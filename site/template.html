@@ -1,0 +1,971 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>deblurring is solved</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Motion deblurring methods with released weights, run with one protocol on GoPro, REDS, BSD and DVD and scored frame by frame.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one 74rem column on white paper. Compact lockup (title, authors, links), then one tabbed panel per test
+   set holding the leaderboard and the Pareto front. Ink for type and rules, blue for image methods, orange for
+   video methods. Single light theme by choice. */
+:root {
+  color-scheme: light;
+  --paper: #ffffff;
+  --paper-2: #f5f6f8;
+  --ink: #0d0e11;
+  --ink-72: #4a4c52;
+  --ink-56: #6e7178;
+  --ink-40: #9a9da4;
+  --ink-16: #d8dade;
+  --ink-8: #ebecef;
+  --img: #2a78d6;
+  --vid: #eb6834;
+  --focus: #2a78d6;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --display: "Inter Tight", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Consolas, "Liberation Mono", monospace;
+  --container: 74rem;
+  --read: 44rem;
+  --pill: 2.5rem;
+  --ease: cubic-bezier(.25, .1, .25, 1);
+  --t-h1: clamp(2.4rem, 1.3rem + 4.4vw, 4.4rem);
+  --t-h2: clamp(1.4rem, 1.2rem + .8vw, 1.85rem);
+  --t-p: 1.0625rem;
+  --t-s: .875rem;
+  --t-xs: .75rem;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { scroll-behavior: smooth; scroll-padding-top: 4.5rem; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font: 400 var(--t-p)/1.6 var(--sans); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--paper); }
+a { color: inherit; text-decoration-color: var(--ink-40); text-underline-offset: .2em; }
+a:hover { text-decoration-color: currentColor; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h2 { font-size: var(--t-h2); font-weight: 600; letter-spacing: -.02em; line-height: 1.2; }
+p { margin: 0; }
+code { font-family: var(--mono); font-size: .86em; }
+
+.wrap {
+  width: 100%; max-width: var(--container); margin-inline: auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* top bar */
+.bar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+  background: rgba(255, 255, 255, .9); backdrop-filter: saturate(1.4) blur(10px); border-bottom: 1px solid var(--ink-8);
+}
+.bar .wrap { display: flex; align-items: center; gap: 1.5rem; height: 3.5rem; }
+.bar .mark { font: 600 1rem/1 var(--display); letter-spacing: -.01em; text-decoration: none; white-space: nowrap; }
+.bar nav { display: flex; gap: 1.25rem; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+.bar nav::-webkit-scrollbar { display: none; }
+.bar nav a { font-size: var(--t-s); color: var(--ink-72); text-decoration: none; white-space: nowrap; }
+.bar nav a:hover { color: var(--ink); }
+
+/* lockup */
+.hero { padding-block: clamp(2.75rem, 7vw, 5rem) 1.5rem; display: grid; gap: 1.1rem; }
+.eyebrow { font: 500 var(--t-xs)/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-56); }
+.wordmark { font: 700 var(--t-h1)/.95 var(--display); letter-spacing: -.045em; }
+.wordmark .smear { display: inline-block; animation: unsmear 1.3s var(--ease) .2s both; }
+@keyframes unsmear {
+  0% { filter: blur(3px); text-shadow: .08em 0 0 rgba(13, 14, 17, .4), .18em 0 0 rgba(13, 14, 17, .16), .3em 0 0 rgba(13, 14, 17, .08), -.08em 0 0 rgba(13, 14, 17, .4), -.18em 0 0 rgba(13, 14, 17, .16); }
+  100% { filter: blur(0); text-shadow: 0 0 0 transparent, 0 0 0 transparent, 0 0 0 transparent, 0 0 0 transparent, 0 0 0 transparent; }
+}
+@media (prefers-reduced-motion: reduce) { .wordmark .smear { animation: none; } }
+.authors { display: flex; flex-wrap: wrap; gap: .2rem 1.4rem; font: 500 1.05rem/1.4 var(--sans); }
+.lede { font-size: 1.1rem; line-height: 1.55; color: var(--ink-72); max-width: 42rem; }
+.meta { font: 400 var(--t-s)/1.5 var(--sans); color: var(--ink-56); font-variant-numeric: tabular-nums; }
+.meta b { color: var(--ink); font-weight: 600; }
+.cta { display: flex; flex-wrap: wrap; gap: .5rem; padding-top: .25rem; }
+.btn {
+  display: inline-flex; align-items: center; gap: .45rem; height: 2.5rem; padding: 0 1.1rem; border-radius: var(--pill);
+  border: 1px solid var(--ink-16); background: var(--paper); color: var(--ink);
+  font: 500 var(--t-s)/1 var(--sans); text-decoration: none; cursor: pointer; transition: border-color .2s var(--ease), background .2s var(--ease);
+}
+.btn:hover { border-color: var(--ink-56); }
+.btn.solid { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.btn.solid:hover { background: var(--ink-72); }
+.btn svg { width: 1rem; height: 1rem; flex: none; }
+
+/* tabs */
+.panel { padding-block: 2rem 0; display: grid; gap: 1rem; }
+.tabs { display: flex; gap: 0; border-bottom: 1px solid var(--ink-16); overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs button {
+  all: unset; cursor: pointer; padding: .7rem 1.25rem .8rem 0; margin-right: 1.25rem; display: grid; gap: .2rem;
+  border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap;
+}
+.tabs button .tl { font: 600 1.15rem/1.1 var(--display); letter-spacing: -.01em; color: var(--ink-56); }
+.tabs button .ts { font: 400 var(--t-xs)/1.2 var(--sans); color: var(--ink-40); font-variant-numeric: tabular-nums; }
+.tabs button:hover .tl { color: var(--ink); }
+.tabs button[aria-selected="true"] { border-bottom-color: var(--ink); }
+.tabs button[aria-selected="true"] .tl { color: var(--ink); }
+.tabs button[aria-selected="true"] .ts { color: var(--ink-56); }
+.tabs button:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+
+/* controls */
+.controls { display: flex; flex-wrap: wrap; gap: .5rem .75rem; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--ink-16); border-radius: var(--pill); padding: 2px; gap: 2px; flex-wrap: wrap; }
+.seg button {
+  border: 0; background: transparent; color: var(--ink-72); font: 500 var(--t-xs)/1 var(--sans);
+  height: 1.85rem; padding: 0 .8rem; border-radius: var(--pill); cursor: pointer;
+}
+.seg button:hover { color: var(--ink); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.toggle {
+  display: inline-flex; align-items: center; gap: .45rem; height: 2.1rem; padding: 0 .85rem; border-radius: var(--pill);
+  border: 1px solid var(--ink-16); background: var(--paper); color: var(--ink); cursor: pointer; font: 500 var(--t-xs)/1 var(--sans);
+}
+.toggle:hover { border-color: var(--ink-56); }
+.toggle[aria-pressed="false"] { color: var(--ink-40); background: var(--paper-2); border-color: var(--ink-8); }
+.toggle[aria-pressed="false"] .sw { opacity: .3; }
+.sel { display: inline-flex; align-items: center; gap: .4rem; font-size: var(--t-xs); color: var(--ink-56); }
+select, input[type="search"] {
+  font: 500 var(--t-xs)/1 var(--sans); color: var(--ink); background: var(--paper);
+  border: 1px solid var(--ink-16); border-radius: var(--pill); height: 2.1rem; padding: 0 .8rem;
+}
+input[type="search"] { width: 13rem; max-width: 100%; }
+.chk { display: inline-flex; align-items: center; gap: .4rem; font-size: var(--t-xs); color: var(--ink-72); cursor: pointer; }
+.chk input { accent-color: var(--ink); margin: 0; }
+.spacer { flex: 1 1 0; }
+.sw { width: .7rem; height: .7rem; flex: none; display: inline-block; }
+.sw.image { background: var(--img); border-radius: 50%; }
+.sw.video { background: var(--vid); }
+.sw.front { height: 0; border-top: 2px solid var(--ink); width: 1rem; }
+.sw.input { height: 0; border-top: 1.5px dashed var(--ink-56); width: 1rem; }
+.sw.gt { height: 0; border-top: 1.5px dotted var(--ink); width: 1rem; }
+.key { display: inline-flex; align-items: center; gap: .4rem; font-size: var(--t-xs); color: var(--ink-72); }
+
+/* leaderboard */
+.tablewrap { overflow-x: auto; border: 1px solid var(--ink-8); border-radius: .75rem; min-width: 0; }
+table.lb { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 780px; font-size: var(--t-s); }
+.lb th, .lb td { padding: .55rem .75rem; text-align: left; border-bottom: 1px solid var(--ink-8); background: var(--paper); }
+.lb thead th { font: 500 var(--t-xs)/1.2 var(--sans); color: var(--ink-56); vertical-align: bottom; white-space: nowrap; }
+.lb th.n, .lb td.n { text-align: right; font-variant-numeric: tabular-nums; }
+.lb th button { all: unset; cursor: pointer; display: inline-flex; gap: .3rem; align-items: center; }
+.lb th button:hover { color: var(--ink); }
+.lb th button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 3px; }
+.lb th.on { color: var(--ink); }
+.lb th.on button::after { content: ""; border: 4px solid transparent; border-top-color: currentColor; margin-top: 4px; }
+.lb th.on.asc button::after { border-top-color: transparent; border-bottom-color: currentColor; margin: 0 0 4px; }
+.lb .c-rank { width: 2.6rem; color: var(--ink-56); position: sticky; left: 0; z-index: 1; }
+.lb .c-name { position: sticky; left: 2.6rem; z-index: 1; min-width: 13.5rem; box-shadow: 1px 0 0 var(--ink-8); }
+.lb thead .c-rank, .lb thead .c-name { z-index: 3; }
+.lb tbody tr:hover td { background: var(--paper-2); }
+.lb tr.open td { background: var(--paper-2); border-bottom-color: transparent; }
+.lb tr.ref td { background: var(--paper-2); color: var(--ink-56); font-style: italic; }
+.lb tr.ref .nm { font-weight: 500; }
+.rowbtn { all: unset; cursor: pointer; display: grid; gap: .1rem; }
+.rowbtn:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 3px; }
+.nm { font-weight: 600; color: var(--ink); }
+.sub { font-size: var(--t-xs); color: var(--ink-56); }
+.chip { display: inline-block; font: 500 10.5px/1 var(--sans); padding: 3px 6px; border-radius: 3px; background: var(--ink-8); color: var(--ink-72); margin-left: .3rem; font-style: normal; }
+.ty { display: inline-flex; align-items: center; gap: .4rem; color: var(--ink-72); white-space: nowrap; }
+td.sc { min-width: 5.4rem; }
+td.sc .v { display: block; }
+td.sc .bar { display: block; height: 3px; border-radius: 2px; margin-top: .3rem; background: var(--ink-8); position: relative; overflow: hidden; }
+td.sc .bar i { position: absolute; inset: 0 auto 0 0; width: calc(var(--w, 0) * 100%); background: var(--ink-40); border-radius: 2px; }
+td.sc.on .bar i { background: var(--ink); }
+td.sc.best .v { font-weight: 700; }
+td.part .v { font-style: italic; color: var(--ink-56); }
+.na { color: var(--ink-40); }
+.lb-foot { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; font-size: var(--t-xs); color: var(--ink-56); align-items: center; }
+.more { justify-self: start; }
+tr.detail td { padding: .25rem .9rem 1.2rem; }
+.det { display: grid; grid-template-columns: minmax(0, 17rem) minmax(0, 1fr); gap: 1.25rem 2rem; position: sticky; left: .9rem; max-width: calc(100vw - 4rem); }
+@media (max-width: 760px) { .det { grid-template-columns: minmax(0, 1fr); } }
+.det dl { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .3rem .9rem; font-size: var(--t-xs); align-content: start; }
+.det dt { color: var(--ink-56); }
+.det dd { margin: 0; }
+.fig-title { font: 600 var(--t-s)/1.3 var(--sans); }
+.fig-note { font-size: var(--t-xs); color: var(--ink-56); line-height: 1.5; }
+
+/* figure */
+.fig { border: 1px solid var(--ink-8); border-radius: .75rem; padding: 1rem; display: grid; gap: .75rem; min-width: 0; }
+.chart { width: 100%; min-width: 0; position: relative; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.ax text { fill: var(--ink-56); font: 400 11px var(--sans); font-variant-numeric: tabular-nums; }
+.ax .grid { stroke: var(--ink-8); stroke-width: 1; }
+.ax .zero { stroke: var(--ink-40); stroke-width: 1; }
+.ax .dom { stroke: var(--ink-16); stroke-width: 1; }
+.ax .ttl { fill: var(--ink-72); font-weight: 500; }
+.inputline { stroke: var(--ink-56); stroke-width: 1.5; stroke-dasharray: 5 4; fill: none; }
+.gtline { stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 1.5 3; stroke-linecap: round; fill: none; }
+.inputlab { fill: var(--ink-56); font: 500 11px var(--sans); }
+.m-image { fill: var(--img); }
+.m-video { fill: var(--vid); }
+.mk { stroke: var(--paper); stroke-width: 1.5; }
+.off { opacity: .28; }
+.front { stroke: var(--ink); stroke-width: 2; fill: none; stroke-linejoin: round; }
+.dlab { fill: var(--ink); font: 500 11px var(--sans); paint-order: stroke; stroke: var(--paper); stroke-width: 3px; stroke-linejoin: round; }
+.hit { fill: transparent; stroke: none; cursor: pointer; }
+.tip {
+  position: fixed; z-index: 50; pointer-events: none; max-width: 18rem;
+  background: var(--paper); color: var(--ink); border: 1px solid var(--ink-16); border-radius: .5rem;
+  box-shadow: 0 6px 24px -8px rgba(13, 14, 17, .3); padding: .55rem .7rem; font-size: var(--t-xs); line-height: 1.45;
+}
+.tip b { font-weight: 600; font-size: .8rem; }
+.tip .k { color: var(--ink-56); }
+.tip table { border-collapse: collapse; margin-top: .3rem; font-variant-numeric: tabular-nums; }
+.tip td { padding: 0 .6rem 0 0; }
+
+/* protocol */
+.sec { padding-block: 3rem 0; display: grid; gap: 1rem; }
+.kicker { font: 500 var(--t-xs)/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-56); }
+.scroll { overflow-x: auto; min-width: 0; }
+.plain { border-collapse: collapse; width: 100%; font-size: var(--t-s); min-width: 34rem; }
+.plain th, .plain td { text-align: left; padding: .55rem .9rem .55rem 0; border-bottom: 1px solid var(--ink-8); vertical-align: top; }
+.plain th { font: 500 var(--t-xs)/1.2 var(--sans); color: var(--ink-56); }
+.plain .n { text-align: right; font-variant-numeric: tabular-nums; }
+.notes { margin: 0; padding-left: 1.1rem; display: grid; gap: .4rem; font-size: var(--t-s); color: var(--ink-72); max-width: var(--read); }
+
+footer { margin-top: 4rem; border-top: 1px solid var(--ink-8); }
+footer .wrap { padding-block: 1.75rem 2.5rem; display: flex; flex-wrap: wrap; gap: .5rem 2rem; justify-content: space-between; font-size: var(--t-xs); color: var(--ink-56); }
+noscript p { padding: 1rem; border: 1px solid var(--ink-16); border-radius: .5rem; font-size: var(--t-s); }
+
+/* two methods, frame by frame; frame viewer. A and B wear violet and aqua, never blue or orange (image / video). */
+:root { --pa: #6250d6; --pb: #1baf7a; }
+.lede-s { max-width: var(--read); color: var(--ink-72); font-size: var(--t-s); }
+.btn.small { height: 2rem; padding: 0 .85rem; font-size: var(--t-xs); }
+.sw.pa { background: var(--pa); border-radius: 2px; }
+.sw.pb { background: var(--pb); border-radius: 2px; }
+.keys { display: inline-flex; flex-wrap: wrap; gap: .25rem .9rem; }
+.pw-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 28rem), 1fr)); gap: 1rem; }
+.bar-a { fill: var(--pa); } .bar-b { fill: var(--pb); }
+.dot-a { fill: var(--pa); opacity: .38; } .dot-b { fill: var(--pb); opacity: .38; }
+.zero { stroke: var(--ink-56); stroke-width: 1; stroke-dasharray: 3 3; }
+.binline { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; }
+.binpt { fill: var(--ink); stroke: var(--paper); stroke-width: 2; }
+.ring { fill: none; stroke: var(--ink); stroke-width: 1.2; }
+.hov { fill: none; stroke: var(--ink); stroke-width: 2; }
+.rholab { fill: var(--ink-72); font: 400 12px var(--sans); }
+.rhoval { fill: var(--ink-72); font: 500 11px var(--sans); font-variant-numeric: tabular-nums; }
+.rhobar { fill: var(--ink-40); }
+.rhorow.on .rhobar { fill: var(--ink); } .rhorow.on .rholab { fill: var(--ink); font-weight: 600; }
+.fv-strip { display: flex; gap: .5rem; overflow-x: auto; padding-bottom: .35rem; min-width: 0; }
+.fv-card { flex: none; width: 10rem; display: grid; gap: .2rem; border: 1px solid var(--ink-16); border-radius: .5rem; padding: .4rem; background: var(--paper);
+  text-align: left; font: 400 var(--t-xs)/1.35 var(--sans); color: var(--ink-72); cursor: pointer; }
+.fv-card:hover { border-color: var(--ink-56); }
+.fv-card[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.fv-card img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: .3rem; display: block; background: var(--ink-8); }
+.fv-why { color: var(--ink); font-weight: 500; }
+.fv-id { font-family: var(--mono); font-size: 10.5px; color: var(--ink-56); }
+.fv-stage { display: grid; gap: .5rem; min-width: 0; }
+.fv-pane { position: relative; min-width: 0; }
+.fv-pane canvas { display: block; max-width: 100%; border-radius: .4rem; background: #000; touch-action: none; cursor: ew-resize; }
+.fv-lab { position: absolute; top: .45rem; font: 500 11px/1.2 var(--sans); background: rgba(13, 14, 17, .74); color: #fff; padding: 4px 7px; border-radius: 3px; pointer-events: none; max-width: 46%; }
+.fv-two { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+@media (max-width: 40rem) { .fv-two { grid-template-columns: 1fr; } }
+
+/* dataset card under the tabs: what the set is, how its blur was made, how to cite it, and the same measured
+   characteristics for every set with a strip placing this set among the six */
+.dcard { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 1rem 2rem; padding: 1rem 0 1.25rem;
+  border-bottom: 1px solid var(--ink-8); margin-bottom: 1rem; }
+@media (max-width: 52rem) { .dcard { grid-template-columns: 1fr; } }
+.dc-head { font-size: var(--t-s); color: var(--ink-72); }
+.dc-head b { font-family: var(--display); font-size: 1.15rem; color: var(--ink); font-weight: 600; margin-right: .35rem; }
+.dc-desc { font-size: var(--t-s); color: var(--ink-72); max-width: var(--read); margin-top: .4rem; }
+.dc-facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: .3rem 1rem; margin: .8rem 0 0; font-size: var(--t-xs); }
+.dc-facts dt { color: var(--ink-56); }
+.dc-facts dd { margin: 0; color: var(--ink); }
+.dc-links { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-top: .8rem; font-size: var(--t-xs); }
+.dc-bib { font: 400 11px/1.5 var(--mono); background: var(--paper-2); border: 1px solid var(--ink-8); border-radius: .5rem;
+  padding: .7rem .8rem; margin: .6rem 0 0; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink-72); }
+.dc-meas { display: grid; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: .5rem; align-content: start; }
+.dc-tile { border: 1px solid var(--ink-8); border-radius: .5rem; padding: .5rem .6rem .45rem; display: grid; gap: .15rem; min-width: 0; }
+.dc-tile .l { font-size: 11px; color: var(--ink-56); line-height: 1.3; }
+.dc-tile .v { font: 600 1.05rem/1.2 var(--display); font-variant-numeric: tabular-nums; }
+.dc-tile .v small { font: 400 11px var(--sans); color: var(--ink-56); margin-left: .2rem; }
+.dc-tile svg { width: 100%; height: 14px; display: block; overflow: visible; }
+.dc-tile .na { font-size: 11px; color: var(--ink-40); }
+.strip-base { stroke: var(--ink-16); stroke-width: 1; }
+.strip-o { fill: var(--ink-40); }
+.strip-me { fill: var(--ink); stroke: var(--paper); stroke-width: 1.5; }
+.dc-src { font-size: 11px; color: var(--ink-56); grid-column: 1 / -1; }
+
+.om-dot.image { fill: var(--img); opacity: .32; } .om-dot.video { fill: var(--vid); opacity: .32; }
+.medline { fill: none; stroke: var(--ink-56); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.sw.medk { height: 0; border-top: 1.5px dashed var(--ink-56); width: 1rem; }
+.seg button:disabled { color: var(--ink-16); cursor: not-allowed; }
+table.prof { border-collapse: separate; border-spacing: 2px; width: 100%; font-size: var(--t-xs); }
+table.prof th { font-weight: 500; color: var(--ink-56); text-align: left; padding: 2px 6px; white-space: nowrap; }
+table.prof th.n { text-align: center; }
+table.prof tbody th { color: var(--ink-72); font-weight: 400; cursor: pointer; }
+table.prof tbody tr.on th { color: var(--ink); font-weight: 600; }
+table.prof td.cellr { background: rgba(13, 14, 17, var(--a)); border-radius: 3px; text-align: center; padding: 3px 4px; min-width: 3.4rem; cursor: pointer; }
+table.prof td.na { color: var(--ink-40); text-align: center; }
+table.prof .rk { display: block; font: 600 12px/1.2 var(--sans); color: var(--ink); font-variant-numeric: tabular-nums; }
+table.prof .dl { display: block; font: 400 10.5px/1.2 var(--sans); color: var(--ink-72); font-variant-numeric: tabular-nums; }
+table.prof .inv { color: #ffffff; }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap">
+    <a class="mark" href="#top">deblurring is solved</a>
+    <nav aria-label="Sections">
+      <a href="#leaderboard">Leaderboard</a>
+      <a href="#pareto">Pareto front</a>
+      <a href="#pairs">Two methods</a>
+      <a href="#method">One method</a>
+      <a href="#frames">Frames</a>
+      <a href="#protocol">Protocol</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <section class="wrap hero" aria-label="Benchmark">
+    <p class="eyebrow">Motion deblurring benchmark</p>
+    <h1 class="wordmark"><span class="smear">deblurring</span> is solved</h1>
+    <p class="authors">{{authors_html}}</p>
+    <p class="lede">Motion deblurring methods with released weights, run with every released checkpoint on {{n_sets}} test sets under one protocol and scored frame by frame.</p>
+    <p class="meta"><b>{{n_methods}}</b> methods &middot; <b>{{n_rows}}</b> variants &middot; <b>{{n_sets}}</b> test sets &middot; <b>{{frames}}</b> test frames &middot; {{year0}}&ndash;{{year1}}</p>
+    <p class="cta">
+      <a class="btn solid" href="#leaderboard"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 13h3V7H2zm4.5 0h3V3h-3zM11 13h3V9h-3z" fill="currentColor"/></svg>Leaderboard</a>
+      <a class="btn" href="#pareto"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 13.5h11M2.5 13.5v-11M4 11h3V7.5h3V5h3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>Pareto front</a>
+      <a class="btn" href="leaderboard.csv"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8m0 0L5 7m3 3 3-3M3 13h10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Results as CSV</a>
+    </p>
+  </section>
+
+  <section class="wrap panel" id="leaderboard" aria-label="Leaderboard">
+    <div class="tabs" role="tablist" aria-label="Test set" id="tabs"></div>
+    <div class="dcard" id="dcard" aria-label="About this test set"></div>
+
+    <div class="controls" aria-label="Filters">
+      <span class="seg" role="group" aria-label="Metrics shown" id="mg" hidden></span>
+      <span id="types"></span>
+      <label class="sel" for="fam">Family
+        <select id="fam"><option value="">All</option></select>
+      </label>
+      <label class="sel" for="tr">Trained on
+        <select id="tr"><option value="gopro">GoPro</option><option value="dom">the test set</option><option value="any">any set</option></select>
+      </label>
+      <label class="chk"><input type="checkbox" id="partial"> unfinished runs</label>
+      <span class="spacer"></span>
+      <input type="search" id="q" placeholder="Search methods" aria-label="Search methods">
+    </div>
+
+    <div class="tablewrap" role="tabpanel" id="lb-panel"><table class="lb" id="lb"><thead></thead><tbody></tbody></table></div>
+    <button type="button" class="btn more" id="more" hidden></button>
+    <div class="lb-foot">
+      <span id="count"></span>
+      <span><b>bold</b> best in column</span>
+      <span><i>italic</i> run still in progress</span>
+      <span>Click a method for its score on each test sequence.</span>
+    </div>
+    <noscript><p>The interactive table needs JavaScript. The same numbers are in <a href="leaderboard.csv">leaderboard.csv</a>.</p></noscript>
+  </section>
+
+  <section class="wrap sec" id="pareto" aria-label="Pareto front">
+    <div class="controls">
+      <h2 id="pf-title">Pareto front</h2>
+    </div>
+    <figure class="fig" style="margin:0">
+      <div class="controls">
+        <span class="seg" role="group" aria-label="Horizontal axis" id="pf-x">
+          <button type="button" data-v="params" aria-pressed="true">Parameters</button>
+          <button type="button" data-v="gmac" aria-pressed="false">Compute</button>
+          <button type="button" data-v="ms" aria-pressed="false">Latency</button>
+        </span>
+        <span class="seg" role="group" aria-label="Metric" id="pf-m"></span>
+        <span class="spacer"></span>
+        <span class="key"><i class="sw image"></i>Image method</span>
+        <span class="key"><i class="sw video"></i>Video method</span>
+        <span class="key"><i class="sw front"></i>Pareto front</span>
+        <span class="key" id="pf-inkey"><i class="sw input"></i>Blurry input</span>
+        <span class="key" id="pf-gtkey" hidden><i class="sw gt"></i>Sharp frames</span>
+      </div>
+      <div class="chart" id="pf" role="img" aria-label="Scatter plot of score against model size with the Pareto front"></div>
+      <p class="fig-note" id="pf-note"></p>
+    </figure>
+  </section>
+
+  <section class="wrap sec" id="pairs" aria-label="Two methods, frame by frame">
+    <div class="controls"><h2 id="pw-title">Two methods, frame by frame</h2></div>
+    <p class="lede-s">Pick two methods. Every test frame of the set is one observation: how much better method A scores than method B on it, and what that frame is like (how strong its blur is, how fast it moves, how dark or textured it is).</p>
+    <div class="controls" aria-label="Methods and measures compared">
+      <label class="sel" for="pw-a"><i class="sw pa"></i>A <select id="pw-a"></select></label>
+      <button type="button" class="btn small" id="pw-swap" aria-label="Swap A and B">Swap</button>
+      <label class="sel" for="pw-b"><i class="sw pb"></i>B <select id="pw-b"></select></label>
+      <label class="sel" for="pw-m">Metric <select id="pw-m"></select></label>
+      <label class="sel" for="pw-x">Characteristic <select id="pw-x"></select></label>
+    </div>
+    <div class="pw-grid">
+      <figure class="fig" style="margin:0"><div class="fig-title" id="pw-h-title"></div><div class="chart" id="pw-hist"></div><p class="fig-note" id="pw-h-note"></p></figure>
+      <figure class="fig" style="margin:0"><div class="fig-title" id="pw-s-title"></div><div class="chart" id="pw-scatter"></div><p class="fig-note" id="pw-s-note"></p></figure>
+    </div>
+    <figure class="fig" style="margin:0"><div class="fig-title">Which frame characteristics go with the difference</div><div class="chart" id="pw-rho"></div><p class="fig-note" id="pw-r-note"></p></figure>
+  </section>
+
+  <section class="wrap sec" id="method" aria-label="One method across the frames of a set">
+    <div class="controls"><h2 id="om-title">One method across frames</h2></div>
+    <p class="lede-s">Where a method does well and where it does not: its score on every frame of the set against a frame characteristic, and its rank among the GoPro-trained methods within each fifth of the frames along every characteristic.</p>
+    <div class="controls" aria-label="Method, metric and characteristic">
+      <label class="sel" for="om-r">Method <select id="om-r"></select></label>
+      <label class="sel" for="om-m">Metric <select id="om-m"></select></label>
+      <label class="sel" for="om-x">Characteristic <select id="om-x"></select></label>
+      <span class="seg" role="group" aria-label="Value shown" id="om-v">
+        <button type="button" data-v="score" aria-pressed="true">Score</button>
+        <button type="button" data-v="med" aria-pressed="false">Against the median method</button>
+        <button type="button" data-v="gain" aria-pressed="false">Gain over the input</button>
+      </span>
+    </div>
+    <figure class="fig" style="margin:0"><div class="fig-title" id="om-s-title"></div><div class="chart" id="om-scatter"></div><p class="fig-note" id="om-s-note"></p></figure>
+    <figure class="fig" style="margin:0"><div class="fig-title">Rank within each fifth of the frames</div><div class="chart" id="om-prof"></div><p class="fig-note" id="om-p-note"></p></figure>
+  </section>
+
+  <section class="wrap sec" id="frames" aria-label="Frames">
+    <div class="controls"><h2 id="fv-title">Frames</h2></div>
+    <p class="lede-s">A few frames of each set, picked at the extremes of the frame characteristics. Compare any two outputs with a sliding divider, side by side, or side by side with a magnified window, and switch to their error maps.</p>
+    <div class="controls"><span class="seg" role="group" aria-label="Frames shown" id="fv-subset"></span></div>
+    <div class="fv-strip" id="fv-strip" aria-label="Frames"></div>
+    <div class="controls" aria-label="Viewer settings">
+      <label class="sel" for="fv-l">Left <select id="fv-l"></select></label>
+      <label class="sel" for="fv-r">Right <select id="fv-r"></select></label>
+      <span class="seg" role="group" aria-label="View" id="fv-mode">
+        <button type="button" data-v="slider" aria-pressed="true">Divider</button>
+        <button type="button" data-v="side" aria-pressed="false">Side by side</button>
+        <button type="button" data-v="zoom" aria-pressed="false">Side by side + zoom</button>
+      </span>
+      <span class="seg" role="group" aria-label="Show" id="fv-err">
+        <button type="button" data-v="false" aria-pressed="true">Image</button>
+        <button type="button" data-v="true" aria-pressed="false">Error map</button>
+      </span>
+      <span class="seg" role="group" aria-label="Error gain" id="fv-gain" hidden>
+        <button type="button" data-v="1" aria-pressed="false">×1</button>
+        <button type="button" data-v="2" aria-pressed="false">×2</button>
+        <button type="button" data-v="4" aria-pressed="true">×4</button>
+        <button type="button" data-v="8" aria-pressed="false">×8</button>
+      </span>
+      <span class="seg" role="group" aria-label="Magnification" id="fv-zoom" hidden>
+        <button type="button" data-v="2" aria-pressed="false">2×</button>
+        <button type="button" data-v="4" aria-pressed="true">4×</button>
+        <button type="button" data-v="8" aria-pressed="false">8×</button>
+      </span>
+    </div>
+    <div class="fv-stage" id="fv-stage"></div>
+    <p class="fig-note" id="fv-note"></p>
+  </section>
+
+  <section class="wrap sec" id="protocol" aria-label="Protocol">
+    <p class="kicker">Protocol</p>
+    <div class="scroll">
+      <table class="plain">
+        <thead><tr><th>Set</th><th class="n">Sequences</th><th class="n">Frames</th><th>Resolution</th><th class="n">Blurry input PSNR</th><th>Input</th></tr></thead>
+        <tbody>
+          <tr><td>GoPro test</td><td class="n">11</td><td class="n">1,111</td><td>1280&times;720</td><td class="n">25.64</td><td><code>blur</code></td></tr>
+          <tr><td>REDS val</td><td class="n">30</td><td class="n">3,000</td><td>1280&times;720</td><td class="n">26.27</td><td><code>val_blur</code></td></tr>
+          <tr><td>BSD 2ms/16ms test</td><td class="n">20</td><td class="n">3,000</td><td>640&times;480</td><td class="n">26.63</td><td><code>Blur/RGB</code></td></tr>
+          <tr><td>DVD test</td><td class="n">10</td><td class="n">1,000</td><td>1280&times;720</td><td class="n">27.29</td><td><code>input</code></td></tr>
+          <tr><td>RealBlur-J test</td><td class="n">50 scenes</td><td class="n">980</td><td>about 670&times;763</td><td class="n" id="in-rbj">–</td><td><code>blur</code></td></tr>
+          <tr><td>RealBlur-R test</td><td class="n">50 scenes</td><td class="n">980</td><td>about 670&times;763</td><td class="n" id="in-rbr">–</td><td><code>blur</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ul class="notes">
+      <li>Every released checkpoint of a method runs on every test set: video methods on the four video sets, image methods also on RealBlur-J and RealBlur-R, which hold single images. <i>Trained on</i> picks the checkpoints shown: GoPro (the default), the training split of the current test set, any set, or one training set.</li>
+      <li>On RealBlur, PSNR and SSIM follow the dataset's official evaluation: each output is aligned to the sharp image by an ECC homography and scored on the valid region (scikit-image 0.17.2, OpenCV 4.2, as the script requires). LPIPS and the other metrics use the unaligned output.</li>
+      <li>PSNR and SSIM are computed per frame on 8-bit RGB outputs against the sharp frame and averaged over all frames of the set. LPIPS uses the AlexNet backbone.</li>
+      <li>A score is final when at least 95&nbsp;% of the frames of the set are scored. Runs below that are shown under <i>unfinished runs</i>.</li>
+      <li>Each row is one variant of a method: the whole frame at once, tiles, test-time local converter (TLC), or the temporal scheme of a video method.</li>
+      <li>Compute (GMAC) and latency are measured per output frame at 1280&times;720, batch 1, on one A100. A method that
+        needs a window of frames to emit one frame is charged for the whole window.</li>
+      <li>Frame characteristics come from the sharp frame and its blurry input: blur as the PSNR of the input and the share of gradient left after blur, texture, brightness, contrast, clipped highlights, input noise (Immerkaer) and colorfulness. Motion on the four video sets is the optical flow between consecutive sharp frames (MEMFOF). Every frame with its characteristics and every method's score on it is in <code>results/frames/bench.sqlite</code>.</li>
+      {{iqa_note}}
+      {{based_note}}
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>deblurring is solved &middot; {{authors}}</span>
+    <span>Numbers as of {{built}}. {{n_complete}} of {{n_rows}} variants scored on all their sets.</span>
+  </div>
+</footer>
+
+<div class="tip" id="tip" hidden></div>
+<script id="payload" type="application/json">/*__DATA__*/null</script>
+<script>
+(function () {
+  "use strict";
+  var D = JSON.parse(document.getElementById("payload").textContent);
+  var SETS = D.sets, LBL = D.setLabel, IN = D.input, ROWS = D.rows;
+  var NS = "http://www.w3.org/2000/svg";
+  var METRIC = {
+    psnr: { label: "PSNR", nd: 2, up: true }, ssim: { label: "SSIM", nd: 3, up: true }, lpips: { label: "LPIPS", nd: 3, up: false },
+    ms_ssim: { label: "MS-SSIM", nd: 4, up: true }, lpips_vgg: { label: "LPIPS-VGG", nd: 3, up: false }, dists: { label: "DISTS", nd: 3, up: false },
+    paq2piq: { label: "PaQ-2-PiQ", nd: 2, up: true, nr: true }, musiq: { label: "MUSIQ", nd: 2, up: true, nr: true },
+    clipiqa: { label: "CLIP-IQA+", nd: 3, up: true, nr: true }, maniqa: { label: "MANIQA", nd: 3, up: true, nr: true },
+    based4: { label: "BASED-4", nd: 2, up: true, nr: true }
+  };
+  var EXTRA = D.extra || [], REF = D.ref || {};
+  var GROUPS = [["fid", "Fidelity", ["psnr", "ssim", "lpips"]], ["per", "Perceptual", ["ms_ssim", "lpips_vgg", "dists"]],
+    ["nr", "No sharp reference", ["paq2piq", "musiq", "clipiqa", "maniqa", "based4"]]].map(function (g) {
+      return [g[0], g[1], g[0] === "fid" ? g[2] : g[2].filter(function (m) { return EXTRA.indexOf(m) >= 0; })];
+    }).filter(function (g) { return g[2].length; });
+  function gm() { return GROUPS.find(function (g) { return g[0] === ST.mg; })[2]; }
+  // value of a reference row ("input" or "gt") for metric m on the current set; PSNR of the input is in D.input
+  function refVal(kind, m) {
+    if (kind === "input" && m === "psnr") return IN[ST.ds];
+    var r = REF[ST.ds] && REF[ST.ds][kind]; return r && r[m] != null ? r[m] : null;
+  }
+  var SIZE = { year: { label: "Year", nd: 0 }, params: { label: "Params, M", nd: 1 }, gmac: { label: "GMAC", nd: 0 }, ms: { label: "ms", nd: 1 } };
+  var SETINFO = { gopro: "1,111 frames · 1280×720", reds_val: "3,000 frames · 1280×720", bsd2: "3,000 frames · 640×480", dvd: "1,000 frames · 1280×720",
+    realblur_j: "980 images · image methods", realblur_r: "980 images · image methods" };
+
+  var ST = { ds: "gopro", sort: "psnr", asc: false, types: { image: true, video: true }, fam: "", tr: "gopro", partial: false, q: "", open: {}, limit: 25, all: false, px: "params", pm: "psnr", mg: "fid" };
+
+  function h(tag, attrs) {
+    var e = document.createElement(tag), kids = Array.prototype.slice.call(arguments, 2);
+    for (var k in attrs || {}) {
+      var v = attrs[k];
+      if (v == null || v === false) continue;
+      if (k === "class") e.className = v;
+      else if (k.slice(0, 2) === "on") e.addEventListener(k.slice(2), v);
+      else e.setAttribute(k, v === true ? "" : v);
+    }
+    kids.flat(3).forEach(function (c) { if (c != null) e.append(c); });
+    return e;
+  }
+  function s(tag, attrs) {
+    var e = document.createElementNS(NS, tag), kids = Array.prototype.slice.call(arguments, 2);
+    for (var k in attrs || {}) if (attrs[k] != null) e.setAttribute(k, attrs[k]);
+    kids.flat(3).forEach(function (c) { if (c != null) e.append(typeof c === "string" ? document.createTextNode(c) : c); });
+    return e;
+  }
+  function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function minus(t) { return String(t).replace("-", "−"); }
+  function fx(x, nd) { return x == null ? "–" : minus(x.toFixed(nd)); }
+  function sgn(x, nd) { return x == null ? "–" : (x > 0 ? "+" : "") + minus(x.toFixed(nd)); }
+  function cell(r) { var c = r.s[ST.ds]; return c && (c.ok || ST.partial) ? c : null; }
+  function variantText(r) { return r.variant.split(",").join(", "); }
+  function metaText(r) { var y = r.year ? " " + r.year : ""; return variantText(r) + (r.venue ? " · " + r.venue + y : (y ? " ·" + y : "")); }
+  function shape(type, x, y, rad, cls) {
+    if (type === "image") return s("circle", { cx: x, cy: y, r: rad, class: cls });
+    return s("rect", { x: x - rad * .9, y: y - rad * .9, width: rad * 1.8, height: rad * 1.8, rx: 1, class: cls });
+  }
+
+  /* ---------- filtering shared by table and chart ---------- */
+  function trainOk(r) {
+    if (ST.tr === "gopro") return r.gopro_trained;
+    if (ST.tr === "any") return true;
+    if (ST.tr === "dom") return r.dom === ST.ds;
+    return r.tr === ST.tr;
+  }
+  function visible() {
+    var q = ST.q.trim().toLowerCase();
+    return ROWS.filter(function (r) {
+      if (!ST.types[r.task]) return false;
+      if (ST.fam && r.family !== ST.fam) return false;
+      if (!trainOk(r)) return false;
+      if (!cell(r)) return false;
+      if (q && (r.name + " " + r.family + " " + r.venue + " " + r.variant + " " + (r.year || "")).toLowerCase().indexOf(q) < 0) return false;
+      return true;
+    });
+  }
+
+  /* ---------- tooltip ---------- */
+  var tip = document.getElementById("tip");
+  function place(ev) {
+    var pad = 14, w = tip.offsetWidth, hh = tip.offsetHeight, x = ev.clientX + pad, y = ev.clientY + pad;
+    if (x + w > innerWidth - 8) x = ev.clientX - w - pad;
+    if (y + hh > innerHeight - 8) y = ev.clientY - hh - pad;
+    tip.style.left = Math.max(8, x) + "px"; tip.style.top = Math.max(8, y) + "px";
+  }
+  function bindTip(el, html) {
+    el.addEventListener("pointerenter", function (ev) { tip.innerHTML = typeof html === "function" ? html() : html; tip.hidden = false; place(ev); });
+    el.addEventListener("pointermove", place);
+    el.addEventListener("pointerleave", function () { tip.hidden = true; });
+  }
+  window.addEventListener("scroll", function () { tip.hidden = true; }, { passive: true });
+  function rowTip(r) {
+    var c = r.s[ST.ds];
+    var t = "<b>" + esc(r.name) + "</b><br><span class='k'>" + esc(metaText(r)) + "</span><table><tr>";
+    gm().forEach(function (m) { t += "<td class='k'>" + METRIC[m].label + "</td><td>" + fx(c[m], METRIC[m].nd) + "</td>"; });
+    t += "</tr></table>";
+    var sz = [];
+    if (r.params) sz.push(fx(r.params, 1) + " M params");
+    if (r.gmac) sz.push(Math.round(r.gmac) + " GMAC");
+    if (r.ms) sz.push(fx(r.ms, 1) + " ms");
+    return t + (sz.length ? "<span class='k'>" + sz.join(" · ") + "</span>" : "");
+  }
+
+  /* ---------- tabs ---------- */
+  var tabs = document.getElementById("tabs");
+  SETS.forEach(function (d) {
+    var b = h("button", { type: "button", role: "tab", id: "tab-" + d, "aria-controls": "lb-panel", "aria-selected": d === ST.ds ? "true" : "false", tabindex: d === ST.ds ? "0" : "-1" },
+      h("span", { class: "tl" }, LBL[d]), h("span", { class: "ts" }, SETINFO[d]));
+    b.addEventListener("click", function () { pickSet(d); });
+    tabs.append(b);
+  });
+  tabs.addEventListener("keydown", function (ev) {
+    var i = SETS.indexOf(ST.ds);
+    if (ev.key === "ArrowRight") i = (i + 1) % SETS.length; else if (ev.key === "ArrowLeft") i = (i + SETS.length - 1) % SETS.length; else return;
+    ev.preventDefault(); pickSet(SETS[i]); document.getElementById("tab-" + SETS[i]).focus();
+  });
+  function pickSet(d) {
+    ST.ds = d; ST.open = {};
+    tabs.querySelectorAll("button").forEach(function (b) { var on = b.id === "tab-" + d; b.setAttribute("aria-selected", on ? "true" : "false"); b.tabIndex = on ? 0 : -1; });
+    document.getElementById("lb-panel").setAttribute("aria-labelledby", "tab-" + d);
+    renderTable(); drawPareto(); renderCard();
+    document.dispatchEvent(new CustomEvent("dbis:set", { detail: d }));
+  }
+
+  /* ---------- filters ---------- */
+  var types = document.getElementById("types");
+  [["image", "Image"], ["video", "Video"]].forEach(function (t) {
+    var b = h("button", { type: "button", class: "toggle", "aria-pressed": "true" }, h("i", { class: "sw " + t[0] }), t[1] + " methods");
+    b.addEventListener("click", function () { ST.types[t[0]] = !ST.types[t[0]]; b.setAttribute("aria-pressed", ST.types[t[0]] ? "true" : "false"); renderTable(); drawPareto(); });
+    types.append(b, " ");
+  });
+  var fam = document.getElementById("fam");
+  Array.from(new Set(ROWS.map(function (r) { return r.family; }))).sort().forEach(function (f) { fam.append(h("option", { value: f }, f)); });
+  fam.addEventListener("change", function () { ST.fam = fam.value; renderTable(); drawPareto(); });
+  var trSel = document.getElementById("tr");
+  (D.trains || []).forEach(function (t) { if (t[0] !== "GoPro") trSel.append(h("option", { value: t[0] }, t[1])); });
+  trSel.addEventListener("change", function () { ST.tr = trSel.value; ST.open = {}; renderTable(); drawPareto(); });
+  [["realblur_j", "in-rbj"], ["realblur_r", "in-rbr"]].forEach(function (p) { var e = document.getElementById(p[1]); if (e && IN[p[0]] != null) e.textContent = IN[p[0]].toFixed(2); });
+  document.getElementById("partial").addEventListener("change", function (e) { ST.partial = e.target.checked; renderTable(); drawPareto(); });
+  document.getElementById("q").addEventListener("input", function (e) { ST.q = e.target.value; renderTable(); drawPareto(); });
+
+  /* ---------- leaderboard ---------- */
+  var thead = document.querySelector("#lb thead"), tbody = document.querySelector("#lb tbody");
+  var SIZECOLS = [["year", "Year"], ["params", "Params, M"], ["gmac", "GMAC"], ["ms", "Latency, ms"]], COLS = [];
+  function setCols() { COLS = SIZECOLS.concat(gm().map(function (m) { return [m, METRIC[m].label]; })); }
+  function sortKey(r, k) { return METRIC[k] ? cell(r)[k] : r[k]; }
+  /* metric groups: one control for the table columns and the Pareto metric */
+  var mg = document.getElementById("mg");
+  if (GROUPS.length > 1) {
+    mg.hidden = false;
+    GROUPS.forEach(function (g) { mg.append(h("button", { type: "button", "data-v": g[0], "aria-pressed": g[0] === ST.mg ? "true" : "false", title: g[2].map(function (m) { return METRIC[m].label; }).join(", ") }, g[1])); });
+  }
+  function pfButtons() {
+    var el = document.getElementById("pf-m"), ms = gm();
+    if (ms.indexOf(ST.pm) < 0) ST.pm = ms[0];
+    el.replaceChildren.apply(el, ms.map(function (m) { return h("button", { type: "button", "data-v": m, "aria-pressed": m === ST.pm ? "true" : "false" }, METRIC[m].label); }));
+  }
+  function pickGroup(v) {
+    ST.mg = v;
+    var ms = gm(); if (METRIC[ST.sort] && ms.indexOf(ST.sort) < 0) { ST.sort = ms[0]; ST.asc = !METRIC[ms[0]].up; }
+    ST.pm = ms[0]; setCols(); head(); pfButtons(); renderTable(); drawPareto();
+  }
+  function head() {
+    var tr = h("tr", null, h("th", { class: "c-rank", scope: "col" }, "#"), h("th", { class: "c-name", scope: "col" }, "Method"), h("th", { scope: "col" }, "Type"));
+    COLS.forEach(function (c) {
+      tr.append(h("th", { class: "n", scope: "col", "data-k": c[0] }, h("button", { type: "button", onclick: function () {
+        if (ST.sort === c[0]) ST.asc = !ST.asc; else { ST.sort = c[0]; ST.asc = METRIC[c[0]] ? !METRIC[c[0]].up : true; }
+        renderTable();
+      } }, c[1] + (METRIC[c[0]] ? (METRIC[c[0]].up ? " ↑" : " ↓") : ""))));
+    });
+    thead.replaceChildren(tr);
+  }
+  function markHead() {
+    thead.querySelectorAll("th[data-k]").forEach(function (th) {
+      var on = th.getAttribute("data-k") === ST.sort;
+      th.classList.toggle("on", on); th.classList.toggle("asc", on && ST.asc);
+      th.setAttribute("aria-sort", on ? (ST.asc ? "ascending" : "descending") : "none");
+    });
+  }
+  function renderTable() {
+    markHead();
+    var rs = visible();
+    rs.sort(function (a, b) {
+      var x = sortKey(a, ST.sort), y = sortKey(b, ST.sort);
+      if (x == null && y == null) return cell(b).psnr - cell(a).psnr;
+      if (x == null) return 1; if (y == null) return -1;
+      return ST.asc ? x - y : y - x;
+    });
+    var range = {}, best = {}, ms = gm();
+    ms.forEach(function (m) {
+      var v = rs.map(function (r) { return cell(r)[m]; }).filter(function (x) { return x != null; });
+      range[m] = v.length ? [Math.min.apply(null, v), Math.max.apply(null, v)] : [0, 1];
+      best[m] = v.length ? (METRIC[m].up ? range[m][1] : range[m][0]) : null;
+    });
+    var total = rs.length, q = ST.q.trim(), cut = !ST.all && !q && total > ST.limit;
+    var more = document.getElementById("more");
+    more.hidden = total <= ST.limit || !!q;
+    more.textContent = ST.all ? "Show the top " + ST.limit : "Show all " + total + " rows";
+    var frag = document.createDocumentFragment(), rank = 0;
+    // reference rows (blurry input, and the sharp frames for no-reference metrics) sit where their score would rank
+    var refs = [["input", "Blurry input", "the untouched input frames"], ["gt", "Sharp frames", "the ground truth, scored like a method"]].filter(function (k) {
+      return METRIC[ST.sort] && refVal(k[0], ST.sort) != null;
+    }).map(function (k) { return { kind: k[0], name: k[1], sub: k[2], v: refVal(k[0], ST.sort), done: false }; });
+    var refRow = function (rf) {
+      var tr = h("tr", { class: "ref" }, h("td", { class: "c-rank n" }, ""), h("td", { class: "c-name" }, h("span", { class: "nm" }, rf.name), h("br"), h("span", { class: "sub" }, rf.sub)),
+        h("td", null, ""), SIZECOLS.map(function () { return h("td", { class: "n" }, ""); }));
+      ms.forEach(function (m) { var v = refVal(rf.kind, m); tr.append(h("td", { class: "n" + (v != null ? " sc" : "") }, v != null ? h("span", { class: "v" }, fx(v, METRIC[m].nd)) : h("span", { class: "na" }, "–"))); });
+      rf.done = true; return tr;
+    };
+    var placeRefs = function (val) {
+      refs.forEach(function (rf) { if (!rf.done && (val == null || (ST.asc ? val > rf.v : val < rf.v))) frag.append(refRow(rf)); });
+    };
+    rs.forEach(function (r, idx) {
+      rank++;
+      if (cut && idx >= ST.limit) return;
+      var c = cell(r);
+      placeRefs(c[ST.sort]);
+      var open = !!ST.open[r.key];
+      var btn = h("button", { type: "button", class: "rowbtn", "aria-expanded": open ? "true" : "false" },
+        h("span", { class: "nm" }, r.name),
+        h("span", { class: "sub" }, metaText(r), r.gopro_trained ? null : h("span", { class: "chip" }, "trained on " + r.train),
+          (r.s[ST.ds] || {}).seen ? h("span", { class: "chip", title: "The training data of this checkpoint includes these test clips" }, "test clips seen in training") : null));
+      btn.addEventListener("click", function () { ST.open[r.key] = !ST.open[r.key]; renderTable(); });
+      var tr = h("tr", { class: open ? "open" : null, "data-k": r.key },
+        h("td", { class: "c-rank n" }, String(rank)),
+        h("td", { class: "c-name" }, btn),
+        h("td", null, h("span", { class: "ty" }, h("i", { class: "sw " + r.task }), r.task)));
+      COLS.slice(0, SIZECOLS.length).forEach(function (k) {
+        var v = r[k[0]];
+        tr.append(h("td", { class: "n" }, v ? (k[0] === "year" ? String(v) : fx(v, v < 10 && k[0] !== "gmac" ? 2 : SIZE[k[0]].nd)) : h("span", { class: "na" }, "–")));
+      });
+      ms.forEach(function (m) {
+        var v = c[m], td = h("td", { class: "n sc" + (m === ST.sort ? " on" : "") + (c.ok ? "" : " part") });
+        if (v == null) { td.append(h("span", { class: "na" }, "–")); tr.append(td); return; }
+        if (best[m] != null && Math.abs(v - best[m]) < 1e-9) td.classList.add("best");
+        var lo = range[m][0], hi = range[m][1], w = hi > lo ? (v - lo) / (hi - lo) : 1;
+        if (!METRIC[m].up) w = 1 - w;
+        var bar = h("i"); bar.style.setProperty("--w", Math.max(.02, Math.min(1, w)).toFixed(3));
+        td.append(h("span", { class: "v" }, fx(v, METRIC[m].nd)), h("span", { class: "bar" }, bar));
+        td.title = c.n + " of " + D.full[ST.ds] + " frames scored";
+        tr.append(td);
+      });
+      frag.append(tr);
+      if (open) frag.append(detailRow(r));
+    });
+    if (!cut) placeRefs(null);
+    tbody.replaceChildren(frag);
+    tbody.querySelectorAll("[data-strip]").forEach(function (b) { drawStrip(b, ROWS.find(function (r) { return r.key === b.getAttribute("data-strip"); })); });
+    document.getElementById("count").textContent = (cut ? ST.limit + " of " + total : String(total)) + " rows on " + LBL[ST.ds];
+  }
+  document.getElementById("more").addEventListener("click", function () {
+    ST.all = !ST.all; renderTable();
+    if (!ST.all) document.getElementById("leaderboard").scrollIntoView();
+  });
+  function detailRow(r) {
+    var c = r.s[ST.ds], dl = h("dl");
+    var add = function (k, v) { if (v != null && v !== "") dl.append(h("dt", null, k), h("dd", null, v)); };
+    add("Family", r.family); add("Venue", ((r.venue ? r.venue + " " : "") + (r.year || "")).trim()); add("Variant", variantText(r)); add("Trained on", r.train);
+    add("Parameters", r.params ? fx(r.params, 2) + " M" : null);
+    add("Compute", r.gmac ? Math.round(r.gmac) + " GMAC per frame" : null);
+    add("Latency", r.ms ? fx(r.ms, 1) + " ms per frame" : null);
+    add("Frames scored", c.n + " of " + D.full[ST.ds]);
+    var right = h("div", { style: "min-width:0" },
+      h("div", { class: "fig-title" }, "PSNR per test sequence on " + LBL[ST.ds] + ", against the blurry input"),
+      c.seq ? h("div", { class: "chart", "data-strip": r.key }) : h("p", { class: "fig-note" }, "Scores per sequence were not kept for this run."));
+    return h("tr", { class: "detail" }, h("td", { colspan: 3 + COLS.length }, h("div", { class: "det" }, dl, right)));
+  }
+  function drawStrip(box, r) {
+    var c = r.s[ST.ds], names = D.seq[ST.ds], inp = D.seqInput[ST.ds];
+    var pts = [];
+    c.seq.forEach(function (v, i) { if (v != null) pts.push({ i: i, v: v, inp: inp[i] }); });
+    var W = Math.max(280, box.clientWidth || 480), rowH = 15, m = { l: 8, r: 12, t: 8, b: 26 };
+    var H = m.t + m.b + rowH * 2 + 10;
+    var vals = pts.map(function (p) { return p.v; }).concat(pts.map(function (p) { return p.inp; }).filter(function (x) { return x != null; }));
+    var lo = Math.floor(Math.min.apply(null, vals) - .3), hi = Math.ceil(Math.max.apply(null, vals) + .3);
+    var x = function (v) { return m.l + 70 + (v - lo) / (hi - lo) * (W - m.l - m.r - 70); };
+    var root = s("svg", { viewBox: "0 0 " + W + " " + H, width: W, height: H }), ax = s("g", { class: "ax" });
+    var nt = W < 420 ? 4 : 7, st0 = (hi - lo) / nt, p10 = Math.pow(10, Math.floor(Math.log10(st0))), mm = st0 / p10, st = (mm < 1.5 ? 1 : mm < 3 ? 2 : mm < 7 ? 5 : 10) * p10;
+    for (var t = Math.ceil(lo / st) * st; t <= hi + 1e-9; t += st) {
+      ax.append(s("line", { x1: x(t), x2: x(t), y1: m.t, y2: H - m.b + 4, class: "grid" }));
+      ax.append(s("text", { x: x(t), y: H - 8, "text-anchor": "middle" }, minus(+t.toFixed(2))));
+    }
+    var y1 = m.t + rowH / 2 + 2, y2 = m.t + rowH * 1.5 + 8;
+    ax.append(s("text", { x: m.l, y: y1 + 4 }, "Input"), s("text", { x: m.l, y: y2 + 4 }, "Method"));
+    root.append(ax);
+    pts.forEach(function (p) {
+      if (p.inp != null) root.append(s("line", { x1: x(p.inp), x2: x(p.v), y1: y1, y2: y2, stroke: "currentColor", "stroke-opacity": .15 }));
+    });
+    pts.forEach(function (p) {
+      if (p.inp != null) root.append(s("circle", { cx: x(p.inp), cy: y1, r: 3, fill: "#9a9da4" }));
+      var mk = shape(r.task, x(p.v), y2, 3.8, "mk m-" + r.task); root.append(mk);
+      var hit = s("circle", { cx: x(p.v), cy: (y1 + y2) / 2, r: 10, class: "hit" });
+      bindTip(hit, "<b>" + esc(names[p.i]) + "</b><table><tr><td class='k'>method</td><td>" + fx(p.v, 2) + " dB</td></tr><tr><td class='k'>input</td><td>" + fx(p.inp, 2) + " dB</td></tr><tr><td class='k'>gain</td><td>" + sgn(p.inp == null ? null : p.v - p.inp, 2) + " dB</td></tr></table>");
+      root.append(hit);
+    });
+    box.replaceChildren(root);
+  }
+
+  /* ---------- Pareto front ---------- */
+  var XLAB = { params: "Parameters, M (log scale)", gmac: "GMAC per output frame at 1280×720 (log scale)", ms: "Latency per output frame at 1280×720 on one A100, ms (log scale)" };
+  function seg(id, onPick) {
+    var el = document.getElementById(id);
+    el.addEventListener("click", function (ev) {
+      var b = ev.target.closest("button"); if (!b) return;
+      el.querySelectorAll("button").forEach(function (q) { q.setAttribute("aria-pressed", q === b ? "true" : "false"); });
+      onPick(b.getAttribute("data-v"));
+    });
+  }
+  seg("pf-x", function (v) { ST.px = v; drawPareto(); });
+  seg("pf-m", function (v) { ST.pm = v; drawPareto(); });
+  function drawPareto() {
+    var box = document.getElementById("pf"), W = Math.max(300, box.clientWidth), H = W < 520 ? 360 : 480;
+    var m = { l: 50, r: 18, t: 30, b: 36 }, mt = ST.pm, up = METRIC[mt].up;
+    document.getElementById("pf-title").textContent = "Pareto front on " + LBL[ST.ds];
+    var rs = visible().filter(function (r) { return r[ST.px] && cell(r)[mt] != null; });
+    var pts = rs.map(function (r) { return { r: r, x: r[ST.px], y: cell(r)[mt] }; });
+    var root = s("svg", { viewBox: "0 0 " + W + " " + H, width: W, height: H });
+    if (pts.length < 2) { root.append(s("text", { x: 0, y: 20, class: "inputlab" }, "Not enough rows with this measurement for the current filters.")); box.replaceChildren(root); document.getElementById("pf-note").textContent = ""; return; }
+    var xv = pts.map(function (p) { return p.x; }), yv = pts.map(function (p) { return p.y; });
+    var inV = refVal("input", mt), gtV = refVal("gt", mt), showIn = inV != null;
+    if (showIn) yv.push(inV);
+    if (gtV != null) yv.push(gtV);
+    var xlo = Math.min.apply(null, xv) / 1.35, xhi = Math.max.apply(null, xv) * 1.35;
+    var span = Math.max.apply(null, yv) - Math.min.apply(null, yv), pad = span * .06 || .1;
+    var ylo = Math.min.apply(null, yv) - pad, yhi = Math.max.apply(null, yv) + pad;
+    var X = function (v) { return m.l + (Math.log(v) - Math.log(xlo)) / (Math.log(xhi) - Math.log(xlo)) * (W - m.l - m.r); };
+    var Y = function (v) { return H - m.b - (v - ylo) / (yhi - ylo) * (H - m.t - m.b); };
+    var ax = s("g", { class: "ax" });
+    for (var e = Math.floor(Math.log10(xlo)); e <= Math.ceil(Math.log10(xhi)); e++) [1, 2, 5].forEach(function (k) {
+      var v = k * Math.pow(10, e); if (v < xlo || v > xhi) return;
+      ax.append(s("line", { x1: X(v), x2: X(v), y1: m.t, y2: H - m.b, class: "grid" }));
+      ax.append(s("text", { x: X(v), y: H - m.b + 16, "text-anchor": "middle" }, v >= 1000 ? (v / 1000) + "k" : String(+v.toPrecision(3))));
+    });
+    var nt = W < 520 ? 5 : 7, st0 = (yhi - ylo) / nt, p10 = Math.pow(10, Math.floor(Math.log10(st0))), mm = st0 / p10, st = (mm < 1.5 ? 1 : mm < 3 ? 2 : mm < 7 ? 5 : 10) * p10;
+    var dec = Math.max(0, -Math.floor(Math.log10(st) + 1e-9));
+    for (var t = Math.ceil(ylo / st) * st; t <= yhi + 1e-9; t += st) {
+      ax.append(s("line", { x1: m.l, x2: W - m.r, y1: Y(t), y2: Y(t), class: "grid" }));
+      ax.append(s("text", { x: m.l - 8, y: Y(t) + 4, "text-anchor": "end" }, minus(t.toFixed(dec))));
+    }
+    ax.append(s("line", { x1: m.l, x2: W - m.r, y1: H - m.b, y2: H - m.b, class: "dom" }));
+    ax.append(s("text", { x: W - m.r, y: H - 6, "text-anchor": "end", class: "ttl" }, XLAB[ST.px]));
+    ax.append(s("text", { x: m.l, y: m.t - 14, class: "ttl" }, METRIC[mt].label + " on " + LBL[ST.ds] + (up ? ", higher is better" : ", lower is better")));
+    root.append(ax);
+    document.getElementById("pf-inkey").hidden = !showIn;
+    if (showIn) root.append(s("line", { x1: m.l, x2: W - m.r, y1: Y(inV), y2: Y(inV), class: "inputline" }));
+    document.getElementById("pf-gtkey").hidden = gtV == null;
+    if (gtV != null) root.append(s("line", { x1: m.l, x2: W - m.r, y1: Y(gtV), y2: Y(gtV), class: "gtline" }));
+    // front: best score reached at or below each size
+    var sorted = pts.slice().sort(function (a, b) { return a.x - b.x || (up ? b.y - a.y : a.y - b.y); }), front = [], best = up ? -Infinity : Infinity;
+    sorted.forEach(function (p) { if (up ? p.y > best : p.y < best) { front.push(p); best = p.y; } });
+    var onFront = new Set(front.map(function (p) { return p.r.key; }));
+    var d = "";
+    front.forEach(function (p, i) { d += (i ? "H" + X(p.x).toFixed(1) + "V" : "M" + X(p.x).toFixed(1) + " ") + Y(p.y).toFixed(1); });
+    d += "H" + (W - m.r);
+    root.append(s("path", { d: d, class: "front" }));
+    var g = s("g"), hits = s("g");
+    pts.forEach(function (p) {
+      g.append(shape(p.r.task, X(p.x), Y(p.y), onFront.has(p.r.key) ? 5 : 4, "mk m-" + p.r.task + (onFront.has(p.r.key) ? "" : " off")));
+      var hit = s("circle", { cx: X(p.x), cy: Y(p.y), r: 9, class: "hit" });
+      bindTip(hit, function () { return rowTip(p.r); });
+      hit.addEventListener("click", function () {
+        ST.open[p.r.key] = true; if (!ST.all) ST.all = true; renderTable();
+        var tr = tbody.querySelector('tr[data-k="' + p.r.key + '"]'); if (tr) tr.scrollIntoView({ block: "center" });
+      });
+      hits.append(hit);
+    });
+    root.append(g);
+    if (W >= 420) {
+      // label each front point at the first free spot next to it; skip the label when none is free (hover still works)
+      var boxes = front.map(function (p) { return { x0: X(p.x) - 6, x1: X(p.x) + 6, y0: Y(p.y) - 6, y1: Y(p.y) + 6 }; });
+      var hitsBox = function (b) { return boxes.some(function (q) { return b.x0 < q.x1 && b.x1 > q.x0 && b.y0 < q.y1 && b.y1 > q.y0; }); };
+      front.forEach(function (p) {
+        var px = X(p.x), py = Y(p.y), w = p.r.name.length * 6.3 + 4;
+        var spots = [[8, -7, "start"], [8, 15, "start"], [-8, -7, "end"], [-8, 15, "end"]];
+        for (var k = 0; k < spots.length; k++) {
+          var sp = spots[k], lx = px + sp[0], ly = py + sp[1];
+          var b = sp[2] === "start" ? { x0: lx, x1: lx + w, y0: ly - 10, y1: ly + 2 } : { x0: lx - w, x1: lx, y0: ly - 10, y1: ly + 2 };
+          if (b.x0 < m.l || b.x1 > W - m.r || b.y0 < m.t || b.y1 > H - m.b || hitsBox(b)) continue;
+          boxes.push(b);
+          root.append(s("text", { x: lx, y: ly, class: "dlab", "text-anchor": sp[2] }, p.r.name));
+          break;
+        }
+      });
+    }
+    root.append(hits);
+    box.replaceChildren(root);
+    var missing = visible().filter(function (r) { return !r[ST.px]; }).length;
+    document.getElementById("pf-note").textContent = front.length + " methods on the front, " + pts.length + " drawn. Hover a point for its scores, click it to open its row." +
+      (missing ? " " + missing + " rows have no " + (ST.px === "params" ? "parameter count" : ST.px === "gmac" ? "compute measurement" : "latency measurement") + " yet and are not drawn." : "");
+  }
+
+  /* ---------- dataset card ---------- */
+  var DSC = D.datasets || {};
+  var CARD_TILES = [
+    ["in", "Blurry input PSNR, dB", 2, "Mean over the test frames, as in the protocol"],
+    ["grad_ratio", "Detail left after blur", 2, "Median ratio of the gradient of the blurry input to that of the sharp frame; lower means stronger blur"],
+    ["motion", "Motion, px per frame", 1, "Median optical flow between consecutive sharp frames (MEMFOF)"],
+    ["texture", "Texture", 1, "Median mean gradient magnitude of the sharp frames"],
+    ["brightness", "Brightness, 0–255", 0, "Median mean luma of the sharp frames"],
+    ["highlights", "Clipped highlights, %", 2, "Median share of input pixels with a channel at 250 or more"],
+    ["noise", "Input noise σ", 2, "Median Immerkaer noise estimate of the blurry input"],
+    ["psnr_med", "Median method PSNR, dB", 2, "Median over frames of the median PSNR of the GoPro-trained methods: how hard the set is"]
+  ];
+  function cardVal(ds, k) { if (k === "in") return IN[ds]; var m = (DSC[ds] || {}).measured || {}; return m[k] == null ? null : m[k]; }
+  function strip(k) {
+    var vals = SETS.map(function (d) { return [d, cardVal(d, k)]; }).filter(function (x) { return x[1] != null; });
+    if (vals.length < 2) return null;
+    var lo = Math.min.apply(null, vals.map(function (x) { return x[1]; })), hi = Math.max.apply(null, vals.map(function (x) { return x[1]; }));
+    var X = function (v) { return 4 + (hi > lo ? (v - lo) / (hi - lo) : 0.5) * 92; };
+    var svg = s("svg", { viewBox: "0 0 100 14", preserveAspectRatio: "none", "aria-hidden": "true" });
+    svg.append(s("line", { x1: 4, x2: 96, y1: 7, y2: 7, class: "strip-base" }));
+    vals.forEach(function (x) { if (x[0] !== ST.ds) svg.append(s("circle", { cx: X(x[1]), cy: 7, r: 2.4, class: "strip-o" }, s("title", {}, LBL[x[0]] + ": " + x[1]))); });
+    vals.forEach(function (x) { if (x[0] === ST.ds) svg.append(s("circle", { cx: X(x[1]), cy: 7, r: 4, class: "strip-me" })); });
+    return svg;
+  }
+  function renderCard() {
+    var box = document.getElementById("dcard"), c = DSC[ST.ds] || {}, kids = [];
+    var main = h("div", { class: "dc-main" });
+    main.append(h("p", { class: "dc-head" }, h("b", {}, c.name || LBL[ST.ds]), [c.authors_short, c.venue && c.year ? c.venue + " " + c.year : c.year].filter(Boolean).join(" · ")));
+    if (c.description) main.append(h("p", { class: "dc-desc" }, c.description));
+    var facts = [["How the blur was made", c.blur_source], ["Capture", c.capture], ["Frame rate and exposure", c.timing],
+      ["Frames", c.resolution], ["Used here", c.used_here], ["Whole dataset", c.splits], ["Terms of use", c.licence]].filter(function (f) { return f[1]; });
+    if (facts.length) main.append(h("dl", { class: "dc-facts" }, facts.map(function (f) { return [h("dt", {}, f[0]), h("dd", {}, f[1])]; })));
+    var links = h("p", { class: "dc-links" });
+    if (c.url) links.append(h("a", { class: "btn small", href: c.url, target: "_blank", rel: "noopener" }, "Dataset page"));
+    if (c.bibtex) {
+      var bib = h("pre", { class: "dc-bib", hidden: true }, c.bibtex), show = h("button", { type: "button", class: "btn small", "aria-expanded": "false" }, "Cite");
+      var copy = h("button", { type: "button", class: "btn small", hidden: true }, "Copy BibTeX");
+      show.addEventListener("click", function () { var on = bib.hidden; bib.hidden = !on; copy.hidden = !on; show.setAttribute("aria-expanded", on ? "true" : "false"); });
+      copy.addEventListener("click", function () {
+        var done = function () { copy.textContent = "Copied"; setTimeout(function () { copy.textContent = "Copy BibTeX"; }, 1600); };
+        var fallback = function () { var r = document.createRange(); r.selectNodeContents(bib); var sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); copy.textContent = "Selected, press Ctrl+C"; };
+        try { navigator.clipboard.writeText(c.bibtex).then(done, fallback); } catch (e) { fallback(); }
+      });
+      links.append(show, copy);
+      main.append(links, bib);
+    } else if (c.url) main.append(links);
+    kids.push(main);
+    var meas = h("div", { class: "dc-meas", "aria-label": "Measured characteristics, the same for every set" });
+    CARD_TILES.forEach(function (t) {
+      var v = cardVal(ST.ds, t[0]), tile = h("div", { class: "dc-tile", title: t[3] });
+      tile.append(h("span", { class: "l" }, t[1]));
+      if (v == null) { tile.append(h("span", { class: "na" }, t[0] === "motion" ? "single images, no motion" : "not measured")); }
+      else { tile.append(h("span", { class: "v" }, minus(v.toFixed(t[2]))), strip(t[0])); }
+      meas.append(tile);
+    });
+    meas.append(h("p", { class: "dc-src" }, "Measured the same way on every set; the strip places " + LBL[ST.ds] + " (dark dot) among the six test sets."));
+    kids.push(meas);
+    box.replaceChildren.apply(box, kids);
+  }
+
+  /* ---------- start ---------- */
+  window.DBIS = { imgBase: D.imgBase || "", ds: function () { return ST.ds; }, rows: ROWS, metric: METRIC, label: LBL, h: h, s: s, bindTip: bindTip, esc: esc, fx: fx, minus: minus, sel: function (k) { ST.tr = "any"; var t = document.getElementById("tr"); if (t) t.value = "any"; ST.open[k] = true; ST.all = true; renderTable(); } };
+  if (GROUPS.length > 1) seg("mg", pickGroup);
+  setCols(); head(); pfButtons(); renderTable(); drawPareto(); renderCard();
+  var lastW = document.documentElement.clientWidth, pending = 0;
+  new ResizeObserver(function () {
+    var w = document.documentElement.clientWidth;
+    if (Math.abs(w - lastW) < 8) return;
+    lastW = w; cancelAnimationFrame(pending);
+    pending = requestAnimationFrame(function () { drawPareto(); tbody.querySelectorAll("[data-strip]").forEach(function (b) { drawStrip(b, ROWS.find(function (r) { return r.key === b.getAttribute("data-strip"); })); }); });
+  }).observe(document.body);
+})();
+</script>
+<script>/*__FRAMES_JS__*/</script>
+</body>
+</html>

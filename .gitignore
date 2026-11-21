@@ -1,0 +1,16 @@
+weights/**/*.safetensors
+weights/**/*.pth
+weights/**/*.pt
+weights/**/*.ckpt
+outputs/
+*.mkv
+*.part
+__pycache__/
+*.pyc
+.venv/
+envs/*/
+!envs/*.txt
+.claude/
+.preview/
+.preview*
+results/frames/img/

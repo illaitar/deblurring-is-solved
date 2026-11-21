@@ -1,0 +1,9 @@
+dir	key	set	images	psnr	ssim	psnr_noalign
+DeblurGANv2-MobileNet_bnfix	DeblurGANv2-MobileNet_bnfix	realblur_j	980	28.1061	0.8381	26.4179
+Ghost-DeblurGAN	Ghost-DeblurGAN	realblur_j	980	28.3203	0.8506	26.5311
+Ghost-DeblurGAN	Ghost-DeblurGAN	realblur_r	980	34.9302	0.9354	32.7554
+MPRNet	MPRNet	realblur_j	980	28.6919	0.8723	26.5164
+MPRNet	MPRNet	realblur_r	980	35.9872	0.9521	33.9134
+TUR-TransWeather	TUR-TransWeather	realblur_r	980	31.4591	0.8741	20.2905
+_ref	_ref	realblur_j	980	27.6820	0.8254	26.5512
+_ref	_ref	realblur_r	980	35.3472	0.9428	33.9279

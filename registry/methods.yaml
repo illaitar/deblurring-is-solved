@@ -1,0 +1,34 @@
+# One entry per method variant. Filled when an adapter is accepted (PROTOCOL.md: strict load, GoPro number checked,
+# outputs on all four sets). Options and presets follow OPTIONS.md. Schema:
+#
+# - name: NAFNet-64                      # row name in the tables
+#   method: NAFNet                       # paper method
+#   paper: "Simple Baselines for Image Restoration"
+#   venue: ECCV 2022
+#   kind: image                          # image | video | all-in-one | generative
+#   causal: true                         # video: uses no future frames; image methods are causal by definition
+#   code: {repo: https://github.com/megvii-research/NAFNet, commit: <sha>}
+#   license: MIT
+#   weights:                             # one entry per released checkpoint; `default` is the GoPro one
+#     default: {file: weights/NAFNet/GoPro-width64.safetensors, trained_on: GoPro, source: <url>, md5_original: <md5>}
+#   env: base
+#   adapter: methods/NAFNet/adapter.py
+#   supports:                            # options of OPTIONS.md this method accepts, with allowed values
+#     tiling: [none, "tile:*"]
+#     tlc: [off, "on:*"]
+#     tta: [none, flip2, x8]
+#     precision: [fp32, fp16, bf16]
+#   presets:
+#     protocol: {tiling: none, tlc: off, tta: none, precision: auto, pad: "replicate:16", input: blur}
+#     authors:  {tiling: none, tlc: "on:384", tta: none, precision: fp32, pad: "replicate:16", input: blur}
+#   fixed:                               # conventions of this method, not options
+#     channels: rgb
+#     range: 0_1
+#     head: last
+#   reported:                            # the authors' numbers and the preset they belong to
+#     gopro: {psnr: 33.69, ssim: 0.967, preset: authors, source: "paper Table 1"}
+#   measured:                            # filled by the runs: preset -> dataset -> metrics
+#     protocol: {}
+#     authors: {}
+#   status: accepted                     # accepted | ready | probe | blocked
+methods: []

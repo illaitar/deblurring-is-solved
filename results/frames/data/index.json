@@ -1,0 +1,82 @@
+{
+ "gopro": {
+  "frames": 1111,
+  "rows": 148,
+  "metrics": [
+   "based4",
+   "clipiqa",
+   "dists",
+   "lpips",
+   "lpips_vgg",
+   "ms_ssim",
+   "musiq",
+   "paq2piq",
+   "psnr",
+   "ssim"
+  ]
+ },
+ "reds_val": {
+  "frames": 3000,
+  "rows": 148,
+  "metrics": [
+   "based4",
+   "clipiqa",
+   "dists",
+   "lpips",
+   "lpips_vgg",
+   "ms_ssim",
+   "musiq",
+   "paq2piq",
+   "psnr",
+   "ssim"
+  ]
+ },
+ "bsd2": {
+  "frames": 3000,
+  "rows": 150,
+  "metrics": [
+   "clipiqa",
+   "dists",
+   "lpips",
+   "lpips_vgg",
+   "ms_ssim",
+   "musiq",
+   "paq2piq",
+   "psnr",
+   "ssim"
+  ]
+ },
+ "dvd": {
+  "frames": 1000,
+  "rows": 148,
+  "metrics": [
+   "clipiqa",
+   "dists",
+   "lpips",
+   "lpips_vgg",
+   "ms_ssim",
+   "musiq",
+   "paq2piq",
+   "psnr",
+   "ssim"
+  ]
+ },
+ "realblur_j": {
+  "frames": 980,
+  "rows": 5,
+  "metrics": [
+   "lpips",
+   "psnr",
+   "ssim"
+  ]
+ },
+ "realblur_r": {
+  "frames": 980,
+  "rows": 4,
+  "metrics": [
+   "lpips",
+   "psnr",
+   "ssim"
+  ]
+ }
+}

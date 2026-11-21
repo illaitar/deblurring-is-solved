@@ -1,0 +1,9 @@
+kind	set	frames	psnr	ssimc	ms_ssim	lpips	lpips-vgg	dists	paq2piq	musiq	clipiqa+
+gt	gopro	1111							68.536043	47.975264	0.430834
+gt	reds_val	3000							72.906638	66.390855	0.586726
+gt	bsd2	3000							67.973346	50.968940	0.491492
+gt	dvd	1000							70.708131	57.130294	0.555281
+input	gopro	1111							44.842785	24.875043	0.271077
+input	reds_val	3000							52.945963	38.857626	0.347941
+input	bsd2	3000							48.820282	31.402858	0.341557
+input	dvd	1000							57.060799	31.881493	0.410186

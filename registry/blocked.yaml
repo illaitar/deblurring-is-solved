@@ -1,0 +1,53 @@
+# Methods found in the survey of 19.11.2026 that cannot be run as released. Re-checked when a source changes.
+baidu_only:
+  - {name: MSCAN, venue: TCSVT 2020}
+  - {name: FPro, venue: ECCV 2024}
+  - {name: SFHformer, venue: ECCV 2024}
+  - {name: SWFormer, venue: arXiv 2025}
+  - {name: MB-TaylorFormer V2, venue: TPAMI 2025}
+  - {name: Perceive-IR, venue: TIP 2025}
+  - {name: ERDN, venue: ECCV 2022, kind: video}
+  - {name: DVD-SFE, venue: TIP 2020, kind: video}
+  - {name: CPGD-Net, venue: arXiv 2025, kind: video}
+  - {name: STGTN, venue: Information Sciences 2025, kind: video}
+  - {name: LightViD, venue: TCSVT 2024, kind: video}
+  - {name: D2Net, venue: CVPR 2022, kind: video}
+dead_link:
+  - {name: SRN-DeblurNet, venue: CVPR 2018}
+  - {name: DeblurGAN, venue: CVPR 2018}
+  - {name: ViStripformer, venue: arXiv 2023, kind: video}
+sign_in_required:
+  - {name: Uformer-B, venue: CVPR 2022, note: USTC SharePoint sign-in; looking for another official link}
+no_weights:
+  - {name: SDWNet, venue: ICCVW 2021}
+  - {name: DBCPeNet, venue: TIP 2020}
+  - {name: XYDeblur, venue: CVPR 2022}
+  - {name: SharpFormer, venue: TIP 2023}
+  - {name: MHNet, venue: arXiv 2023}
+  - {name: FocalNet, venue: ICCV 2023}
+  - {name: CGNet, venue: TMLR 2024, note: "GoPro weights 'soon'"}
+  - {name: BlurDM, venue: NeurIPS 2025, note: "weights 'coming soon'"}
+  - {name: FideDiff, venue: ICLR 2026}
+  - {name: CogSENet, venue: ECCV 2026, note: empty repository}
+  - {name: VD-Diff, venue: ECCV 2024, kind: video}
+  - {name: AHFNet, venue: WACV 2025, kind: video}
+  - {name: ASTNet, venue: TCE 2026, kind: video}
+  - {name: ReBotNet, venue: WACV 2025, kind: video}
+  - {name: BSSTNet++, venue: unpublished, kind: video}
+  - {name: DTBN, kind: video}
+  - {name: IFIRNN, kind: video}
+  - {name: ARVo, kind: video}
+code_does_not_match_weights:
+  - {name: CATF (GoPro checkpoint), venue: Sensors 2026, kind: video, note: "3 recurrent layers in the checkpoint, 5 in the code; two trained sub-networks missing from the code (the DVD checkpoint works)"}
+out_of_scope:
+  - {name: [BiT, VIDUE, UTI-VFI, BIN, DeMFI], reason: blur interpolation with their own blur synthesis}
+  - {name: JCD, reason: rolling-shutter correction}
+  - {name: GyroDVD, reason: needs gyroscope data}
+  - {name: UHDVD, reason: 4K weights only}
+  - {name: [DaBiT, LTX IC-LoRA Deblur], reason: defocus}
+  - {name: FMA-Net, reason: joint x4 super-resolution}
+  - {name: [DADeblur], reason: test-time adaptation on the test domain}
+  - {name: [SelfHVD], reason: self-supervised on its own handheld data}
+  - {name: [DAVIDE], reason: own dataset only, weights on request}
+  - {name: [Blur2Vid], reason: one image to a video}
+  - {name: [SVRNN], reason: Caffe + MATLAB, possible but costly}

@@ -1,0 +1,199 @@
+{
+  "gopro": {
+    "name": "GoPro (GOPRO_Large)",
+    "paper": "Deep Multi-Scale Convolutional Neural Network for Dynamic Scene Deblurring",
+    "venue": "CVPR 2017",
+    "year": 2017,
+    "authors": ["Seungjun Nah", "Tae Hyun Kim", "Kyoung Mu Lee"],
+    "bibtex": "@InProceedings{Nah_2017_CVPR,\n  author = {Nah, Seungjun and Kim, Tae Hyun and Lee, Kyoung Mu},\n  title = {Deep Multi-Scale Convolutional Neural Network for Dynamic Scene Deblurring},\n  booktitle = {CVPR},\n  month = {July},\n  year = {2017}\n}",
+    "url": "https://seungjunnah.github.io/Datasets/gopro.html",
+    "blur_source": "Synthetic. Each blurry image is the average of 7 to 13 consecutive frames of a 240 fps video. The sharp target is the middle frame of the averaged window.",
+    "capture": "GoPro HERO4 Black (the paper writes 'GOPRO4 Hero Black'), 240 fps video of dynamic scenes with camera and object motion.",
+    "fps": "240 fps capture. The paper does not state the frame rate or spacing of the resulting blurry sequences.",
+    "exposure": "Each source frame is a 1/240 s shot as stated. A blurry image spans 7 to 13 such frames, about 29 to 54 ms (computed). The paper's own example: averaging 15 frames simulates a 1/16 s shutter.",
+    "processing": "For blur_gamma, frames are mapped to signal space with an assumed gamma 2.2 camera response, averaged, and mapped back. The 'blur' folder is the version without this correction (the dataset page calls it 'linear CRF'). No frame interpolation. Distributed as 8-bit RGB PNG (verified).",
+    "resolution": "1280x720 for blur, blur_gamma and sharp (verified from PNG headers in GOPRO_Large.zip).",
+    "splits": "3,214 pairs in total. Train: 22 sequences, 2,103 pairs. Test: 11 sequences, 1,111 pairs (9 sequences of 100 frames, one of 134, one of 77). No validation split. Sequence and frame counts verified from the archive listing. Each pair is stored three times: blur, blur_gamma, sharp.",
+    "licence": "CC BY 4.0 (stated on the dataset page).",
+    "description": "GoPro is a set of 1280x720 blurry and sharp image pairs made by averaging 7 to 13 consecutive frames of 240 fps GoPro HERO4 Black videos, with the middle frame kept as the sharp target. Its test split has 1,111 pairs from 11 sequences with camera and object motion.",
+    "sources": [
+      "https://seungjunnah.github.io/Datasets/gopro.html",
+      "https://openaccess.thecvf.com/content_cvpr_2017/papers/Nah_Deep_Multi-Scale_Convolutional_CVPR_2017_paper.pdf",
+      "https://huggingface.co/datasets/snah/GOPRO_Large/resolve/main/GOPRO_Large.zip",
+      "https://arxiv.org/abs/2106.16028"
+    ],
+    "unverified": [
+      "The 22/11 sequence split is not stated in the GoPro paper. It comes from the archive listing and from the ESTRNN/BSD papers.",
+      "Folder names (e.g. GOPR0372_07_00, GOPR0378_13_00, all test folders *_11_*) appear to encode the number of averaged frames. This is not documented.",
+      "The paper does not state whether averaging windows of consecutive blurry frames overlap, or their temporal spacing.",
+      "The paper does not describe in-camera compression of the 240 fps source video.",
+      "Which of the two blur versions (blur or blur_gamma) a given method was evaluated on is not fixed by the authors. Both are in the archive.",
+      "Exposure in milliseconds is computed from the frame counts and is not stated."
+    ]
+  },
+  "reds_val": {
+    "name": "REDS (validation split, val_blur / val_sharp)",
+    "paper": "NTIRE 2019 Challenge on Video Deblurring and Super-Resolution: Dataset and Study",
+    "venue": "CVPR Workshops (NTIRE) 2019",
+    "year": 2019,
+    "authors": ["Seungjun Nah", "Sungyong Baik", "Seokil Hong", "Gyeongsik Moon", "Sanghyun Son", "Radu Timofte", "Kyoung Mu Lee"],
+    "bibtex": "@InProceedings{Nah_2019_CVPR_Workshops_REDS,\n  author = {Nah, Seungjun and Baik, Sungyong and Hong, Seokil and Moon, Gyeongsik and Son, Sanghyun and Timofte, Radu and Lee, Kyoung Mu},\n  title = {NTIRE 2019 Challenge on Video Deblurring and Super-Resolution: Dataset and Study},\n  booktitle = {CVPR Workshops},\n  month = {June},\n  year = {2019}\n}",
+    "url": "https://seungjunnah.github.io/Datasets/reds.html",
+    "blur_source": "Synthetic. 120 fps frames were recursively interpolated to a virtual 1920 fps with a frame-interpolation CNN (Niklaus et al., ICCV 2017, adaptive separable convolution), then averaged into a virtual 24 fps blurry video with duty cycle 0.8. Averaging is done in signal space through a calibrated inverse camera response.",
+    "capture": "GoPro HERO6 Black, 1920x1080 at 120 fps. 300 clips recorded by the authors in many countries and locations.",
+    "fps": "120 fps capture. The distributed blurry and sharp sequences correspond to 24 fps.",
+    "exposure": "Duty cycle 0.8 at 24 fps, about 33.3 ms of integrated motion per blurry frame (computed from the stated numbers). Sharp targets are recorded frames.",
+    "processing": "Inverse camera response calibrated with Robertson et al.'s method (OpenCV cv2.createCalibrateRobertson); above pixel value 250 it is replaced by a linear extension. Blurry frames and recorded sharp frames are both downscaled by 2/3 (1080x1920 to 720x1280) with OpenCV bicubic interpolation. val_blur is the clean track without compression; the separate val_blur_comp adds MPEG-4 compression (MATLAB VideoWriter, 60% quality). The inverse CRF is published on the dataset page (crf.npy, crf.pt). Distributed as 8-bit RGB PNG (verified).",
+    "resolution": "1280x720 (verified from PNG headers in val_blur.zip and val_sharp.zip).",
+    "splits": "300 sequences of 100 frames: train 240 sequences (24,000 frames), validation 30 (3,000 frames), test 30 (3,000 frames). Validation verified: 30 folders x 100 PNG in both val_blur and val_sharp. Test sharp frames have no download link on the dataset page, only test inputs. During NTIRE 2019 the online validation server scored every 10th frame (300 frames).",
+    "licence": "CC BY 4.0 (stated on the dataset page).",
+    "description": "REDS is made from 300 GoPro HERO6 Black videos whose 120 fps frames were interpolated to 1920 fps, averaged into 24 fps blurry clips through a calibrated camera response, and downscaled to 1280x720. The validation split has 30 clips of 100 blurry and sharp frame pairs (3,000 pairs).",
+    "sources": [
+      "https://seungjunnah.github.io/Datasets/reds.html",
+      "https://openaccess.thecvf.com/content_CVPRW_2019/papers/NTIRE/Nah_NTIRE_2019_Challenge_on_Video_Deblurring_and_Super-Resolution_Dataset_and_CVPRW_2019_paper.pdf",
+      "https://huggingface.co/datasets/snah/REDS/resolve/main/val_blur.zip",
+      "https://huggingface.co/datasets/snah/REDS/resolve/main/val_sharp.zip",
+      "https://huggingface.co/api/datasets/snah/REDS/tree/main"
+    ],
+    "unverified": [
+      "The paper's abstract expands REDS as 'REalistic and Diverse Scenes', while Section 2 and the dataset page use 'REalistic and Dynamic Scenes'.",
+      "Exposure in milliseconds is computed from the 24 fps rate and duty cycle 0.8 and is not stated.",
+      "That papers use the validation split as the public test set (because test sharp frames are withheld) is a community convention, not an instruction from the authors.",
+      "The dataset page lists five more NTIRE BibTeX entries (2019 deblurring and SR reports, 2020 and 2021 challenges). Only the dataset paper entry is given here."
+    ]
+  },
+  "bsd2": {
+    "name": "BSD (2ms/16ms setting)",
+    "paper": "Real-World Video Deblurring: A Benchmark Dataset and an Efficient Recurrent Neural Network",
+    "venue": "International Journal of Computer Vision, vol. 131, no. 1, pp. 284-301 (published online 27 Oct 2022). Earlier version: ECCV 2020, 'Efficient Spatio-Temporal Recurrent Neural Network for Video Deblurring'.",
+    "year": 2023,
+    "authors": ["Zhihang Zhong", "Ye Gao", "Yinqiang Zheng", "Bo Zheng", "Imari Sato"],
+    "bibtex": "@inproceedings{zhong2020efficient,\n  title={Efficient spatio-temporal recurrent neural network for video deblurring},\n  author={Zhong, Zhihang and Gao, Ye and Zheng, Yinqiang and Zheng, Bo},\n  booktitle={Computer Vision--ECCV 2020: 16th European Conference, Glasgow, UK, August 23--28, 2020, Proceedings, Part VI 16},\n  pages={191--207},\n  year={2020},\n  organization={Springer}\n}\n\n@article{zhong2023real,\n  title={Real-world video deblurring: A benchmark dataset and an efficient recurrent neural network},\n  author={Zhong, Zhihang and Gao, Ye and Zheng, Yinqiang and Zheng, Bo and Sato, Imari},\n  journal={International Journal of Computer Vision},\n  volume={131},\n  number={1},\n  pages={284--301},\n  year={2023},\n  publisher={Springer}\n}",
+    "citation_request": "The ESTRNN README says: 'If you use any part of our code, or ESTRNN and BSD are useful for your research, please consider citing:' followed by both entries above (ECCV 2020 and IJCV 2023). It does not single out one paper. The three-exposure BSD described here is introduced in the IJCV paper.",
+    "url": "https://github.com/zzh-tech/ESTRNN",
+    "blur_source": "Real capture. Two cameras behind a co-axial beam splitter record the same scene at the same time. One takes the long (blurry) exposure, the other the short (sharp) exposure. Synchronization is center-aligned: the short exposure lies exactly in the middle of the long one.",
+    "capture": "Two cameras of the same model on a beam-splitter rig. A 12.5% neutral-density filter in front of the blurry camera (C1) cuts its irradiance to 1/8, and C1's exposure is always 8 times that of the sharp camera (C2), so both frames have matching brightness. The papers do not name the camera model.",
+    "fps": "15 fps",
+    "exposure": "This setting: 2 ms sharp, 16 ms blurry. BSD also has 1 ms/8 ms and 3 ms/24 ms settings with the same structure.",
+    "processing": "Per sequence, frames are stored as 8-bit RGB PNG in Blur/RGB/%08d.png and Sharp/RGB/%08d.png (verified in BSD_2ms16ms.zip). A separate 'Full BSD with RAW' archive exists, and the official loader reads RAW frames as .tiff. The papers do not describe the colour processing from sensor data to the RGB PNGs. No synthetic averaging or interpolation.",
+    "resolution": "640x480 (paper Table 1, the official data loader, and PNG headers in BSD_2ms16ms.zip).",
+    "splits": "Per setting: train 60 sequences x 100 frames (6,000 pairs), validation 20 x 100 (2,000 pairs), test 20 x 150 (3,000 pairs), 11,000 pairs in total. Verified for 2ms/16ms from the folders train/valid/test in BSD_2ms16ms.zip (the archive also contains __MACOSX resource-fork copies, which are not images).",
+    "licence": "No dataset licence is stated. The ESTRNN repository (code) is under the MIT License.",
+    "description": "BSD is a real-world video set recorded with two synchronized cameras behind a beam splitter. In this setting one camera takes a 16 ms blurry exposure through a neutral-density filter and the other a 2 ms sharp exposure centered inside it, at 640x480 and 15 fps. The 2ms/16ms test split has 20 sequences of 150 frames (3,000 pairs).",
+    "sources": [
+      "https://github.com/zzh-tech/ESTRNN",
+      "https://raw.githubusercontent.com/zzh-tech/ESTRNN/master/README.md",
+      "https://raw.githubusercontent.com/zzh-tech/ESTRNN/master/data/BSD.py",
+      "https://raw.githubusercontent.com/zzh-tech/ESTRNN/master/LICENSE",
+      "https://arxiv.org/abs/2106.16028",
+      "https://api.crossref.org/works/10.1007/s11263-022-01705-6",
+      "https://www.ecva.net/papers/eccv_2020/papers_ECCV/papers/123510188.pdf",
+      "https://drive.google.com/drive/folders/1LKLCE_RqPF5chqWgmh3pj7cg-t9KM2Hd"
+    ],
+    "unverified": [
+      "The IJCV and ECCV papers, the README and the README's configuration image do not name the camera model, lens or sensor.",
+      "The papers do not describe the ISP and colour processing that produced the RGB PNGs from the cameras' data.",
+      "The ECCV 2020 BSD is a different, earlier capture (15 and 30 fps, 2 ms/16 ms, 1280x720, 24 sequences of 50 frames per frequency, 18 train / 6 test). The README links only the IJCV three-setting version.",
+      "The README heading says 'IJCV2022' and the requested BibTeX says 2023. Crossref gives online publication 27 Oct 2022 and the issue as January 2023.",
+      "The arXiv title (v2) is '...A Benchmark Dataset and An Efficient Recurrent Neural Network'. The README link text adds 'Spatio-Temporal' before 'Recurrent'. Crossref uses the title given in 'paper'."
+    ]
+  },
+  "dvd": {
+    "name": "DVD (DeepVideoDeblurring, quantitative test set)",
+    "paper": "Deep Video Deblurring for Hand-held Cameras",
+    "venue": "CVPR 2017",
+    "year": 2017,
+    "authors": ["Shuochen Su", "Mauricio Delbracio", "Jue Wang", "Guillermo Sapiro", "Wolfgang Heidrich", "Oliver Wang"],
+    "bibtex": "@inproceedings{su2017deep,\n  title={Deep Video Deblurring for Hand-held Cameras},\n  author={Su, Shuochen and Delbracio, Mauricio and Wang, Jue and Sapiro, Guillermo and Heidrich, Wolfgang and Wang, Oliver},\n  booktitle={Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition},\n  pages={1279--1288},\n  year={2017}\n}",
+    "bibtex_source": "GitHub README (https://github.com/shuochsu/DeepVideoDeblurring). The project page gives no BibTeX.",
+    "url": "https://www.cs.ubc.ca/labs/imager/tr/2017/DeepVideoDeblurring/",
+    "blur_source": "Synthetic. Videos were captured at 240 fps. Every eighth frame is kept as the 30 fps sharp ground truth. Each blurry frame averages a temporally centered window of 7 frames (3 on either side), after adding 10 evenly spaced optical-flow-interpolated images between each pair of adjacent frames to avoid ghosting.",
+    "capture": "Hand-held 240 fps videos. The paper says the training videos were captured with an iPhone 6s, a GoPro Hero 4 Black and a Canon 7D, and 'we test on videos captured by other devices, including Nexus 5x and Moto X mobile phones and a Sony a6300 consumer camera'. Scenes were recorded in good light to keep noise low. Blur is mostly camera shake, with some object motion.",
+    "fps": "240 fps capture, 30 fps output.",
+    "exposure": "A blurry frame covers 7 frames at 240 fps, about 29 ms (computed), centered on the sharp frame.",
+    "processing": "Optical-flow frame interpolation (10 in-between images per frame gap) before averaging. The paper describes no gamma or camera-response step. Distributed as JPEG (verified: all frames in the dataset archive are .jpg).",
+    "resolution": "Mostly 1280x720. In the distributed quantitative set, 66 of 71 videos are 1280x720, 3 are portrait 720x1280 (IMG_0049, IMG_0051, IMG_0053) and 2 are 1920x1080 (C0036, C0041). In the test set, 9 videos are 1280x720 and IMG_0049 is 720x1280 (verified from JPEG headers).",
+    "splits": "Paper: 71 videos, 6,708 blurry and sharp pairs, split into 61 training and 10 test videos. Test videos, named by the first author in GitHub issue #2: IMG_0030, IMG_0049, IMG_0021, 720p_240fps_2, IMG_0032, IMG_0033, IMG_0031, IMG_0003, IMG_0039, IMG_0037. Each has 100 frames, 1,000 pairs in total (verified in the archive). The paper's Table 2 scored only 30 frames per test video (MATLAB fr_idx = floor(linspace(2,97,30))). The distributed archive holds 6,786 input and 6,783 GT JPEGs over the 71 videos (training part 5,786 / 5,783). It also holds 22 qualitative real blurry videos (10,610 frames) without ground truth.",
+    "licence": "No dataset licence is stated. The project page says the images on it are 'reproduced here by permission of IEEE for your personal use. Not for redistribution.' The GitHub code is under the MIT License.",
+    "description": "DVD consists of hand-held 240 fps videos from several phones and cameras. Each 30 fps blurry frame averages 7 neighboring frames, with optical-flow interpolation in between, and the central frame is the sharp target. The quantitative test set has 10 videos of 100 frames each, mostly 1280x720, dominated by camera-shake blur.",
+    "sources": [
+      "https://www.cs.ubc.ca/labs/imager/tr/2017/DeepVideoDeblurring/",
+      "https://openaccess.thecvf.com/content_cvpr_2017/papers/Su_Deep_Video_Deblurring_CVPR_2017_paper.pdf",
+      "https://github.com/shuochsu/DeepVideoDeblurring",
+      "https://github.com/shuochsu/DeepVideoDeblurring/issues/2",
+      "https://www.cs.ubc.ca/labs/imager/tr/2017/DeepVideoDeblurring/DeepVideoDeblurring_Dataset.zip"
+    ],
+    "unverified": [
+      "The camera behind each test video is not stated. The paper's sentence about 'other devices' (Nexus 5x, Moto X, Sony a6300) may refer to the qualitative videos rather than the 10 quantitative test videos.",
+      "The paper's total of 6,708 pairs differs from the archive's 6,783 GT frames (and 6,786 inputs; two videos have extra input frames). The reason is not stated.",
+      "Whether averaging is done in linear or gamma-encoded space is not stated.",
+      "Exposure in milliseconds is computed from the 7-frame window and is not stated.",
+      "The test split is defined only in a GitHub issue comment by the first author, not in the paper."
+    ]
+  },
+  "realblur_j": {
+    "name": "RealBlur-J",
+    "paper": "Real-World Blur Dataset for Learning and Benchmarking Deblurring Algorithms",
+    "venue": "ECCV 2020",
+    "year": 2020,
+    "authors": ["Jaesung Rim", "Haeyun Lee", "Jucheol Won", "Sunghyun Cho"],
+    "bibtex": "@inproceedings{rim_2020_ECCV,\n title={Real-World Blur Dataset for Learning and Benchmarking Deblurring Algorithms},\n author={Rim, Jaesung and Lee, Haeyun and Won, Jucheol and Cho, Sunghyun},\n booktitle={Proceedings of the European Conference on Computer Vision (ECCV)},\n year={2020}\n}",
+    "bibtex_source": "GitHub README (https://github.com/rimchang/RealBlur). The project page gives the same entry with the author field written as one comma-separated string.",
+    "url": "http://cg.postech.ac.kr/research/RealBlur/",
+    "blur_source": "Real capture. Two cameras behind a beam splitter in an optical enclosure fire together. One shoots a 1/2 s exposure, blurred by hand-held camera shake; the other shoots a 1/80 s sharp exposure. Scenes are static and low-light, so the blur comes from camera motion only.",
+    "capture": "Two Sony A7R III bodies (paper: 'Sony A7RM3') with Samyang 14mm F2.8 MF lenses, synchronized by a multi-camera trigger. Per scene: one reference pair (both cameras at 1/80 s) plus 20 blurred and sharp pairs; the blurred camera uses an ISO 40 times lower than the reference ISO. 4,738 pairs of 232 scenes were captured, including reference pairs. The estimated stereo baseline between the cameras is 8.22 mm.",
+    "fps": "Not applicable (still images).",
+    "exposure": "Blurred 1/2 s, sharp 1/80 s. The shutters open at the same time but close at different moments. The alignment step then registers the pair to the centroid of the blur kernel.",
+    "processing": "RealBlur-J uses the cameras' JPEG output (in-camera ISP). Post-processing: crop of invalid border regions, lens-distortion correction, downsampling by 1/4 per axis (7952x5304 from the camera, 2721x3094 after cropping, 680x773 after downsampling), geometric alignment (homography from the reference pair via ECC, then phase correlation, then blur-kernel centroid), and linear photometric alignment estimated from the reference pair. No extra denoising for J. In the paper's evaluation protocol, each result is aligned to its ground truth with an ECC homography before PSNR and SSIM (the repository's evaluation_RealBlur_ecc.py). Distributed as 8-bit RGB PNG (verified for sampled files).",
+    "resolution": "Variable, a little under the paper's 680x773. 470 RealBlur-J PNGs sampled from the start of the official RealBlur.tar.gz were 656 to 671 px wide and 741 to 765 px tall. The repository's test command pads inputs to 688x784.",
+    "splits": "Train: 3,758 pairs from 182 scenes, including 182 reference pairs. Test: 980 pairs from 50 scenes, without reference pairs. No validation split. Counts verified from the official datalists RealBlur_J_train_list.txt and RealBlur_J_test_list.txt.",
+    "licence": "CC BY 4.0 (stated in the GitHub README).",
+    "description": "RealBlur-J contains real blurred and sharp photo pairs taken at the same moment by two Sony A7R III cameras behind a beam splitter, with 1/2 s and 1/80 s shutters, in dim indoor and night scenes with hand-held camera shake. The images are the cameras' JPEG output, downsampled by 4 and aligned to about 670x760 pixels, and the test set has 980 pairs from 50 scenes.",
+    "sources": [
+      "http://cg.postech.ac.kr/research/RealBlur/",
+      "https://github.com/rimchang/RealBlur",
+      "https://www.ecva.net/papers/eccv_2020/papers_ECCV/papers/123700188.pdf",
+      "https://raw.githubusercontent.com/rimchang/SRN-Deblur/master/datalist/RealBlur_J_test_list.txt",
+      "https://raw.githubusercontent.com/rimchang/SRN-Deblur/master/datalist/RealBlur_J_train_list.txt",
+      "https://huggingface.co/datasets/rimchang/RealBlur/resolve/main/RealBlur.tar.gz"
+    ],
+    "unverified": [
+      "Image sizes were checked on 470 files from the start of the archive, not the full set.",
+      "The project page BibTeX writes the authors as one comma-separated string, which BibTeX would read as a single author. The README version, which separates them with 'and', is used here.",
+      "The paper's introduction says each subset provides 4,556 pairs, while Section 4 says 4,738 pairs were captured including reference pairs. Train plus test equals 4,738.",
+      "The paper does not describe the camera JPEG settings (picture profile, quality)."
+    ]
+  },
+  "realblur_r": {
+    "name": "RealBlur-R",
+    "paper": "Real-World Blur Dataset for Learning and Benchmarking Deblurring Algorithms",
+    "venue": "ECCV 2020",
+    "year": 2020,
+    "authors": ["Jaesung Rim", "Haeyun Lee", "Jucheol Won", "Sunghyun Cho"],
+    "bibtex": "@inproceedings{rim_2020_ECCV,\n title={Real-World Blur Dataset for Learning and Benchmarking Deblurring Algorithms},\n author={Rim, Jaesung and Lee, Haeyun and Won, Jucheol and Cho, Sunghyun},\n booktitle={Proceedings of the European Conference on Computer Vision (ECCV)},\n year={2020}\n}",
+    "bibtex_source": "GitHub README (https://github.com/rimchang/RealBlur). The project page gives the same entry with the author field written as one comma-separated string.",
+    "url": "http://cg.postech.ac.kr/research/RealBlur/",
+    "blur_source": "Real capture, the same shots as RealBlur-J. Two cameras behind a beam splitter fire together: a 1/2 s blurred exposure and a 1/80 s sharp exposure of static low-light scenes, with hand-held camera shake.",
+    "capture": "Two Sony A7R III bodies (paper: 'Sony A7RM3') with Samyang 14mm F2.8 MF lenses and a multi-camera trigger. Per scene: one reference pair (both cameras at 1/80 s) plus 20 blurred and sharp pairs; the blurred camera uses an ISO 40 times lower than the reference ISO. Raw files of the same captures as RealBlur-J.",
+    "fps": "Not applicable (still images).",
+    "exposure": "Blurred 1/2 s, sharp 1/80 s. The shutters open together and close at different moments, and alignment registers the pair to the blur-kernel centroid.",
+    "processing": "Built from the camera raw files. Decoded with libraw, white balance from the camera's parameters, adaptive homogeneity-directed (AHD) demosaicing, crop of invalid border regions, lens-distortion correction, downsampling by 1/4 per axis (to 680x773), and BM3D denoising of the sharp image only (noise level 1.5 times the estimate from Chen et al.'s method). The same geometric alignment (reference homography via ECC, phase correlation, blur-kernel centroid) and linear photometric alignment as J follow. No camera tone curve is applied; the paper gamma-corrects RealBlur-R examples for display. Evaluation aligns each result to its ground truth with an ECC homography before PSNR and SSIM.",
+    "resolution": "Nominally 680x773 after downsampling (paper). Distributed sizes were not checked for R. The same alignment pipeline as J suggests similar variable sizes.",
+    "splits": "Same scenes as RealBlur-J. Train: 3,758 pairs from 182 scenes, including 182 reference pairs. Test: 980 pairs from 50 scenes. Counts verified from the official datalists RealBlur_R_train_list.txt and RealBlur_R_test_list.txt.",
+    "licence": "CC BY 4.0 (stated in the GitHub README).",
+    "description": "RealBlur-R holds the same scenes and shots as RealBlur-J, but its images are made from the cameras' raw files with white balance and demosaicing only, so they lack the camera's tone curve, and the sharp images are also denoised with BM3D. The test set has 980 blurred and sharp pairs from 50 low-light scenes with hand-held camera shake.",
+    "sources": [
+      "http://cg.postech.ac.kr/research/RealBlur/",
+      "https://github.com/rimchang/RealBlur",
+      "https://www.ecva.net/papers/eccv_2020/papers_ECCV/papers/123700188.pdf",
+      "https://raw.githubusercontent.com/rimchang/SRN-Deblur/master/datalist/RealBlur_R_test_list.txt",
+      "https://raw.githubusercontent.com/rimchang/SRN-Deblur/master/datalist/RealBlur_R_train_list.txt"
+    ],
+    "unverified": [
+      "Bit depth and exact pixel sizes of the RealBlur-R PNGs were not checked. Only RealBlur-J files were sampled.",
+      "That RealBlur-R values are linear is inferred from the processing description (no tone curve) and the Fig. 7 caption ('For visualization, the examples of RealBlur-R are gamma-corrected'). The paper does not state it outright.",
+      "The project page BibTeX writes the authors as one comma-separated string. The README version is used here.",
+      "The README (news dated 2026.09) says the original RAW files are now on Hugging Face (rimchang/RealBlur_RAW). They were not inspected."
+    ]
+  }
+}
