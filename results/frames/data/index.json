@@ -1,7 +1,7 @@
 {
  "gopro": {
   "frames": 1111,
-  "rows": 148,
+  "rows": 257,
   "metrics": [
    "based4",
    "clipiqa",
@@ -17,7 +17,7 @@
  },
  "reds_val": {
   "frames": 3000,
-  "rows": 148,
+  "rows": 226,
   "metrics": [
    "based4",
    "clipiqa",
@@ -33,8 +33,9 @@
  },
  "bsd2": {
   "frames": 3000,
-  "rows": 150,
+  "rows": 263,
   "metrics": [
+   "based4",
    "clipiqa",
    "dists",
    "lpips",
@@ -48,8 +49,9 @@
  },
  "dvd": {
   "frames": 1000,
-  "rows": 148,
+  "rows": 257,
   "metrics": [
+   "based4",
    "clipiqa",
    "dists",
    "lpips",
@@ -63,7 +65,7 @@
  },
  "realblur_j": {
   "frames": 980,
-  "rows": 5,
+  "rows": 189,
   "metrics": [
    "lpips",
    "psnr",
@@ -72,7 +74,7 @@
  },
  "realblur_r": {
   "frames": 980,
-  "rows": 4,
+  "rows": 189,
   "metrics": [
    "lpips",
    "psnr",

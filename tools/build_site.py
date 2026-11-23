@@ -32,7 +32,7 @@ TRAIN_LABEL = {"GoPro": "GoPro", "AiO-mix": "all-in-one mix", "GoPro+DVD+NFS": "
                "DVD": "DVD", "REDS": "REDS", "BSD1": "BSD 1ms/8ms", "BSD2": "BSD 2ms/16ms", "BSD3": "BSD 3ms/24ms",
                "RealBlurJ": "RealBlur-J", "RealBlurR": "RealBlur-R", "RSBlur": "RSBlur", "HIDE": "HIDE", "NAH": "NAH",
                "REDS_ours": "REDS (retrained by us)", "GoPro_ours": "GoPro (retrained by us)",
-               "RealBlur": "RealBlur (subset not stated)", "GoProRealBlurJ": "GoPro + RealBlur-J",
+               "RealBlur": "RealBlur (subset not stated)", "GoProRealBlurJ": "GoPro + RealBlur-J", "GoProREDS": "GoPro + REDS",
                "REDSjpeg": "REDS with JPEG (NTIRE 2021)", "BSD": "BSD (exposure not stated)"}
 # (row, test set) whose test clips were part of the checkpoint's training data: the REDS models of BasicSR (EDVR) and
 # VRT 007 were trained on REDS train + val without REDS4, and our REDS test set is the official val split.
