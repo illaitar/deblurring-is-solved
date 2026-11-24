@@ -43,6 +43,8 @@ ConvIR-L	ConvIR-L	realblur_j	980	28.3989	0.8655	26.3611
 ConvIR-L	ConvIR-L	realblur_r	980	35.8687	0.9518	33.8094
 ConvIR-L@RSBlur	ConvIR-L@RSBlur	realblur_j	980	30.2623	0.8925	27.2471
 ConvIR-L@RSBlur	ConvIR-L@RSBlur	realblur_r	980	36.6421	0.9144	34.4111
+DA-CLIP	DA-CLIP	realblur_j	980	26.3068	0.8038	20.0861
+DA-CLIP	DA-CLIP	realblur_r	980	29.6585	0.8257	12.4569
 DA-RCOT	DA-RCOT	realblur_j	980	22.9392	0.7428	12.9110
 DA-RCOT	DA-RCOT	realblur_r	980	29.6767	0.8313	14.1262
 DATPRL-IR	DATPRL-IR	realblur_j	980	22.3810	0.7207	13.3141
@@ -205,6 +207,8 @@ IDBlau-Stripformer@RealBlurJ	IDBlau-Stripformer@RealBlurJ	realblur_j	980	33.7996
 IDBlau-Stripformer@RealBlurJ	IDBlau-Stripformer@RealBlurJ	realblur_r	980	38.2739	0.9551	35.8784
 IDBlau-Stripformer@RealBlurR	IDBlau-Stripformer@RealBlurR	realblur_j	980	31.4412	0.9126	29.1456
 IDBlau-Stripformer@RealBlurR	IDBlau-Stripformer@RealBlurR	realblur_r	980	41.0839	0.9773	37.8624
+IR-SDE	IR-SDE	realblur_j	980	24.1456	0.7273	23.1368
+IR-SDE	IR-SDE	realblur_r	980	33.9508	0.9184	32.5294
 IRNeXt	IRNeXt	realblur_j	980	28.4587	0.8645	26.4541
 IRNeXt	IRNeXt	realblur_r	980	35.7928	0.9507	33.7623
 IRNeXt-N16	IRNeXt-N16	realblur_j	980	28.4845	0.8666	26.3964
