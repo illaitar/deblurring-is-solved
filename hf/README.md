@@ -1,5 +1,5 @@
 ---
-pretty_name: deblurring is solved, frames and per-frame scores
+pretty_name: "deblurring is solved?: frames and per-frame scores"
 license: other
 license_name: mixed-source-terms
 license_link: LICENSE.md
@@ -21,9 +21,9 @@ configs:
   data_files: data/scores.parquet
 ---
 
-# deblurring is solved: frames and per-frame scores
+# deblurring is solved?: frames and per-frame scores
 
-Companion data of the **deblurring is solved** benchmark (Nikita Alutis, Egor Chistov): motion deblurring methods with
+Companion data of the **deblurring is solved?** benchmark (Nikita Alutis, Egor Chistov): motion deblurring methods with
 released weights, run with one protocol on six test sets and scored frame by frame.
 
 ## Contents

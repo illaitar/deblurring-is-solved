@@ -1,4 +1,11 @@
-<h1 align="center">deblurring is solved</h1>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/logo-dark.svg">
+    <img src="docs/logo.svg" width="120" height="120" alt="deblurring is solved? logo: the letter d with a camera iris, shaken diagonally">
+  </picture>
+</p>
+
+<h1 align="center">deblurring is solved?</h1>
 
 <p align="center">Nikita Alutis &nbsp;&middot;&nbsp; Egor Chistov</p>
 
@@ -9,6 +16,12 @@
 <p align="center">
   <a href="https://illaitar.github.io/deblurring-is-solved/"><b>Interactive leaderboard: illaitar.github.io/deblurring-is-solved</b></a>
 </p>
+
+<!-- progress:start (tools/build_site.py writes this block; edit the script, not the text) -->
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/progress-dark.svg"><img src="docs/progress.svg" width="780" alt="13,377 of 18,760 measurements done"></picture></p>
+
+<p align="center"><b>13,377 of 18,760 measurements done (71 %)</b> &nbsp;&middot;&nbsp; one measurement = a method variant on a test set with a metric &nbsp;&middot;&nbsp; 96 methods, 268 variants, 8 test sets, 10 metrics, as of 2026-11-24</p>
+<!-- progress:end -->
 
 <p align="center">
   <a href="#leaderboard">Leaderboard</a> &nbsp;&middot;&nbsp;

@@ -166,6 +166,37 @@ FACTS = {
                   if "based4" in iqa_have else "",
 }
 
+# ---------------------------------------------------------------- progress of the measurement program
+# results/progress_cells.tsv: every possible (variant, test set, metric) cell and when it was done (tools/progress.py).
+# Shown at the top of the site and of the README, as the numbers of the moment and their history.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import progress as PROG  # noqa: E402
+
+PG = PROG.compute(RES / "progress_cells.tsv", {r["key"] for r in rows}, {r["key"]: r["base"] for r in master}) \
+    if (RES / "progress_cells.tsv").exists() else None
+if PG:
+    _m, _v, _ = PROG.svgs(PG, "css")
+    _new = [PROG.SET_LABEL[k] for k in PG["by_set"] if k not in SETS]
+    FACTS["progress_html"] = (
+        f'<div class="prog" aria-label="Progress of the measurements">'
+        f'<p class="prog-h"><b>{PG["done"]:,}</b> of <b>{PG["possible"]:,}</b> measurements done '
+        f'<span class="pct">{100 * PG["done"] / PG["possible"]:.0f} %</span></p>'
+        f'<p class="prog-s">A measurement is one method variant on one test set with one metric: {PG["variants"]} variants of '
+        f'{PG["methods"]} methods, {PG["sets"]} test sets, {PG["metrics"]} metrics.'
+        + (f' {" and ".join(_new)} are being run now and join the tables when complete.' if _new else "")
+        + f'</p><div class="prog-c">{_m}{_v}</div>'
+        f'<p class="prog-n">Each count follows the modification time of the result files, hour by hour, up to '
+        f'{PG["now"].strftime("%d %b %Y, %H:%M")} UTC.</p></div>')
+else:
+    FACTS["progress_html"] = ""
+
+# ---------------------------------------------------------------- the mark
+# site/logo-inline.svg takes its colours from the page's CSS variables (it follows the theme button); __ID__ keeps the
+# filter ids of its two copies apart. site/logo.svg, logo-dark.svg (README) and favicon.svg are copied to docs/.
+_lg = (ROOT / "site" / "logo-inline.svg").read_text(encoding="utf-8") if (ROOT / "site" / "logo-inline.svg").exists() else ""
+FACTS["logo_bar"] = _lg.replace("__ID__", "lb")
+FACTS["logo_hero"] = _lg.replace("__ID__", "lh")
+
 # ---------------------------------------------------------------- dataset cards
 # Static facts and citations: site/datasets.json (curated from the papers and dataset pages, see datasets_sources.json).
 # Measured characteristics, the same for every set: medians over the test frames of results/frames/data/frames_<set>.json.
@@ -233,6 +264,12 @@ if COLLAGE.is_dir():
         shutil.copyfile(p, out / "collage" / p.name)
 (out / "index.html").write_text(page, encoding="utf-8")
 (out / ".nojekyll").write_text("", encoding="utf-8")
+for name in ("logo.svg", "logo-dark.svg", "favicon.svg"):
+    if (ROOT / "site" / name).exists():
+        shutil.copyfile(ROOT / "site" / name, out / name)
+if PG:                                   # the progress chart of the README, one file per GitHub theme
+    (out / "progress.svg").write_text(PROG.svgs(PG, "light")[2], encoding="utf-8")
+    (out / "progress-dark.svg").write_text(PROG.svgs(PG, "dark")[2], encoding="utf-8")
 
 with open(out / "leaderboard.csv", "w", encoding="utf-8", newline="") as fh:
     w = csv.writer(fh)
@@ -279,9 +316,21 @@ readme = ROOT / "README.md"
 txt = readme.read_text(encoding="utf-8")
 a, b = txt.find("<!-- generated:start"), txt.find("<!-- generated:end -->")
 if a >= 0 and b > a:
-    readme.write_text(txt[:a] + gen + txt[b + len("<!-- generated:end -->"):], encoding="utf-8")
+    txt = txt[:a] + gen + txt[b + len("<!-- generated:end -->"):]
 else:
     print("README.md has no generated block; left unchanged")
+# progress block at the top of the README, between <!-- progress:start --> and <!-- progress:end -->
+a, b = txt.find("<!-- progress:start"), txt.find("<!-- progress:end -->")
+if PG and a >= 0 and b > a:
+    pgen = ("<!-- progress:start (tools/build_site.py writes this block; edit the script, not the text) -->\n"
+            '<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/progress-dark.svg">'
+            f'<img src="docs/progress.svg" width="780" alt="{PG["done"]:,} of {PG["possible"]:,} measurements done"></picture></p>\n\n'
+            f'<p align="center"><b>{PG["done"]:,} of {PG["possible"]:,} measurements done ({100 * PG["done"] / PG["possible"]:.0f} %)</b>'
+            f' &nbsp;&middot;&nbsp; one measurement = a method variant on a test set with a metric &nbsp;&middot;&nbsp; '
+            f'{PG["methods"]} methods, {PG["variants"]} variants, {PG["sets"]} test sets, {PG["metrics"]} metrics, as of '
+            f'{PG["now"].strftime("%Y-%m-%d")}</p>\n<!-- progress:end -->')
+    txt = txt[:a] + pgen + txt[b + len("<!-- progress:end -->"):]
+readme.write_text(txt, encoding="utf-8")
 
 if FRAGMENT:
     frag = re.sub(r"<!doctype html>\s*|</?html[^>]*>\s*|</?head>\s*|</?body>\s*", "", page, flags=re.I)
