@@ -199,6 +199,11 @@ if PG:
           f'result files hour by hour, up to {PG["now"].strftime("%d %b %Y, %H:%M")} UTC.</p></div>')
 else:
     FACTS["progress_html"] = ""
+# the GitHub stars after the authors' names (24.11: the tiles are off the page for now; progress_html is kept for later)
+FACTS["stars_html"] = (f'<a class="stars" href="https://github.com/{REPO}" target="_blank" rel="noopener" title="Stars of the repository on GitHub">'
+                       '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.6l1.9 4 4.3.5-3.2 2.9.9 4.3L8 11.1 4.1 13.3l.9-4.3L1.8 6.1l4.3-.5z" '
+                       'fill="currentColor"/></svg><span data-stars>' + (f"{STARS:,}" if STARS is not None else "–") + '</span>'
+                       '<span class="sr"> stars on GitHub</span></a>')
 
 # ---------------------------------------------------------------- the mark
 # site/logo-inline.svg takes its colours from the page's CSS variables (it follows the theme button); __ID__ keeps the
@@ -335,8 +340,6 @@ else:
 a, b = txt.find("<!-- progress:start"), txt.find("<!-- progress:end -->")
 if PG and a >= 0 and b > a:
     pgen = ("<!-- progress:start (tools/build_site.py writes this block; edit the script, not the text) -->\n"
-            '<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/dashboard-dark.svg">'
-            f'<img src="docs/dashboard.svg" width="780" alt="{PG["done"]:,} of {PG["possible"]:,} measurements done"></picture></p>\n\n'
             f'<p align="center"><a href="https://github.com/{REPO}/stargazers"><img src="https://img.shields.io/github/stars/{REPO}?style=flat&amp;label=stars" alt="GitHub stars"></a></p>\n\n'
             f'<p align="center"><b>{PG["done"]:,} of {PG["possible"]:,} measurements done ({100 * PG["done"] / PG["possible"]:.0f} %)</b>'
             f' &nbsp;&middot;&nbsp; one measurement = a method variant on a test set with a metric &nbsp;&middot;&nbsp; '

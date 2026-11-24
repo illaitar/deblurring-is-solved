@@ -112,7 +112,7 @@ svg.dletter { display: inline-block; }    /* size, baseline and spacing come wit
 .bar nav a:hover { color: var(--ink); }
 
 /* lockup */
-.hero { padding-block: clamp(2.75rem, 7vw, 5rem) 1.5rem; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 27rem);
+.hero { padding-block: clamp(2.75rem, 7vw, 5rem) 1.5rem; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 36rem);
   column-gap: 2.5rem; row-gap: 1.1rem; align-items: center; }
 .hero-main { display: grid; gap: 1.1rem; min-width: 0; }
 @media (max-width: 60rem) { .hero { grid-template-columns: minmax(0, 1fr); } }
@@ -124,7 +124,11 @@ svg.dletter { display: inline-block; }    /* size, baseline and spacing come wit
   100% { filter: blur(0); text-shadow: 0 0 0 transparent, 0 0 0 transparent, 0 0 0 transparent, 0 0 0 transparent, 0 0 0 transparent; }
 }
 @media (prefers-reduced-motion: reduce) { .wordmark .smear { animation: none; } }
-.authors { display: flex; flex-wrap: wrap; gap: .2rem 1.4rem; font: 500 1.05rem/1.4 var(--sans); }
+.authors { display: flex; flex-wrap: wrap; align-items: center; gap: .2rem 1.4rem; font: 500 1.05rem/1.4 var(--sans); }
+.authors .stars { display: inline-flex; align-items: center; gap: .3rem; padding: .1rem .65rem .1rem .55rem; border: 1px solid var(--ink-8);
+  border-radius: 999px; color: inherit; text-decoration: none; font-variant-numeric: tabular-nums; }
+.authors .stars:hover { border-color: var(--ink-40); }
+.authors .stars svg { width: 1em; height: 1em; color: #e3a92b; flex: none; }
 .lede { font-size: 1.1rem; line-height: 1.55; color: var(--ink-72); max-width: 42rem; }
 .meta { font: 400 var(--t-s)/1.5 var(--sans); color: var(--ink-56); font-variant-numeric: tabular-nums; }
 .meta b { color: var(--ink); font-weight: 600; }
@@ -142,7 +146,7 @@ a.tile:hover { border-color: var(--ink-40); }
 .tile .spark { width: 100%; height: 2.2rem; margin-top: .35rem; display: block; }
 .dash-n { grid-column: 1 / -1; font-size: var(--t-xs); color: var(--ink-56); }
 /* method cloud right of the title: every method with a GoPro score, sized by its rank; the GoPro Pareto front lights up in turn */
-.cloud { position: relative; min-width: 0; height: 21rem; }
+.cloud { position: relative; min-width: 0; height: 24rem; }
 .cloud-in { position: absolute; inset: 0 0 2.6rem 0; }
 .cloud-in > span { position: absolute; white-space: nowrap; font: 500 var(--fs)/1.05 var(--display); letter-spacing: -.01em; color: var(--c);
   opacity: .5; cursor: pointer;
@@ -165,7 +169,8 @@ a.tile:hover { border-color: var(--ink-40); }
 .cloud-cap.out { opacity: 0; }
 .cloud-cap b { color: var(--ink); font-weight: 600; }
 @media (max-width: 60rem) { .cloud { height: 17rem; } }
-@media (prefers-reduced-motion: reduce) { .cloud-in > span > span { animation: none; } .cloud.hl .cloud-in > span.on { scale: none; } }
+/* with "reduce motion" the names still drift, at half the distance and without the depth, and a lit name does not grow */
+@media (prefers-reduced-motion: reduce) { .cloud.hl .cloud-in > span.on { scale: none; } }
 .btn {
   display: inline-flex; align-items: center; gap: .45rem; height: 2.5rem; padding: 0 1.1rem; border-radius: var(--pill);
   border: 1px solid var(--ink-16); background: var(--paper); color: var(--ink);
@@ -422,11 +427,10 @@ table.prof .inv { color: var(--paper); }
     <div class="hero-main">
     <p class="eyebrow">Motion deblurring framework</p>
     <h1 class="wordmark"><span class="sr">d</span>{{logo_hero}}<span class="smear">eblurring</span> is solved?</h1>
-    <p class="authors">{{authors_html}}</p>
+    <p class="authors">{{authors_html}}{{stars_html}}</p>
     <p class="lede">Motion deblurring methods with released weights, run with every released checkpoint on {{n_sets}} test sets under one protocol and scored frame by frame.</p>
     </div>
     <div class="cloud" id="cloud" aria-hidden="true"><div class="cloud-in" id="cloud-in"></div><p class="cloud-cap" id="cloud-cap"></p></div>
-    {{progress_html}}
   </section>
 
   <section class="wrap panel" id="sets" aria-label="Test sets, Pareto front and leaderboard">
@@ -1130,7 +1134,7 @@ table.prof .inv { color: var(--paper); }
       var order = items.filter(function (it) { return inFront[it.name]; }).concat(items.filter(function (it) { return !inFront[it.name]; }));
       order.forEach(function (it) {
         var i = rank[it.name];
-        var fs = 10.5 + 10.5 * Math.pow(1 - i / Math.max(1, n - 1), 1.7);
+        var fs = 9.5 + 11 * Math.pow(1 - i / Math.max(1, n - 1), 2);
         if (inFront[it.name]) fs = Math.max(fs, 14);
         var el = document.createElement("span"), inner = document.createElement("span");
         inner.textContent = it.name;
@@ -1139,7 +1143,8 @@ table.prof .inv { color: var(--paper); }
         el.style.setProperty("--fs", fs.toFixed(1) + "px");
         el.style.setProperty("--c", it.task === "video" ? "var(--vid)" : "var(--img)");
         /* its own small trajectory: left-right, up-down and nearer-farther, each a slow back-and-forth with a period of its own */
-        var ax = 4 + 2.5 * rnd(i + 3), ay = 2.5 + 1.5 * rnd(i + 5), az = .04 + .03 * rnd(i + 11);
+        var amp = reduce ? .5 : 1;
+        var ax = (4 + 2.5 * rnd(i + 3)) * amp, ay = (2.5 + 1.5 * rnd(i + 5)) * amp, az = reduce ? 0 : .04 + .03 * rnd(i + 11);
         var tx = 3.4 + 2 * rnd(i + 13), ty = 2.8 + 2 * rnd(i + 17), tz = 4.2 + 3 * rnd(i + 19);
         [["--ax", ax.toFixed(1) + "px"], ["--ay", ay.toFixed(1) + "px"], ["--az", az.toFixed(3)],
          ["--tx", tx.toFixed(2) + "s"], ["--ty", ty.toFixed(2) + "s"], ["--tz", tz.toFixed(2) + "s"],
@@ -1150,7 +1155,7 @@ table.prof .inv { color: var(--paper); }
         inn.append(el);
         var w = el.offsetWidth, h = el.offsetHeight, ok = false, x = 0, y = 0;
         /* room for the whole trajectory, and for the growth of a lit name of the front, so no two names ever touch */
-        var grow = inFront[it.name] ? .11 : 0, g = 1 + 2 * grow;
+        var grow = inFront[it.name] && !reduce ? .11 : 0, g = 1 + 2 * grow;
         var px = ax * g + w * (az / 2 + grow), py = ay * g + h * (az / 2 + grow);
         for (var k = 0; k < 1400 && !ok; k++) {
           var t = k * 0.32, rr = 1.9 * t;
