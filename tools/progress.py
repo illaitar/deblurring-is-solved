@@ -147,3 +147,71 @@ def svgs(p, theme="light"):
                            f'<title>{alt}</title>{body}</svg>')
     both = one(m + f'<g transform="translate(500 0)">{v}</g>', 780)
     return one(m, 480), one(v, 280), both
+
+
+# ---------------------------------------------------------------- dashboard tiles (24.11)
+def sparkline(series, lines, pal, W=160, H=38):
+    """A small chart without axes. lines: [(index into the series tuples, colour key, dashed?, area?)]. The scale is
+    shared by the lines, from zero to the largest value, so a dashed 'possible' line sits above a solid 'done' line."""
+    t0, t1 = series[0][0], series[-1][0]
+    span = max((t1 - t0).total_seconds(), 1.0)
+    vmax = max(max(s[i] for s in series) for i, *_ in lines) or 1
+    X = lambda t: 1 + (t - t0).total_seconds() / span * (W - 2)  # noqa: E731
+    Y = lambda v: H - 2 - v / vmax * (H - 5)  # noqa: E731
+    o = []
+    for i, ck, dashed, area in lines:
+        pts = " ".join(f"{X(s[0]):.1f},{Y(s[i]):.1f}" for s in series)
+        if area:
+            o.append(f'<polygon points="{X(t0):.1f},{Y(0):.1f} {pts} {X(t1):.1f},{Y(0):.1f}" {_fi(pal[area])}/>')
+        o.append(f'<polyline points="{pts}" fill="none" {_sk(pal[ck])} stroke-width="{1.4 if dashed else 1.8}" stroke-linejoin="round"'
+                 + (' stroke-dasharray="3 3"' if dashed else "") + "/>")
+    last = series[-1]
+    i0, ck0 = lines[-1][0], lines[-1][1]
+    o.append(f'<circle cx="{X(last[0]):.1f}" cy="{Y(last[i0]):.1f}" r="2.4" {_fi(pal[ck0])}/>')
+    return f'<svg class="spark" viewBox="0 0 {W} {H}" preserveAspectRatio="none" aria-hidden="true">{"".join(o)}</svg>'
+
+
+def tiles(p, best, n_table_sets, theme="css"):
+    """[(value, label, sub, sparkline svg or '')] for the dashboard. best = (psnr, name, task)."""
+    pal = PALETTE[theme]
+    pct = 100 * p["done"] / p["possible"] if p["possible"] else 0
+    new = [SET_LABEL[k] for k in p["by_set"]][n_table_sets:]
+    return [
+        (f"{p['done']:,}", "measurements done", f"of {p['possible']:,} possible, {pct:.0f} %",
+         sparkline(p["series"], [(1, "poss", True, "fill"), (2, "ink", False, None)], pal)),
+        (f"{p['methods']}", "methods", f"{p['variants']} variants with released weights",
+         sparkline(p["series"], [(4, "poss", True, None), (3, "blue", False, None)], pal)),
+        (f"{p['sets']}", "test sets", (f"{n_table_sets} in the tables, " + " and ".join(new) + " running") if new else "all in the tables", ""),
+        (f"{p['metrics']}", "metrics per frame", "full-reference and no-reference", ""),
+        (f"{best[0]:.2f}", "best GoPro PSNR, dB", f"{best[1]}, {best[2]} method", ""),
+    ]
+
+
+def tiles_svg(p, best, n_table_sets, theme="light"):
+    """The dashboard as one image for the README (GitHub cannot run the page's script)."""
+    pal = PALETTE[theme]
+    ts = tiles(p, best, n_table_sets, theme)
+    W, H, gap = 148, 112, 10
+
+    def wrap(s, n=27):                     # the sub line in at most two lines, broken at a space
+        if len(s) <= n:
+            return [s]
+        cut = s.rfind(" ", 0, n + 1)
+        cut = cut if cut > 0 else n
+        return [s[:cut], s[cut:].strip()]
+
+    o = []
+    for k, (val, lab, sub, sp) in enumerate(ts):
+        x = k * (W + gap)
+        o.append(f'<g transform="translate({x} 0)"><rect x=".5" y=".5" width="{W - 1}" height="{H - 1}" rx="10" fill="none" {_sk(pal["grid"])}/>'
+                 f'<text x="12" y="34" font-size="24" font-weight="600" {_fi(pal["ink"])}>{val}</text>'
+                 f'<text x="12" y="52" font-size="11.5" {_fi(pal["text"])}>{lab}</text>'
+                 + "".join(f'<text x="12" y="{67 + 12 * j}" font-size="9.5" {_fi(pal["muted"])}>{line}</text>' for j, line in enumerate(wrap(sub)))
+                 )
+        if sp:
+            o.append(f'<g transform="translate(12 84)">{sp.replace(chr(60) + "svg class=" + chr(34) + "spark" + chr(34), chr(60) + "svg width=" + chr(34) + "124" + chr(34) + " height=" + chr(34) + "20" + chr(34), 1)}</g>')
+        o.append("</g>")
+    Wt = len(ts) * (W + gap) - gap
+    alt = f"{p['done']:,} of {p['possible']:,} measurements done; {p['methods']} methods, {p['variants']} variants"
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {Wt} {H}" role="img" aria-label="{alt}" font-family="{FONT}">'
+            f'<title>{alt}</title>{"".join(o)}</svg>')

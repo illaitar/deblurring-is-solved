@@ -112,7 +112,10 @@ svg.dletter { display: inline-block; }    /* size, baseline and spacing come wit
 .bar nav a:hover { color: var(--ink); }
 
 /* lockup */
-.hero { padding-block: clamp(2.75rem, 7vw, 5rem) 1.5rem; display: grid; gap: 1.1rem; }
+.hero { padding-block: clamp(2.75rem, 7vw, 5rem) 1.5rem; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 27rem);
+  column-gap: 2.5rem; row-gap: 1.1rem; align-items: center; }
+.hero-main { display: grid; gap: 1.1rem; min-width: 0; }
+@media (max-width: 60rem) { .hero { grid-template-columns: minmax(0, 1fr); } }
 .eyebrow { font: 500 var(--t-xs)/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-56); }
 .wordmark { font: 700 var(--t-h1)/.95 var(--display); letter-spacing: -.035em; }
 .wordmark .smear { display: inline-block; animation: unsmear 1.3s var(--ease) .2s both; }
@@ -126,15 +129,33 @@ svg.dletter { display: inline-block; }    /* size, baseline and spacing come wit
 .meta { font: 400 var(--t-s)/1.5 var(--sans); color: var(--ink-56); font-variant-numeric: tabular-nums; }
 .meta b { color: var(--ink); font-weight: 600; }
 .cta { display: flex; flex-wrap: wrap; gap: .5rem; padding-top: .25rem; }
-/* progress of the measurement program: the numbers of the moment, then their history (tools/progress.py) */
-.prog { border: 1px solid var(--ink-8); border-radius: .75rem; padding: 1rem 1.1rem .8rem; margin-top: .6rem; display: grid; gap: .5rem; }
-.prog-h { font: 600 1.15rem/1.3 var(--display); letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
-.prog-h .pct { display: inline-block; margin-left: .4rem; padding: .1rem .5rem; border-radius: 1rem; background: var(--ink); color: var(--paper); font: 600 .8rem/1.4 var(--sans); vertical-align: .15em; }
-.prog-s { font-size: var(--t-s); color: var(--ink-72); max-width: var(--read); }
-.prog-c { display: grid; grid-template-columns: minmax(0, 48fr) minmax(0, 28fr); gap: 1.25rem; margin-top: .4rem; }
-.prog-c svg { width: 100%; height: auto; display: block; }
-@media (max-width: 44rem) { .prog-c { grid-template-columns: minmax(0, 1fr); } }
-.prog-n { font-size: var(--t-xs); color: var(--ink-56); }
+/* key numbers as tiles (tools/progress.py); the stars are refreshed from the GitHub API by the page */
+.dash { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: .6rem; margin-top: .6rem; }
+@media (max-width: 68rem) { .dash { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 34rem) { .dash { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.tile { border: 1px solid var(--ink-8); border-radius: .75rem; padding: .75rem .85rem .7rem; display: grid; gap: .15rem; align-content: start;
+  min-width: 0; color: inherit; text-decoration: none; background: var(--paper); }
+a.tile:hover { border-color: var(--ink-40); }
+.tile .v { font: 600 1.6rem/1.1 var(--display); letter-spacing: -.02em; font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: .35rem; }
+.tile .v svg { width: 1.15rem; height: 1.15rem; color: #e3a92b; flex: none; }
+.tile .l { font-size: var(--t-s); color: var(--ink-72); }
+.tile .s { font-size: var(--t-xs); color: var(--ink-56); overflow-wrap: anywhere; }
+.tile .spark { width: 100%; height: 2.2rem; margin-top: .35rem; display: block; }
+.dash-n { grid-column: 1 / -1; font-size: var(--t-xs); color: var(--ink-56); }
+/* method cloud right of the title: every method with a GoPro score, sized by its rank; the GoPro Pareto front lights up in turn */
+.cloud { position: relative; min-width: 0; height: 21rem; }
+.cloud-in { position: absolute; inset: 0 0 2.6rem 0; }
+.cloud-in span { position: absolute; white-space: nowrap; font: 500 var(--fs)/1.05 var(--display); letter-spacing: -.01em; color: var(--c);
+  opacity: .5; cursor: pointer; transition: opacity .6s var(--ease), scale .6s var(--ease), color .6s var(--ease);
+  animation: drift var(--dur) ease-in-out var(--del) infinite alternate; }
+.cloud-in span.front { font-weight: 600; opacity: .78; }
+.cloud.hl .cloud-in span { opacity: .2; }
+.cloud.hl .cloud-in span.on { opacity: 1; font-weight: 700; scale: 1.3; z-index: 2; }
+@keyframes drift { from { translate: 0 0; } to { translate: var(--dx) var(--dy); } }
+.cloud-cap { position: absolute; left: 0; right: 0; bottom: 0; margin: 0; min-height: 2.4rem; font-size: var(--t-xs); line-height: 1.45; color: var(--ink-56); }
+.cloud-cap b { color: var(--ink); font-weight: 600; }
+@media (max-width: 60rem) { .cloud { height: 15rem; } }
+@media (prefers-reduced-motion: reduce) { .cloud-in span { animation: none; transition: none; } }
 .btn {
   display: inline-flex; align-items: center; gap: .45rem; height: 2.5rem; padding: 0 1.1rem; border-radius: var(--pill);
   border: 1px solid var(--ink-16); background: var(--paper); color: var(--ink);
@@ -388,16 +409,18 @@ table.prof .inv { color: var(--paper); }
 
 <main id="top">
   <section class="wrap hero" aria-label="Benchmark">
+    <div class="hero-main">
     <p class="eyebrow">Motion deblurring framework</p>
     <h1 class="wordmark"><span class="sr">d</span>{{logo_hero}}<span class="smear">eblurring</span> is solved?</h1>
     <p class="authors">{{authors_html}}</p>
     <p class="lede">Motion deblurring methods with released weights, run with every released checkpoint on {{n_sets}} test sets under one protocol and scored frame by frame.</p>
-    <p class="meta"><b>{{n_methods}}</b> methods &middot; <b>{{n_rows}}</b> variants &middot; <b>{{n_sets}}</b> test sets &middot; <b>{{frames}}</b> test frames &middot; {{year0}}&ndash;{{year1}}</p>
     <p class="cta">
       <a class="btn solid" href="#leaderboard"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 13h3V7H2zm4.5 0h3V3h-3zM11 13h3V9h-3z" fill="currentColor"/></svg>Leaderboard</a>
       <a class="btn" href="#pareto"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 13.5h11M2.5 13.5v-11M4 11h3V7.5h3V5h3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>Pareto front</a>
       <a class="btn" href="leaderboard.csv"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8m0 0L5 7m3 3 3-3M3 13h10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Results as CSV</a>
     </p>
+    </div>
+    <div class="cloud" id="cloud" aria-hidden="true"><div class="cloud-in" id="cloud-in"></div><p class="cloud-cap" id="cloud-cap"></p></div>
     {{progress_html}}
   </section>
 
@@ -1064,6 +1087,104 @@ table.prof .inv { color: var(--paper); }
       };
       if (mq.addEventListener) mq.addEventListener("change", follow);
     }
+  })();
+</script>
+<script>
+  /* method cloud: one name per method (its best GoPro-trained variant on GoPro), sized by the rank of that score;
+     the methods on the GoPro Pareto front (latency against PSNR) light up in turn and a click opens the method's row */
+  (function () {
+    var box = document.getElementById("cloud"), inn = document.getElementById("cloud-in"), cap = document.getElementById("cloud-cap");
+    if (!box || !inn || !window.DBIS) return;
+    var best = {};
+    DBIS.rows.forEach(function (r) {
+      var c = r.gopro_trained && r.s.gopro;
+      if (!c || !c.ok || c.psnr == null) return;
+      var b = best[r.name];
+      if (!b || c.psnr > b.psnr) best[r.name] = { name: r.name, psnr: c.psnr, ms: r.ms, task: r.task, key: r.key };
+    });
+    var items = Object.keys(best).map(function (k) { return best[k]; }).sort(function (a, b) { return b.psnr - a.psnr; });
+    var front = [], top = -1;
+    items.filter(function (i) { return i.ms; }).sort(function (a, b) { return a.ms - b.ms; })
+      .forEach(function (i) { if (i.psnr > top) { front.push(i); top = i.psnr; } });
+    var inFront = {};
+    front.forEach(function (i) { inFront[i.name] = 1; });
+    var rnd = function (i) { var x = Math.sin(i * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x); };
+    var ms = function (v) { return v == null ? "?" : v < 100 ? v.toFixed(1) + " ms" : v < 1000 ? Math.round(v) + " ms" : (v / 1000).toFixed(1) + " s"; };
+    var spans = [], lastW = 0;
+    function layout() {
+      var W = inn.clientWidth, H = inn.clientHeight;
+      if (W < 60 || H < 60) return;
+      lastW = W;
+      box.classList.remove("hl");
+      inn.replaceChildren();
+      spans = [];
+      /* the front goes in first, so it takes the middle and never falls out when the box is small */
+      var placed = [], n = items.length, rank = {};
+      items.forEach(function (it, i) { rank[it.name] = i; });
+      var order = items.filter(function (it) { return inFront[it.name]; }).concat(items.filter(function (it) { return !inFront[it.name]; }));
+      order.forEach(function (it) {
+        var i = rank[it.name];
+        var fs = 11 + 11 * Math.pow(1 - i / Math.max(1, n - 1), 1.7);
+        if (inFront[it.name]) fs = Math.max(fs, 14);
+        var el = document.createElement("span");
+        el.textContent = it.name;
+        el.title = it.name + ": " + it.psnr.toFixed(2) + " dB on GoPro, " + ms(it.ms) + " per frame";
+        el.style.setProperty("--fs", fs.toFixed(1) + "px");
+        el.style.setProperty("--c", it.task === "video" ? "var(--vid)" : "var(--img)");
+        el.style.setProperty("--dur", (5 + 5 * rnd(i)).toFixed(1) + "s");
+        el.style.setProperty("--del", (-8 * rnd(i + 7)).toFixed(1) + "s");
+        el.style.setProperty("--dx", ((rnd(i + 3) - .5) * 9).toFixed(1) + "px");
+        el.style.setProperty("--dy", ((rnd(i + 5) - .5) * 6).toFixed(1) + "px");
+        if (inFront[it.name]) el.className = "front";
+        el.style.visibility = "hidden";
+        inn.append(el);
+        var w = el.offsetWidth, h = el.offsetHeight, ok = false, x = 0, y = 0;
+        for (var k = 0; k < 1400 && !ok; k++) {
+          var t = k * 0.32, rr = 1.9 * t;
+          x = W / 2 + rr * Math.cos(t) * (W / H) - w / 2;
+          y = H / 2 + rr * Math.sin(t) - h / 2;
+          if (x < 0 || y < 0 || x + w > W || y + h > H) continue;
+          ok = placed.every(function (p) { return x + w + 6 < p[0] || p[0] + p[2] + 6 < x || y + h + 3 < p[1] || p[1] + p[3] + 3 < y; });
+        }
+        if (!ok) { el.remove(); return; }
+        placed.push([x, y, w, h]);
+        el.style.left = x.toFixed(1) + "px";
+        el.style.top = y.toFixed(1) + "px";
+        el.style.visibility = "";
+        el.addEventListener("click", function () { DBIS.sel(it.key); var lb = document.getElementById("leaderboard"); if (lb) lb.scrollIntoView(); });
+        el.addEventListener("mouseenter", function () { light(it); });
+        spans.push({ el: el, it: it });
+      });
+    }
+    function light(it) {
+      spans.forEach(function (s) { s.el.classList.toggle("on", s.it.name === it.name); });
+      box.classList.add("hl");
+      cap.replaceChildren(DBIS.h("b", {}, it.name), (inFront[it.name] ? " is on the GoPro Pareto front: " : ": ")
+        + it.psnr.toFixed(2) + " dB at " + ms(it.ms) + " per 720p frame" + (inFront[it.name] ? "" : ", not on the front"));
+    }
+    var idx = 0, hover = false, reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    box.addEventListener("mouseenter", function () { hover = true; });
+    box.addEventListener("mouseleave", function () { hover = false; });
+    function tick() {
+      if (!hover && front.length && !document.hidden) { light(front[idx % front.length]); idx++; }
+    }
+    layout();
+    tick();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { layout(); idx = Math.max(0, idx - 1); tick(); });
+    setInterval(tick, reduce ? 6000 : 2600);
+    var pend = null;
+    window.addEventListener("resize", function () {
+      clearTimeout(pend);
+      pend = setTimeout(function () { if (Math.abs(inn.clientWidth - lastW) > 8) { layout(); idx = Math.max(0, idx - 1); tick(); } }, 200);
+    });
+  })();
+  /* GitHub stars: the number at build time, refreshed here when the API answers */
+  (function () {
+    var els = document.querySelectorAll("[data-stars]");
+    if (!els.length || !window.fetch) return;
+    fetch("https://api.github.com/repos/illaitar/deblurring-is-solved").then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      if (j && typeof j.stargazers_count === "number") els.forEach(function (e) { e.textContent = j.stargazers_count.toLocaleString("en-US"); });
+    }).catch(function () { /* offline or rate-limited: keep the number of the build */ });
   })();
 </script>
 </body>

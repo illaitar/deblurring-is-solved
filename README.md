@@ -16,7 +16,9 @@
 </p>
 
 <!-- progress:start (tools/build_site.py writes this block; edit the script, not the text) -->
-<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/progress-dark.svg"><img src="docs/progress.svg" width="780" alt="13,377 of 18,760 measurements done"></picture></p>
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/dashboard-dark.svg"><img src="docs/dashboard.svg" width="780" alt="13,377 of 18,760 measurements done"></picture></p>
+
+<p align="center"><a href="https://github.com/illaitar/deblurring-is-solved/stargazers"><img src="https://img.shields.io/github/stars/illaitar/deblurring-is-solved?style=flat&amp;label=stars" alt="GitHub stars"></a></p>
 
 <p align="center"><b>13,377 of 18,760 measurements done (71 %)</b> &nbsp;&middot;&nbsp; one measurement = a method variant on a test set with a metric &nbsp;&middot;&nbsp; 96 methods, 268 variants, 8 test sets, 10 metrics, as of 2026-11-24</p>
 <!-- progress:end -->

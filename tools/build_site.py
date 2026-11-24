@@ -174,19 +174,29 @@ import progress as PROG  # noqa: E402
 
 PG = PROG.compute(RES / "progress_cells.tsv", {r["key"] for r in rows}, {r["key"]: r["base"] for r in master}) \
     if (RES / "progress_cells.tsv").exists() else None
+# The best GoPro-trained row on GoPro (for the dashboard) and the GitHub stars at build time (the page refreshes them)
+_bg = max((r for r in rows if r["gopro_trained"] and r["s"].get("gopro", {}).get("ok")), key=lambda r: r["s"]["gopro"]["psnr"], default=None)
+BEST = (_bg["s"]["gopro"]["psnr"], _bg["name"], _bg["task"]) if _bg else (0.0, "", "")
+REPO = "illaitar/deblurring-is-solved"
+STARS = None
+try:
+    import urllib.request
+    with urllib.request.urlopen(urllib.request.Request(f"https://api.github.com/repos/{REPO}",
+                                                       headers={"User-Agent": "dbis-site-build"}), timeout=10) as _r:
+        STARS = int(json.loads(_r.read().decode("utf-8")).get("stargazers_count"))
+except Exception:
+    STARS = None
 if PG:
-    _m, _v, _ = PROG.svgs(PG, "css")
-    _new = [PROG.SET_LABEL[k] for k in PG["by_set"] if k not in SETS]
+    _tiles = PROG.tiles(PG, BEST, len(SETS), "css")
+    _tile = lambda v, l, s, sp: f'<div class="tile"><span class="v">{v}</span><span class="l">{l}</span><span class="s">{s}</span>{sp}</div>'  # noqa: E731
+    _star = ('<a class="tile star" href="https://github.com/' + REPO + '" target="_blank" rel="noopener">'
+             '<span class="v"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.6l1.9 4 4.3.5-3.2 2.9.9 4.3L8 11.1 4.1 13.3l.9-4.3L1.8 6.1l4.3-.5z" '
+             'fill="currentColor"/></svg><span data-stars>' + (f"{STARS:,}" if STARS is not None else "–") + '</span></span>'
+             '<span class="l">stars on GitHub</span><span class="s">' + REPO + '</span></a>')
     FACTS["progress_html"] = (
-        f'<div class="prog" aria-label="Progress of the measurements">'
-        f'<p class="prog-h"><b>{PG["done"]:,}</b> of <b>{PG["possible"]:,}</b> measurements done '
-        f'<span class="pct">{100 * PG["done"] / PG["possible"]:.0f} %</span></p>'
-        f'<p class="prog-s">A measurement is one method variant on one test set with one metric: {PG["variants"]} variants of '
-        f'{PG["methods"]} methods, {PG["sets"]} test sets, {PG["metrics"]} metrics.'
-        + (f' {" and ".join(_new)} are being run now and join the tables when complete.' if _new else "")
-        + f'</p><div class="prog-c">{_m}{_v}</div>'
-        f'<p class="prog-n">Each count follows the modification time of the result files, hour by hour, up to '
-        f'{PG["now"].strftime("%d %b %Y, %H:%M")} UTC.</p></div>')
+        '<div class="dash" aria-label="Key numbers">' + "".join(_tile(*x) for x in _tiles[:2]) + _star + "".join(_tile(*x) for x in _tiles[2:])
+        + f'<p class="dash-n">A measurement is one method variant on one test set with one metric. The two small charts follow the '
+          f'result files hour by hour, up to {PG["now"].strftime("%d %b %Y, %H:%M")} UTC.</p></div>')
 else:
     FACTS["progress_html"] = ""
 
@@ -269,9 +279,9 @@ if COLLAGE.is_dir():
 for name in ("logo.svg", "logo-dark.svg", "favicon.svg", "wordmark.svg", "wordmark-dark.svg"):
     if (ROOT / "site" / name).exists():
         shutil.copyfile(ROOT / "site" / name, out / name)
-if PG:                                   # the progress chart of the README, one file per GitHub theme
-    (out / "progress.svg").write_text(PROG.svgs(PG, "light")[2], encoding="utf-8")
-    (out / "progress-dark.svg").write_text(PROG.svgs(PG, "dark")[2], encoding="utf-8")
+if PG:                                   # the dashboard of the README, one image per GitHub theme
+    (out / "dashboard.svg").write_text(PROG.tiles_svg(PG, BEST, len(SETS), "light"), encoding="utf-8")
+    (out / "dashboard-dark.svg").write_text(PROG.tiles_svg(PG, BEST, len(SETS), "dark"), encoding="utf-8")
 
 with open(out / "leaderboard.csv", "w", encoding="utf-8", newline="") as fh:
     w = csv.writer(fh)
@@ -325,8 +335,9 @@ else:
 a, b = txt.find("<!-- progress:start"), txt.find("<!-- progress:end -->")
 if PG and a >= 0 and b > a:
     pgen = ("<!-- progress:start (tools/build_site.py writes this block; edit the script, not the text) -->\n"
-            '<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/progress-dark.svg">'
-            f'<img src="docs/progress.svg" width="780" alt="{PG["done"]:,} of {PG["possible"]:,} measurements done"></picture></p>\n\n'
+            '<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/dashboard-dark.svg">'
+            f'<img src="docs/dashboard.svg" width="780" alt="{PG["done"]:,} of {PG["possible"]:,} measurements done"></picture></p>\n\n'
+            f'<p align="center"><a href="https://github.com/{REPO}/stargazers"><img src="https://img.shields.io/github/stars/{REPO}?style=flat&amp;label=stars" alt="GitHub stars"></a></p>\n\n'
             f'<p align="center"><b>{PG["done"]:,} of {PG["possible"]:,} measurements done ({100 * PG["done"] / PG["possible"]:.0f} %)</b>'
             f' &nbsp;&middot;&nbsp; one measurement = a method variant on a test set with a metric &nbsp;&middot;&nbsp; '
             f'{PG["methods"]} methods, {PG["variants"]} variants, {PG["sets"]} test sets, {PG["metrics"]} metrics, as of '
