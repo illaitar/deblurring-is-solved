@@ -12,7 +12,7 @@ from datetime import datetime, timedelta, timezone
 
 SET_LABEL = {"gopro": "GoPro", "reds_val": "REDS", "bsd2": "BSD", "dvd": "DVD", "realblur_j": "RealBlur-J",
              "realblur_r": "RealBlur-R", "gsblur": "GS-Blur", "miore": "MIORe"}
-FONT = "Inter, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+FONT = "Geologica, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
 PALETTE = {
     "light": {"ink": "#0d0e11", "text": "#4a4c52", "muted": "#6e7178", "grid": "#ebecef", "fill": "#f1f2f4", "poss": "#9a9da4",
               "blue": "#2a78d6"},

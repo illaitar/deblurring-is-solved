@@ -18,7 +18,7 @@
 <meta name="description" content="Motion deblurring methods with released weights, run with one protocol on GoPro, REDS, BSD and DVD and scored frame by frame.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: one 74rem column on white paper. Compact lockup (title, authors, links), then one tabbed panel per test
    set holding the leaderboard and the Pareto front. Ink for type and rules, blue for image methods, orange for
@@ -39,8 +39,9 @@
   --focus: #2a78d6;
   --bar-bg: rgba(255, 255, 255, .9);
   --logo-ghost: #55585f;
-  --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --display: "Inter Tight", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Geologica: a geometric sans whose d, b, o and p have nearly round counters (the d of the title carries the iris) */
+  --sans: "Geologica", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --display: "Geologica", system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "JetBrains Mono", ui-monospace, "SF Mono", Consolas, "Liberation Mono", monospace;
   --container: 74rem;
   --read: 44rem;
@@ -95,7 +96,7 @@ code { font-family: var(--mono); font-size: .86em; }
 .bar .wrap { display: flex; align-items: center; gap: 1.5rem; height: 3.5rem; }
 .bar .mark { font: 600 1rem/1 var(--display); letter-spacing: -.01em; text-decoration: none; white-space: nowrap; flex: none; }
 /* the mark stands in for the letter d of "deblurring": its stem (y 10 to 88 of the 100-unit box) spans the ascender
-   height of Inter Tight, its foot sits on the baseline, the bowl overshoots below like a round letter. The hidden "d"
+   height of Geologica, its foot sits on the baseline, the bowl overshoots below like a round letter. The hidden "d"
    keeps the text whole for screen readers, search and copy. */
 svg.dletter { display: inline-block; }    /* size, baseline and spacing come with the SVG (glyph advance, ascent, descent) */
 .sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
@@ -113,7 +114,7 @@ svg.dletter { display: inline-block; }    /* size, baseline and spacing come wit
 /* lockup */
 .hero { padding-block: clamp(2.75rem, 7vw, 5rem) 1.5rem; display: grid; gap: 1.1rem; }
 .eyebrow { font: 500 var(--t-xs)/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-56); }
-.wordmark { font: 700 var(--t-h1)/.95 var(--display); letter-spacing: -.045em; }
+.wordmark { font: 700 var(--t-h1)/.95 var(--display); letter-spacing: -.035em; }
 .wordmark .smear { display: inline-block; animation: unsmear 1.3s var(--ease) .2s both; }
 @keyframes unsmear {
   0% { filter: blur(3px); text-shadow: .08em 0 0 rgba(var(--ink-rgb), .4), .18em 0 0 rgba(var(--ink-rgb), .16), .3em 0 0 rgba(var(--ink-rgb), .08), -.08em 0 0 rgba(var(--ink-rgb), .4), -.18em 0 0 rgba(var(--ink-rgb), .16); }

@@ -193,7 +193,7 @@ else:
 # ---------------------------------------------------------------- the mark
 # site/logo-inline.svg takes its colours from the page's CSS variables (it follows the theme button); __ID__ keeps the
 # filter ids of its two copies apart. site/logo.svg, logo-dark.svg (README) and favicon.svg are copied to docs/.
-# The d of both wordmarks is the real d of Inter Tight (600 in the bar, 700 in the title) with the shake and the iris
+# The d of both wordmarks is the real d of Geologica (600 in the bar, 700 in the title) with the shake and the iris
 # drawn on it: site/dletter-<weight>.svg, made by logo/glyph_d.py from the font files the site loads.
 _dl = lambda w: (ROOT / "site" / f"dletter-{w}.svg").read_text(encoding="utf-8") if (ROOT / "site" / f"dletter-{w}.svg").exists() else ""  # noqa: E731
 FACTS["logo_bar"] = _dl(600).replace("__ID__", "lb")
