@@ -294,6 +294,13 @@ noscript p { padding: 1rem; border: 1px solid var(--ink-16); border-radius: .5re
 .strip-o { fill: var(--ink-40); }
 .strip-me { fill: var(--ink); stroke: var(--paper); stroke-width: 1.5; }
 .dc-src { font-size: 11px; color: var(--ink-56); grid-column: 1 / -1; }
+/* collage of the set above its measured characteristics: eight blurry test frames, strongest to weakest blur */
+.dc-side { display: grid; gap: .75rem; align-content: start; min-width: 0; }
+.dc-shot { margin: 0; }
+.dc-shot a { display: block; border: 1px solid var(--ink-8); border-radius: .5rem; overflow: hidden; background: var(--ink-8); }
+.dc-shot a:hover { border-color: var(--ink-56); }
+.dc-shot img { display: block; width: 100%; height: auto; }
+.dc-shot figcaption { font-size: 11px; line-height: 1.4; color: var(--ink-56); margin-top: .35rem; }
 
 .om-dot.image { fill: var(--img); opacity: .32; } .om-dot.video { fill: var(--vid); opacity: .32; }
 .medline { fill: none; stroke: var(--ink-56); stroke-width: 1.5; stroke-dasharray: 4 3; }
@@ -377,9 +384,9 @@ table.prof .inv { color: #ffffff; }
     <figure class="fig" style="margin:0">
       <div class="controls">
         <span class="seg" role="group" aria-label="Horizontal axis" id="pf-x">
-          <button type="button" data-v="params" aria-pressed="true">Parameters</button>
+          <button type="button" data-v="ms" aria-pressed="true">Latency</button>
           <button type="button" data-v="gmac" aria-pressed="false">Compute</button>
-          <button type="button" data-v="ms" aria-pressed="false">Latency</button>
+          <button type="button" data-v="params" aria-pressed="false">Parameters</button>
         </span>
         <span class="seg" role="group" aria-label="Metric" id="pf-m"></span>
         <span class="spacer"></span>
@@ -389,7 +396,7 @@ table.prof .inv { color: #ffffff; }
         <span class="key" id="pf-inkey"><i class="sw input"></i>Blurry input</span>
         <span class="key" id="pf-gtkey" hidden><i class="sw gt"></i>Sharp frames</span>
       </div>
-      <div class="chart" id="pf" role="img" aria-label="Scatter plot of score against model size with the Pareto front"></div>
+      <div class="chart" id="pf" role="img" aria-label="Scatter plot of score against latency, compute or model size with the Pareto front"></div>
       <p class="fig-note" id="pf-note"></p>
     </figure>
   </section>
@@ -528,7 +535,7 @@ table.prof .inv { color: #ffffff; }
   var SETINFO = { gopro: "1,111 frames · 1280×720", reds_val: "3,000 frames · 1280×720", bsd2: "3,000 frames · 640×480", dvd: "1,000 frames · 1280×720",
     realblur_j: "980 images · image methods", realblur_r: "980 images · image methods" };
 
-  var ST = { ds: "gopro", sort: "psnr", asc: false, types: { image: true, video: true }, fam: "", tr: "gopro", partial: false, q: "", open: {}, limit: 25, all: false, px: "params", pm: "psnr", mg: "fid" };
+  var ST = { ds: "gopro", sort: "psnr", asc: false, types: { image: true, video: true }, fam: "", tr: "gopro", partial: false, q: "", open: {}, limit: 25, all: false, px: "ms", pm: "psnr", mg: "fid" };
 
   function h(tag, attrs) {
     var e = document.createElement(tag), kids = Array.prototype.slice.call(arguments, 2);
@@ -949,7 +956,17 @@ table.prof .inv { color: #ffffff; }
       meas.append(tile);
     });
     meas.append(h("p", { class: "dc-src" }, "Measured the same way on every set; the strip places " + LBL[ST.ds] + " (dark dot) among the six test sets."));
-    kids.push(meas);
+    var side = h("div", { class: "dc-side" }), g = c.collage;
+    if (g) {
+      var img = h("img", { src: g.src, width: g.w, height: g.h, decoding: "async",
+        alt: "Eight blurry test frames of " + (c.name || LBL[ST.ds]) + ", from the strongest to the weakest blur" });
+      side.append(h("figure", { class: "dc-shot" },
+        h("a", { href: g.src, target: "_blank", rel: "noopener", title: "Open the collage in full size" }, img),
+        h("figcaption", {}, "Eight blurry test inputs, from the strongest blur (top left, " + fx(g.lo, 1) + " dB against the sharp frame) to the weakest (bottom right, " +
+          fx(g.hi, 1) + " dB). The same rule for every set: evenly spaced quantiles of the input PSNR, one frame per " + g.unit + ".")));
+    }
+    side.append(meas);
+    kids.push(side);
     box.replaceChildren.apply(box, kids);
   }
 

@@ -1,0 +1,284 @@
+{
+ "gopro": {
+  "file": "gopro.jpg",
+  "w": 1612,
+  "h": 454,
+  "frames": [
+   {
+    "seq": "GOPR0868_11_00",
+    "stem": "000028",
+    "psnr_in": 20.84
+   },
+   {
+    "seq": "GOPR0869_11_00",
+    "stem": "000018",
+    "psnr_in": 22.46
+   },
+   {
+    "seq": "GOPR0862_11_00",
+    "stem": "000048",
+    "psnr_in": 23.86
+   },
+   {
+    "seq": "GOPR0881_11_01",
+    "stem": "000276",
+    "psnr_in": 24.98
+   },
+   {
+    "seq": "GOPR0384_11_00",
+    "stem": "000063",
+    "psnr_in": 25.95
+   },
+   {
+    "seq": "GOPR0396_11_00",
+    "stem": "000037",
+    "psnr_in": 27.16
+   },
+   {
+    "seq": "GOPR0410_11_00",
+    "stem": "000163",
+    "psnr_in": 28.53
+   },
+   {
+    "seq": "GOPR0384_11_05",
+    "stem": "004013",
+    "psnr_in": 30.8
+   }
+  ]
+ },
+ "reds_val": {
+  "file": "reds_val.jpg",
+  "w": 1612,
+  "h": 454,
+  "frames": [
+   {
+    "seq": "022",
+    "stem": "00000093",
+    "psnr_in": 20.79
+   },
+   {
+    "seq": "023",
+    "stem": "00000073",
+    "psnr_in": 22.36
+   },
+   {
+    "seq": "003",
+    "stem": "00000000",
+    "psnr_in": 23.48
+   },
+   {
+    "seq": "010",
+    "stem": "00000008",
+    "psnr_in": 24.68
+   },
+   {
+    "seq": "014",
+    "stem": "00000050",
+    "psnr_in": 25.94
+   },
+   {
+    "seq": "021",
+    "stem": "00000027",
+    "psnr_in": 27.23
+   },
+   {
+    "seq": "013",
+    "stem": "00000098",
+    "psnr_in": 29.73
+   },
+   {
+    "seq": "009",
+    "stem": "00000042",
+    "psnr_in": 35.61
+   }
+  ]
+ },
+ "bsd2": {
+  "file": "bsd2.jpg",
+  "w": 1612,
+  "h": 454,
+  "frames": [
+   {
+    "seq": "080",
+    "stem": "00000103",
+    "psnr_in": 21.31
+   },
+   {
+    "seq": "044",
+    "stem": "00000116",
+    "psnr_in": 23.08
+   },
+   {
+    "seq": "020",
+    "stem": "00000124",
+    "psnr_in": 24.37
+   },
+   {
+    "seq": "072",
+    "stem": "00000097",
+    "psnr_in": 25.38
+   },
+   {
+    "seq": "099",
+    "stem": "00000081",
+    "psnr_in": 26.69
+   },
+   {
+    "seq": "129",
+    "stem": "00000137",
+    "psnr_in": 28.39
+   },
+   {
+    "seq": "052",
+    "stem": "00000027",
+    "psnr_in": 30.48
+   },
+   {
+    "seq": "069",
+    "stem": "00000086",
+    "psnr_in": 32.75
+   }
+  ]
+ },
+ "dvd": {
+  "file": "dvd.jpg",
+  "w": 1612,
+  "h": 454,
+  "frames": [
+   {
+    "seq": "IMG_0003",
+    "stem": "00066",
+    "psnr_in": 21.36
+   },
+   {
+    "seq": "IMG_0049",
+    "stem": "00020",
+    "psnr_in": 23.17
+   },
+   {
+    "seq": "IMG_0032",
+    "stem": "00056",
+    "psnr_in": 24.81
+   },
+   {
+    "seq": "IMG_0021",
+    "stem": "00076",
+    "psnr_in": 26.14
+   },
+   {
+    "seq": "IMG_0031",
+    "stem": "00078",
+    "psnr_in": 27.83
+   },
+   {
+    "seq": "720p_240fps_2",
+    "stem": "00014",
+    "psnr_in": 29.09
+   },
+   {
+    "seq": "IMG_0033",
+    "stem": "00012",
+    "psnr_in": 31.2
+   },
+   {
+    "seq": "IMG_0039",
+    "stem": "00024",
+    "psnr_in": 34.12
+   }
+  ]
+ },
+ "realblur_j": {
+  "file": "realblur_j.jpg",
+  "w": 1612,
+  "h": 454,
+  "frames": [
+   {
+    "seq": "scene103_gt_12",
+    "stem": "gt_12",
+    "psnr_in": 21.47
+   },
+   {
+    "seq": "scene218_gt_11",
+    "stem": "gt_11",
+    "psnr_in": 23.45
+   },
+   {
+    "seq": "scene130_gt_10",
+    "stem": "gt_10",
+    "psnr_in": 24.8
+   },
+   {
+    "seq": "scene024_gt_17",
+    "stem": "gt_17",
+    "psnr_in": 26.13
+   },
+   {
+    "seq": "scene209_gt_18",
+    "stem": "gt_18",
+    "psnr_in": 27.31
+   },
+   {
+    "seq": "scene205_gt_9",
+    "stem": "gt_9",
+    "psnr_in": 28.43
+   },
+   {
+    "seq": "scene101_gt_17",
+    "stem": "gt_17",
+    "psnr_in": 29.69
+   },
+   {
+    "seq": "scene047_gt_12",
+    "stem": "gt_12",
+    "psnr_in": 31.72
+   }
+  ]
+ },
+ "realblur_r": {
+  "file": "realblur_r.jpg",
+  "w": 1612,
+  "h": 454,
+  "frames": [
+   {
+    "seq": "scene103_gt_2",
+    "stem": "gt_2",
+    "psnr_in": 23.81
+   },
+   {
+    "seq": "scene059_gt_13",
+    "stem": "gt_13",
+    "psnr_in": 28.18
+   },
+   {
+    "seq": "scene149_gt_11",
+    "stem": "gt_11",
+    "psnr_in": 30.51
+   },
+   {
+    "seq": "scene085_gt_19",
+    "stem": "gt_19",
+    "psnr_in": 32.74
+   },
+   {
+    "seq": "scene071_gt_13",
+    "stem": "gt_13",
+    "psnr_in": 34.98
+   },
+   {
+    "seq": "scene017_gt_6",
+    "stem": "gt_6",
+    "psnr_in": 37.4
+   },
+   {
+    "seq": "scene218_gt_21",
+    "stem": "gt_21",
+    "psnr_in": 39.92
+   },
+   {
+    "seq": "scene047_gt_4",
+    "stem": "gt_4",
+    "psnr_in": 44.46
+   }
+  ]
+ }
+}

@@ -42,7 +42,7 @@ SEEN = {("EDVR-REDS", "reds_val"), ("VRT@REDS", "reds_val")}
 # training label -> the test set it is in-domain for (the "trained on the test set" filter)
 IN_DOMAIN = {"GoPro": "gopro", "REDS": "reds_val", "REDS_ours": "reds_val", "REDSjpeg": "reds_val", "BSD": "bsd2", "BSD1": "bsd2", "BSD2": "bsd2", "BSD3": "bsd2",
              "DVD": "dvd", "RealBlurJ": "realblur_j", "RealBlurR": "realblur_r", "GoPro_ours": "gopro"}
-SITE_URL = ""   # the GitHub Pages address once Pages is on, e.g. https://<owner>.github.io/deblurring-is-solved/
+SITE_URL = "https://illaitar.github.io/deblurring-is-solved/"   # the GitHub Pages address (docs/ of the default branch)
 AUTHORS = ["Nikita Alutis", "Egor Chistov"]
 PYIQA = "0.1.16"  # envs/iqa/FREEZE.txt on the cluster
 
@@ -178,6 +178,16 @@ for ds in SETS:
                     meas[c] = round(v[len(v) // 2], 3)
         meas["sequences"] = len({x[0] for x in fr})
     cards.setdefault(ds, {})["measured"] = meas
+# Collage of each card: site/collage/<set>.jpg, listed in site/collage/index.json with the frames it shows. Eight blurry
+# test frames per set at evenly spaced quantiles of the input PSNR (1/16, 3/16, ..., 15/16), one per sequence
+# (RealBlur: per scene), ordered from the strongest to the weakest blur.
+COLLAGE = ROOT / "site" / "collage"
+if (COLLAGE / "index.json").exists():
+    for ds, c in json.loads((COLLAGE / "index.json").read_text(encoding="utf-8")).items():
+        if ds in cards and (COLLAGE / c["file"]).exists():
+            cards[ds]["collage"] = {"src": "collage/" + c["file"], "w": c["w"], "h": c["h"],
+                                    "lo": c["frames"][0]["psnr_in"], "hi": c["frames"][-1]["psnr_in"],
+                                    "unit": "scene" if ds.startswith("realblur") else "sequence"}
 
 data = {
     "datasets": cards, "imgBase": IMG_BASE,
@@ -211,6 +221,10 @@ if src.is_dir():
         shutil.copytree(src, ROOT / "docs" / "img", dirs_exist_ok=True)
 out = ROOT / "docs"
 out.mkdir(exist_ok=True)
+if COLLAGE.is_dir():
+    (out / "collage").mkdir(exist_ok=True)
+    for p in sorted(COLLAGE.glob("*.jpg")):
+        shutil.copyfile(p, out / "collage" / p.name)
 (out / "index.html").write_text(page, encoding="utf-8")
 (out / ".nojekyll").write_text("", encoding="utf-8")
 

@@ -7,6 +7,10 @@
 </p>
 
 <p align="center">
+  <a href="https://illaitar.github.io/deblurring-is-solved/"><b>Interactive leaderboard: illaitar.github.io/deblurring-is-solved</b></a>
+</p>
+
+<p align="center">
   <a href="#leaderboard">Leaderboard</a> &nbsp;&middot;&nbsp;
   <a href="docs/leaderboard.csv">All results (CSV)</a> &nbsp;&middot;&nbsp;
   <a href="PROTOCOL.md">Protocol</a> &nbsp;&middot;&nbsp;
@@ -18,7 +22,7 @@
 
 <!-- generated:start (tools/build_site.py writes this block; edit the script, not the text) -->
 > [!NOTE]
-> Numbers as of 2026-11-24: 263 of 268 variants scored on all their sets (six for image methods, four for video methods), 4 on some. GoPro-trained weights (other training sets are on the site), PSNR in dB (RealBlur: official ECC-aligned PSNR), sorted by PSNR. The full table is in [`docs/leaderboard.csv`](docs/leaderboard.csv) and on the interactive leaderboard in [`docs/`](docs/) (GitHub Pages).
+> Numbers as of 2026-11-24: 263 of 268 variants scored on all their sets (six for image methods, four for video methods), 4 on some. GoPro-trained weights (other training sets are on the site), PSNR in dB (RealBlur: official ECC-aligned PSNR), sorted by PSNR. The full table is in [`docs/leaderboard.csv`](docs/leaderboard.csv) and on the [interactive leaderboard](https://illaitar.github.io/deblurring-is-solved/).
 
 ### GoPro
 
