@@ -1,11 +1,9 @@
-<p align="center">
+<h1 align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/logo-dark.svg">
-    <img src="docs/logo.svg" width="120" height="120" alt="deblurring is solved? logo: the letter d with a camera iris, shaken diagonally">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/wordmark-dark.svg">
+    <img src="docs/wordmark.svg" width="560" alt="deblurring is solved?">
   </picture>
-</p>
-
-<h1 align="center">deblurring is solved?</h1>
+</h1>
 
 <p align="center">Nikita Alutis &nbsp;&middot;&nbsp; Egor Chistov</p>
 

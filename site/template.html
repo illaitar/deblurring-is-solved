@@ -93,16 +93,18 @@ code { font-family: var(--mono); font-size: .86em; }
   background: var(--bar-bg); backdrop-filter: saturate(1.4) blur(10px); border-bottom: 1px solid var(--ink-8);
 }
 .bar .wrap { display: flex; align-items: center; gap: 1.5rem; height: 3.5rem; }
-.bar .mark { font: 600 1rem/1 var(--display); letter-spacing: -.01em; text-decoration: none; white-space: nowrap; display: inline-flex; align-items: center; gap: .5rem; flex: none; }
-.bar .mark svg { width: 1.6rem; height: 1.6rem; display: block; }
+.bar .mark { font: 600 1rem/1 var(--display); letter-spacing: -.01em; text-decoration: none; white-space: nowrap; flex: none; }
+/* the mark stands in for the letter d of "deblurring": its stem (y 10 to 88 of the 100-unit box) spans the ascender
+   height of Inter Tight, its foot sits on the baseline, the bowl overshoots below like a round letter. The hidden "d"
+   keeps the text whole for screen readers, search and copy. */
+svg.dletter { display: inline-block; }    /* size, baseline and spacing come with the SVG (glyph advance, ascent, descent) */
+.sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .theme { margin-left: auto; flex: none; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: 50%;
   border: 1px solid var(--ink-16); background: var(--paper); color: var(--ink); cursor: pointer; padding: 0; }
 .theme:hover { border-color: var(--ink-56); }
 .theme svg { width: 1.15rem; height: 1.15rem; display: block; }
 .theme .sun, :root[data-theme="dark"] .theme .moon { display: none; }
 :root[data-theme="dark"] .theme .sun { display: block; }
-.lockup { display: flex; align-items: center; gap: clamp(.6rem, .3rem + 1.2vw, 1.2rem); min-width: 0; }
-.lockup > svg { width: clamp(3rem, 1.9rem + 4.4vw, 5.6rem); height: auto; flex: none; }
 .bar nav { display: flex; gap: 1.25rem; overflow-x: auto; scrollbar-width: none; min-width: 0; }
 .bar nav::-webkit-scrollbar { display: none; }
 .bar nav a { font-size: var(--t-s); color: var(--ink-72); text-decoration: none; white-space: nowrap; }
@@ -367,7 +369,7 @@ table.prof .inv { color: var(--paper); }
 
 <header class="bar">
   <div class="wrap">
-    <a class="mark" href="#top">{{logo_bar}}deblurring is solved?</a>
+    <a class="mark" href="#top"><span class="sr">d</span>{{logo_bar}}eblurring is solved?</a>
     <nav aria-label="Sections">
       <a href="#pareto">Pareto front</a>
       <a href="#leaderboard">Leaderboard</a>
@@ -386,7 +388,7 @@ table.prof .inv { color: var(--paper); }
 <main id="top">
   <section class="wrap hero" aria-label="Benchmark">
     <p class="eyebrow">Motion deblurring benchmark</p>
-    <div class="lockup">{{logo_hero}}<h1 class="wordmark"><span class="smear">deblurring</span> is solved?</h1></div>
+    <h1 class="wordmark"><span class="sr">d</span>{{logo_hero}}<span class="smear">eblurring</span> is solved?</h1>
     <p class="authors">{{authors_html}}</p>
     <p class="lede">Motion deblurring methods with released weights, run with every released checkpoint on {{n_sets}} test sets under one protocol and scored frame by frame.</p>
     <p class="meta"><b>{{n_methods}}</b> methods &middot; <b>{{n_rows}}</b> variants &middot; <b>{{n_sets}}</b> test sets &middot; <b>{{frames}}</b> test frames &middot; {{year0}}&ndash;{{year1}}</p>

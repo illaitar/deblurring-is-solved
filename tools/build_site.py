@@ -193,9 +193,11 @@ else:
 # ---------------------------------------------------------------- the mark
 # site/logo-inline.svg takes its colours from the page's CSS variables (it follows the theme button); __ID__ keeps the
 # filter ids of its two copies apart. site/logo.svg, logo-dark.svg (README) and favicon.svg are copied to docs/.
-_lg = (ROOT / "site" / "logo-inline.svg").read_text(encoding="utf-8") if (ROOT / "site" / "logo-inline.svg").exists() else ""
-FACTS["logo_bar"] = _lg.replace("__ID__", "lb")
-FACTS["logo_hero"] = _lg.replace("__ID__", "lh")
+# The d of both wordmarks is the real d of Inter Tight (600 in the bar, 700 in the title) with the shake and the iris
+# drawn on it: site/dletter-<weight>.svg, made by logo/glyph_d.py from the font files the site loads.
+_dl = lambda w: (ROOT / "site" / f"dletter-{w}.svg").read_text(encoding="utf-8") if (ROOT / "site" / f"dletter-{w}.svg").exists() else ""  # noqa: E731
+FACTS["logo_bar"] = _dl(600).replace("__ID__", "lb")
+FACTS["logo_hero"] = _dl(700).replace("__ID__", "lh")
 
 # ---------------------------------------------------------------- dataset cards
 # Static facts and citations: site/datasets.json (curated from the papers and dataset pages, see datasets_sources.json).
@@ -264,7 +266,7 @@ if COLLAGE.is_dir():
         shutil.copyfile(p, out / "collage" / p.name)
 (out / "index.html").write_text(page, encoding="utf-8")
 (out / ".nojekyll").write_text("", encoding="utf-8")
-for name in ("logo.svg", "logo-dark.svg", "favicon.svg"):
+for name in ("logo.svg", "logo-dark.svg", "favicon.svg", "wordmark.svg", "wordmark-dark.svg"):
     if (ROOT / "site" / name).exists():
         shutil.copyfile(ROOT / "site" / name, out / name)
 if PG:                                   # the progress chart of the README, one file per GitHub theme
