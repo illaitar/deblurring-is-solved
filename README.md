@@ -16,8 +16,6 @@
 </p>
 
 <!-- progress:start (tools/build_site.py writes this block; edit the script, not the text) -->
-<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/dashboard-dark.svg"><img src="docs/dashboard.svg" width="780" alt="13,377 of 18,760 measurements done"></picture></p>
-
 <p align="center"><a href="https://github.com/illaitar/deblurring-is-solved/stargazers"><img src="https://img.shields.io/github/stars/illaitar/deblurring-is-solved?style=flat&amp;label=stars" alt="GitHub stars"></a></p>
 
 <p align="center"><b>13,377 of 18,760 measurements done (71 %)</b> &nbsp;&middot;&nbsp; one measurement = a method variant on a test set with a metric &nbsp;&middot;&nbsp; 96 methods, 268 variants, 8 test sets, 10 metrics, as of 2026-11-24</p>
@@ -25,17 +23,35 @@
 
 <p align="center">
   <a href="#leaderboard">Leaderboard</a> &nbsp;&middot;&nbsp;
+  <a href="DBIS.md">DBIS models</a> &nbsp;&middot;&nbsp;
   <a href="docs/leaderboard.csv">All results (CSV)</a> &nbsp;&middot;&nbsp;
   <a href="PROTOCOL.md">Protocol</a> &nbsp;&middot;&nbsp;
   <a href="METRICS.md">Metrics</a> &nbsp;&middot;&nbsp;
   <a href="WEIGHTS.md">Weights</a>
 </p>
 
+## DBIS and DBISF
+
+Our re-implementations of benchmark methods, in the package [`dbis/`](dbis) ([DBIS.md](DBIS.md)). **DBIS** gives the
+authors' outputs from one file of plain PyTorch and a safetensors file. **DBISF** is faster and lighter and stays
+within 0.01 dB of the authors' mean PSNR.
+
+| Model | Weights | Load | ms per 720p frame | GoPro PSNR, dB |
+|---|---:|---:|---:|---:|
+| NAFNet-64, authors' code | 272 MB | 3.06 s | 34.9 | 33.7103 |
+| DBIS-NAFNet-64 | 271 MB | 0.70 s | 33.5 | 33.7103 |
+| DBISF-NAFNet-64 | 76 MB | 0.83 s | 26.6 | 33.7103 |
+
+```python
+import dbis                               # weights: python -m dbis.convert NAFNet-64 NAFNet-GoPro-width64.pth
+net = dbis.load("DBISF-NAFNet-64")
+```
+
 ## Leaderboard
 
 <!-- generated:start (tools/build_site.py writes this block; edit the script, not the text) -->
 > [!NOTE]
-> Numbers as of 2026-11-24: 267 of 268 variants scored on all their sets (six for image methods, four for video methods), 0 on some. GoPro-trained weights (other training sets are on the site), PSNR in dB (RealBlur: official ECC-aligned PSNR), sorted by PSNR. The full table is in [`docs/leaderboard.csv`](docs/leaderboard.csv) and on the [interactive leaderboard](https://illaitar.github.io/deblurring-is-solved/).
+> Numbers as of 2026-11-25: 267 of 268 variants scored on all their sets (six for image methods, four for video methods), 0 on some. GoPro-trained weights (other training sets are on the site), PSNR in dB (RealBlur: official ECC-aligned PSNR), sorted by PSNR. The full table is in [`docs/leaderboard.csv`](docs/leaderboard.csv) and on the [interactive leaderboard](https://illaitar.github.io/deblurring-is-solved/).
 
 ### GoPro
 

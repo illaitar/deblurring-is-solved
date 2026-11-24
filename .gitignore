@@ -2,6 +2,7 @@ weights/**/*.safetensors
 weights/**/*.pth
 weights/**/*.pt
 weights/**/*.ckpt
+weights/dbis/
 outputs/
 *.mkv
 *.part
