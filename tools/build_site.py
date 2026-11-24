@@ -36,6 +36,11 @@ TRAIN_LABEL = {"GoPro": "GoPro", "AiO-mix": "all-in-one mix", "GoPro+DVD+NFS": "
                "GoProBSDBRealBlurR": "GoPro + BSD-B + RealBlur-R", "GoProRealBlurR": "GoPro + RealBlur-R",
                "GoProRealBlur": "GoPro + RealBlur (inferred, not stated by the authors)",
                "REDSjpeg": "REDS with JPEG (NTIRE 2021)", "BSD": "BSD (exposure not stated)"}
+# The "Trained on" filter of the site offers single datasets only. Every exact training label belongs to at most one of
+# them. A checkpoint trained on a mix of sets, or on a set that is not listed, has no group and shows under "any set".
+TRAIN_GROUP = {"GoPro": "GoPro", "REDS": "REDS", "REDSjpeg": "REDS", "REDS_ours": "REDS", "BSD": "BSD", "BSD1": "BSD",
+               "BSD2": "BSD", "BSD3": "BSD", "DVD": "DVD", "RealBlurJ": "RealBlur", "RealBlurR": "RealBlur", "RealBlur": "RealBlur"}
+GROUP_ORDER = ["GoPro", "REDS", "BSD", "DVD", "RealBlur"]
 # (row, test set) whose test clips were part of the checkpoint's training data: the REDS models of BasicSR (EDVR) and
 # VRT 007 were trained on REDS train + val without REDS4, and our REDS test set is the official val split.
 SEEN = {("EDVR-REDS", "reds_val"), ("VRT@REDS", "reds_val")}
@@ -114,7 +119,8 @@ for r in master:
         "key": r["key"], "name": r["name"], "variant": r["variant"], "task": r["task"],
         "family": r["cluster"], "year": int(r["year"]) if str(r["year"]).isdigit() else None,
         "venue": r["venue"] if r["venue"] not in ("-", "unknown") else "",
-        "train": TRAIN_LABEL.get(r["train"], r["train"]), "tr": r["train"], "gopro_trained": r["train"] == "GoPro",
+        "train": TRAIN_LABEL.get(r["train"], r["train"]), "tr": r["train"], "tg": TRAIN_GROUP.get(r["train"], ""),
+        "gopro_trained": r["train"] == "GoPro",
         "dom": IN_DOMAIN.get(r["train"], ""),
         "params": num(r["params_M"], 3), "gmac": num(r["gmac"], 1), "ms": num(r["ms_720p"], 2), "s": {},
     }
@@ -195,7 +201,7 @@ data = {
     "seq": seq_names, "seqInput": {ds: [round(seq_in[ds][s], 3) if s in seq_in.get(ds, {}) else None
                                         for s in seq_names[ds]] for ds in SETS},
     "rows": rows, "extra": sorted(iqa_have), "ref": iqa_ref, "videoSets": VIDEO_SETS,
-    "trains": sorted({(r["tr"], r["train"]) for r in rows}, key=lambda t: (t[0] != "GoPro", t[1])),
+    "trainGroups": [g for g in GROUP_ORDER if g != "GoPro" and any(r["tg"] == g for r in rows)],
 }
 
 # ---------------------------------------------------------------- page

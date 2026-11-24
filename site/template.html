@@ -361,7 +361,7 @@ table.prof .inv { color: #ffffff; }
         <select id="fam"><option value="">All</option></select>
       </label>
       <label class="sel" for="tr">Trained on
-        <select id="tr"><option value="gopro">GoPro</option><option value="dom">the test set</option><option value="any">any set</option></select>
+        <select id="tr"><option value="gopro">GoPro</option><option value="dom">the test set</option><option value="any">any set or mix</option></select>
       </label>
       <label class="chk"><input type="checkbox" id="partial"> unfinished runs</label>
       <span class="spacer"></span>
@@ -577,7 +577,7 @@ table.prof .inv { color: #ffffff; }
     if (ST.tr === "gopro") return r.gopro_trained;
     if (ST.tr === "any") return true;
     if (ST.tr === "dom") return r.dom === ST.ds;
-    return r.tr === ST.tr;
+    return "g:" + r.tg === ST.tr;
   }
   function visible() {
     var q = ST.q.trim().toLowerCase();
@@ -649,7 +649,9 @@ table.prof .inv { color: #ffffff; }
   Array.from(new Set(ROWS.map(function (r) { return r.family; }))).sort().forEach(function (f) { fam.append(h("option", { value: f }, f)); });
   fam.addEventListener("change", function () { ST.fam = fam.value; renderTable(); drawPareto(); });
   var trSel = document.getElementById("tr");
-  (D.trains || []).forEach(function (t) { if (t[0] !== "GoPro") trSel.append(h("option", { value: t[0] }, t[1])); });
+  /* single datasets only: a checkpoint trained on a mix of sets shows under "any set or mix", with its exact label in the row */
+  var domOpt = trSel.querySelector('option[value="dom"]');
+  (D.trainGroups || []).forEach(function (g) { trSel.insertBefore(h("option", { value: "g:" + g }, g), domOpt); });
   trSel.addEventListener("change", function () { ST.tr = trSel.value; ST.open = {}; renderTable(); drawPareto(); });
   [["realblur_j", "in-rbj"], ["realblur_r", "in-rbr"]].forEach(function (p) { var e = document.getElementById(p[1]); if (e && IN[p[0]] != null) e.textContent = IN[p[0]].toFixed(2); });
   document.getElementById("partial").addEventListener("change", function (e) { ST.partial = e.target.checked; renderTable(); drawPareto(); });
