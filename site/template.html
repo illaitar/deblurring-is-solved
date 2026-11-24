@@ -144,18 +144,28 @@ a.tile:hover { border-color: var(--ink-40); }
 /* method cloud right of the title: every method with a GoPro score, sized by its rank; the GoPro Pareto front lights up in turn */
 .cloud { position: relative; min-width: 0; height: 21rem; }
 .cloud-in { position: absolute; inset: 0 0 2.6rem 0; }
-.cloud-in span { position: absolute; white-space: nowrap; font: 500 var(--fs)/1.05 var(--display); letter-spacing: -.01em; color: var(--c);
-  opacity: .5; cursor: pointer; will-change: translate;
-  transition: opacity .55s cubic-bezier(.4, 0, .2, 1), scale .7s cubic-bezier(.22, 1, .36, 1), text-shadow .55s cubic-bezier(.4, 0, .2, 1); }
-.cloud-in span.front { font-weight: 600; opacity: .78; }
-.cloud.hl .cloud-in span { opacity: .22; }
-.cloud.hl .cloud-in span.on { opacity: 1; scale: 1.22; z-index: 2; text-shadow: 0 0 .8em color-mix(in srgb, var(--c) 40%, transparent); }
+.cloud-in > span { position: absolute; white-space: nowrap; font: 500 var(--fs)/1.05 var(--display); letter-spacing: -.01em; color: var(--c);
+  opacity: .5; cursor: pointer;
+  transition: opacity .8s cubic-bezier(.45, 0, .55, 1), scale .8s cubic-bezier(.45, 0, .55, 1), text-shadow .8s cubic-bezier(.45, 0, .55, 1); }
+/* every name drifts on its own small path: three slow back-and-forth motions (left-right, up-down, nearer-farther) with
+   periods of their own, so the path is a smooth curve that never repeats exactly; the layout keeps room for the whole path */
+.cloud-in > span > span { display: inline-block; will-change: transform;
+  animation: cl-x var(--tx) ease-in-out var(--dx) infinite alternate, cl-y var(--ty) ease-in-out var(--dy) infinite alternate,
+    cl-z var(--tz) ease-in-out var(--dz) infinite alternate; }
+@keyframes cl-x { from { translate: calc(-1 * var(--ax)) 0; } to { translate: var(--ax) 0; } }
+@keyframes cl-y { from { transform: translateY(calc(-1 * var(--ay))); } to { transform: translateY(var(--ay)); } }
+@keyframes cl-z { from { scale: calc(1 - var(--az)); } to { scale: calc(1 + var(--az)); } }
+.cloud.off .cloud-in > span > span { animation-play-state: paused; }
+.cloud-in > span.front { font-weight: 600; opacity: .78; }
+/* the highlight: the lit name loses its contrast slowly, then the next one gains it */
+.cloud.hl .cloud-in > span { opacity: .22; }
+.cloud.hl .cloud-in > span.on { opacity: 1; scale: 1.22; z-index: 2; text-shadow: 0 0 .8em color-mix(in srgb, var(--c) 40%, transparent); }
 .cloud-cap { position: absolute; left: 0; right: 0; bottom: 0; margin: 0; min-height: 2.4rem; font-size: var(--t-xs); line-height: 1.45; color: var(--ink-56);
-  transition: opacity .28s cubic-bezier(.4, 0, .2, 1); }
+  transition: opacity .4s cubic-bezier(.45, 0, .55, 1); }
 .cloud-cap.out { opacity: 0; }
 .cloud-cap b { color: var(--ink); font-weight: 600; }
-@media (max-width: 60rem) { .cloud { height: 15rem; } }
-@media (prefers-reduced-motion: reduce) { .cloud-in span, .cloud-cap { transition: none; } }
+@media (max-width: 60rem) { .cloud { height: 17rem; } }
+@media (prefers-reduced-motion: reduce) { .cloud-in > span > span { animation: none; } .cloud.hl .cloud-in > span.on { scale: none; } }
 .btn {
   display: inline-flex; align-items: center; gap: .45rem; height: 2.5rem; padding: 0 1.1rem; border-radius: var(--pill);
   border: 1px solid var(--ink-16); background: var(--paper); color: var(--ink);
@@ -1120,25 +1130,34 @@ table.prof .inv { color: var(--paper); }
       var order = items.filter(function (it) { return inFront[it.name]; }).concat(items.filter(function (it) { return !inFront[it.name]; }));
       order.forEach(function (it) {
         var i = rank[it.name];
-        var fs = 11 + 11 * Math.pow(1 - i / Math.max(1, n - 1), 1.7);
+        var fs = 10.5 + 10.5 * Math.pow(1 - i / Math.max(1, n - 1), 1.7);
         if (inFront[it.name]) fs = Math.max(fs, 14);
-        var el = document.createElement("span");
-        el.textContent = it.name;
+        var el = document.createElement("span"), inner = document.createElement("span");
+        inner.textContent = it.name;
+        el.append(inner);
         el.title = it.name + ": " + it.psnr.toFixed(2) + " dB on GoPro, " + ms(it.ms) + " per frame";
         el.style.setProperty("--fs", fs.toFixed(1) + "px");
         el.style.setProperty("--c", it.task === "video" ? "var(--vid)" : "var(--img)");
+        /* its own small trajectory: left-right, up-down and nearer-farther, each a slow back-and-forth with a period of its own */
+        var ax = 4 + 2.5 * rnd(i + 3), ay = 2.5 + 1.5 * rnd(i + 5), az = .04 + .03 * rnd(i + 11);
+        var tx = 3.4 + 2 * rnd(i + 13), ty = 2.8 + 2 * rnd(i + 17), tz = 4.2 + 3 * rnd(i + 19);
+        [["--ax", ax.toFixed(1) + "px"], ["--ay", ay.toFixed(1) + "px"], ["--az", az.toFixed(3)],
+         ["--tx", tx.toFixed(2) + "s"], ["--ty", ty.toFixed(2) + "s"], ["--tz", tz.toFixed(2) + "s"],
+         ["--dx", (-tx * rnd(i + 23)).toFixed(2) + "s"], ["--dy", (-ty * rnd(i + 29)).toFixed(2) + "s"], ["--dz", (-tz * rnd(i + 31)).toFixed(2) + "s"]]
+          .forEach(function (p) { inner.style.setProperty(p[0], p[1]); });
         if (inFront[it.name]) el.className = "front";
         el.style.visibility = "hidden";
         inn.append(el);
         var w = el.offsetWidth, h = el.offsetHeight, ok = false, x = 0, y = 0;
-        /* a name of the front grows when it lights up, so it keeps that much room around it */
-        var px = inFront[it.name] ? w * .11 : 0, py = inFront[it.name] ? h * .11 : 0;
+        /* room for the whole trajectory, and for the growth of a lit name of the front, so no two names ever touch */
+        var grow = inFront[it.name] ? .11 : 0, g = 1 + 2 * grow;
+        var px = ax * g + w * (az / 2 + grow), py = ay * g + h * (az / 2 + grow);
         for (var k = 0; k < 1400 && !ok; k++) {
           var t = k * 0.32, rr = 1.9 * t;
           x = W / 2 + rr * Math.cos(t) * (W / H) - w / 2;
           y = H / 2 + rr * Math.sin(t) - h / 2;
           if (x - px < 0 || y - py < 0 || x + w + px > W || y + h + py > H) continue;
-          ok = placed.every(function (p) { return x + w + px + 7 < p[0] || p[0] + p[2] + 7 < x - px || y + h + py + 4 < p[1] || p[1] + p[3] + 4 < y - py; });
+          ok = placed.every(function (p) { return x + w + px + 3 < p[0] || p[0] + p[2] + 3 < x - px || y + h + py + 2 < p[1] || p[1] + p[3] + 2 < y - py; });
         }
         if (!ok) { el.remove(); return; }
         placed.push([x - px, y - py, w + 2 * px, h + 2 * py]);
@@ -1147,18 +1166,20 @@ table.prof .inv { color: var(--paper); }
         el.style.visibility = "";
         el.addEventListener("click", function () { DBIS.sel(it.key); var lb = document.getElementById("leaderboard"); if (lb) lb.scrollIntoView(); });
         el.addEventListener("mouseenter", function () { light(it); });
-        spans.push({ el: el, it: it, cx: x + w / 2, cy: y + h / 2,
-                     f1: .35 + .4 * rnd(i + 3), f2: .3 + .4 * rnd(i + 5), p1: 6.28 * rnd(i + 7), p2: 6.28 * rnd(i + 9) });
+        spans.push({ el: el, it: it });
       });
       cur = null;
+      /* the highlight walks only over the names of the front that fit in the box */
+      shown = front.filter(function (f) { return spans.some(function (s) { return s.it.name === f.name; }); });
     }
+    var shown = [];
     /* the highlight hands over: the lit name and the caption fade out, then the next name lights up and its caption fades in */
     var cur = null, pendOn = null;
     function light(it) {
       if (cur === it.name) return;
       cur = it.name;
       clearTimeout(pendOn);
-      var d = reduce || !box.classList.contains("hl") ? 0 : 280;
+      var d = !box.classList.contains("hl") ? 0 : 500;
       spans.forEach(function (s) { s.el.classList.remove("on"); });
       box.classList.add("hl");
       if (d) cap.classList.add("out");
@@ -1173,31 +1194,14 @@ table.prof .inv { color: var(--paper); }
     box.addEventListener("mouseenter", function () { hover = true; });
     box.addEventListener("mouseleave", function () { hover = false; });
     function tick() {
-      if (!hover && front.length && !document.hidden) { light(front[idx % front.length]); idx++; }
+      if (!hover && shown.length && !document.hidden) { light(shown[idx % shown.length]); idx++; }
     }
-    /* the names float like particles in water: a slow flow field shared by neighbours (so they drift together and do not
-       collide) plus a small motion of each name; paused while the cloud is off screen and for reduced motion */
-    var t0 = performance.now(), running = false;
-    function frame(now) {
-      var t = (now - t0) / 1000;
-      for (var j = 0; j < spans.length; j++) {
-        var s = spans[j];
-        var dx = 3.2 * Math.sin(.011 * s.cy + .62 * t) + 1.6 * Math.sin(.017 * s.cx - .41 * t + 1.3) + 1.1 * Math.sin(s.f1 * t + s.p1);
-        var dy = 2.6 * Math.sin(.013 * s.cx + .53 * t + 2.1) + 1.3 * Math.sin(.009 * s.cy - .67 * t) + .9 * Math.sin(s.f2 * t + s.p2);
-        s.el.style.translate = dx.toFixed(2) + "px " + dy.toFixed(2) + "px";
-      }
-      if (running) requestAnimationFrame(frame);
-    }
-    function run(on) {
-      if (on && !running && !reduce) { running = true; requestAnimationFrame(frame); }
-      if (!on) running = false;
-    }
-    if ("IntersectionObserver" in window) new IntersectionObserver(function (es) { run(es[0].isIntersecting); }).observe(box);
-    else run(true);
+    /* the drift is a CSS animation (smooth on the compositor); it pauses while the cloud is off screen */
+    if ("IntersectionObserver" in window) new IntersectionObserver(function (es) { box.classList.toggle("off", !es[0].isIntersecting); }).observe(box);
     layout();
     tick();
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { layout(); idx = Math.max(0, idx - 1); tick(); });
-    setInterval(tick, reduce ? 6000 : 2100);
+    setInterval(tick, reduce ? 6000 : 2400);
     var pend = null;
     window.addEventListener("resize", function () {
       clearTimeout(pend);
