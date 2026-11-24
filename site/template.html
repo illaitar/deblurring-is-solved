@@ -128,7 +128,6 @@ svg.dletter { display: inline-block; }    /* size, baseline and spacing come wit
 .lede { font-size: 1.1rem; line-height: 1.55; color: var(--ink-72); max-width: 42rem; }
 .meta { font: 400 var(--t-s)/1.5 var(--sans); color: var(--ink-56); font-variant-numeric: tabular-nums; }
 .meta b { color: var(--ink); font-weight: 600; }
-.cta { display: flex; flex-wrap: wrap; gap: .5rem; padding-top: .25rem; }
 /* key numbers as tiles (tools/progress.py); the stars are refreshed from the GitHub API by the page */
 .dash { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: .6rem; margin-top: .6rem; }
 @media (max-width: 68rem) { .dash { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
@@ -415,11 +414,6 @@ table.prof .inv { color: var(--paper); }
     <h1 class="wordmark"><span class="sr">d</span>{{logo_hero}}<span class="smear">eblurring</span> is solved?</h1>
     <p class="authors">{{authors_html}}</p>
     <p class="lede">Motion deblurring methods with released weights, run with every released checkpoint on {{n_sets}} test sets under one protocol and scored frame by frame.</p>
-    <p class="cta">
-      <a class="btn solid" href="#leaderboard"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 13h3V7H2zm4.5 0h3V3h-3zM11 13h3V9h-3z" fill="currentColor"/></svg>Leaderboard</a>
-      <a class="btn" href="#pareto"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 13.5h11M2.5 13.5v-11M4 11h3V7.5h3V5h3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>Pareto front</a>
-      <a class="btn" href="leaderboard.csv"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8m0 0L5 7m3 3 3-3M3 13h10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Results as CSV</a>
-    </p>
     </div>
     <div class="cloud" id="cloud" aria-hidden="true"><div class="cloud-in" id="cloud-in"></div><p class="cloud-cap" id="cloud-cap"></p></div>
     {{progress_html}}
@@ -468,7 +462,8 @@ table.prof .inv { color: var(--paper); }
     </div>
 
     <div class="blk" id="leaderboard" aria-label="Leaderboard">
-    <div class="controls"><h2 id="lb-title">Leaderboard</h2></div>
+    <div class="controls"><h2 id="lb-title">Leaderboard</h2><span class="spacer"></span>
+      <a class="btn small" href="leaderboard.csv"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8m0 0L5 7m3 3 3-3M3 13h10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Results as CSV</a></div>
     <div class="tablewrap" role="tabpanel" id="lb-panel"><table class="lb" id="lb"><thead></thead><tbody></tbody></table></div>
     <button type="button" class="btn more" id="more" hidden></button>
     <div class="lb-foot">
