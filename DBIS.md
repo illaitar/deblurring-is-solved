@@ -2,8 +2,8 @@
 
 Methods of the benchmark re-implemented in this repository, in the package `dbis/`.
 
-- **dbis-*method*** is our code and weight file for the authors' network: one file of plain PyTorch per architecture,
-  no training framework, weights as safetensors. It gives the same outputs as the authors' code: the largest
+- **dbis-*method*** is our code and weight file for the authors' network: plain PyTorch in one folder per method,
+  every folder with the same layout (below), no training framework, weights as safetensors. It gives the same outputs as the authors' code: the largest
   difference of an output value is about 1e-5 and the mean PSNR on the test set is equal to the fourth decimal.
 - **dbisf-*method*** is our fast and light version of it. Its mean PSNR is at most 0.05 dB below the authors' code on
   every test set of the benchmark; the tables below give every set.
@@ -113,11 +113,40 @@ dbisf-BSSTNet takes 18 GiB of GPU memory at 1280x720 (the authors' code 9.4 GiB,
 36 GiB). On a smaller card give fewer patches per call, `net.restore(frames, batch=4)` for example; it changes only
 float rounding.
 
+## Layout of a method and its encoder
+
+Every method has the same folder, `dbis/<method>/`:
+
+```
+dbis/<method>/
+  __init__.py     credits and licenses; exports the network, its encoder and fold
+  net.py          the full network (restore() comes from dbis/restore.py) and fold(), which turns the authors'
+                  checkpoint into our weights
+  encoder.py      the encoder: the full network subclasses it, so its weights keep their names and load on their own
+  blocks/         the building blocks, one file per part
+```
+
+The encoder of a model loads alone from the model's weight file, without the rest of the network:
+
+```python
+enc = dbis.load_encoder("dbisf-NAFNet-64")   # or any other model
+feats = enc(x)                              # x: [N, 3, H, W] in [0, 1] -> a list of feature maps, finest first
+enc.feature_info                            # channels, reduction and source module of each (as timm's features_only)
+```
+
+| Model | Encoder | Features (channels at reduction) | Parameters |
+|---|---|---|---:|
+| NAFNet-64 | intro conv, the four encoder stages, the middle blocks | 64 at 1, 128 at 2, 256 at 4, 512 at 8, 1024 at 16 | 62.5 M of 67.8 M |
+| BSSTNet | the per-frame encoder of BSST, before the temporal propagation | 64 at 1, 64 at 2, 192 at 4 | 1.9 M of 43.7 M |
+
+NAFNet's encoder pads the input to a multiple of 16 as the network does; BSSTNet's needs H and W multiples of 4. Both
+are the same modules with the same weights as in the full network (checked: equal features).
+
 ## What changed
 
 **dbis-NAFNet-64**
-- The network is one file, [`dbis/nafnet.py`](dbis/nafnet.py) (NAFBlock, U-Net, TLC), instead of three files inside
-  the basicsr package. Its import takes 4 ms instead of 1.6 s.
+- The network is [`dbis/nafnet/`](dbis/nafnet) (network, encoder, NAFBlock with TLC) instead of three files inside the
+  basicsr package. Its import takes 6 ms instead of 1.6 s.
 - The scale and shift of both LayerNorms of a block are folded into the next 1x1 conv, the residual scales beta and
   gamma into conv3 and conv5. The folding is exact up to float rounding and removes 216 of 664 tensors.
 - TLC (Chu et al., ECCV 2022) averages the channel-attention input over a window 1.5 times the training crop. The
@@ -138,8 +167,8 @@ float rounding.
 
 **dbis-BSSTNet**
 - BSST, its RAFT optical flow and the authors' inference (flows on half-size frames, then BSST on 256 px patches with
-  64 px overlap under fp16 autocast) are one file, [`dbis/bsst.py`](dbis/bsst.py), instead of the basicsr package with
-  mmcv. With one patch per BSST call, as the authors, the flows, every patch and whole windows are bit for bit the
+  64 px overlap under fp16 autocast) are [`dbis/bsst/`](dbis/bsst), plain PyTorch, instead of the basicsr package
+  with mmcv. With one patch per BSST call, as the authors, the flows, every patch and whole windows are bit for bit the
   authors' in fp16 and in fp32 (checked on two GoPro windows); on the four test sets dbis-BSSTNet gives the authors'
   outputs, black tiles included.
 - The checkpoint holds modules that the forward pass never calls (8.3 M values); they are dropped, 175 MB instead of
@@ -198,6 +227,7 @@ the frames without black tiles (it must stay above −0.05 dB).
 **Credits.** BSSTNet (Zhang, Xie and Yao, CVPR 2024; MIT License stated in its README) reuses code of ProPainter
 (Zhou et al., ICCV 2023; S-Lab License 1.0, non-commercial use only) for its sparse transformer and flow completion,
 of Shift-Net (Li et al., CVPR 2023), of RAFT (Teed and Deng, ECCV 2020; BSD 3-Clause) and of BasicVSR++ and RVRT.
-`dbis/bsst.py` re-implements these parts; its header lists what comes from where.
+[`dbis/bsst/`](dbis/bsst) re-implements these parts; its `__init__.py` lists what comes from where, and the header of
+every file in `blocks/` names its source and license.
 
 Not in the leaderboard yet: dbis and dbisf are not rows of the tables.

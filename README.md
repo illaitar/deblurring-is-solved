@@ -33,7 +33,7 @@
 ## dbis and dbisf
 
 Our re-implementations of benchmark methods, in the package [`dbis/`](dbis) ([DBIS.md](DBIS.md)). **dbis** gives the
-authors' outputs from one file of plain PyTorch and a safetensors file. **dbisf** is faster and lighter: its mean PSNR
+authors' outputs from plain PyTorch (one folder per method: network, encoder, blocks) and a safetensors file. **dbisf** is faster and lighter: its mean PSNR
 is never more than 0.05 dB below the authors' code on any test set (DBIS.md has the tables).
 
 | Model | Weights | Load | Per 720p frame | GoPro PSNR, dB |
@@ -54,6 +54,7 @@ import dbis                               # weights: python -m dbis.convert NAFN
 net = dbis.load("dbisf-NAFNet-64")        # or "dbisf-BSSTNet" (python -m dbis.convert BSSTNet BSST_gopro.pth raft-things.pth)
 out = net.restore(frames)                 # the same call for every model; options: tile, tile_overlap, window, batch,
                                           # precision, compile, out (DBIS.md)
+enc = dbis.load_encoder("dbisf-NAFNet-64")  # the encoder alone: enc(x) -> feature maps, enc.feature_info
 ```
 
 ## Leaderboard

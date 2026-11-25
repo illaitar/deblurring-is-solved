@@ -17,7 +17,8 @@ Options (None keeps the model's own setting; net.defaults lists them):
   tile_overlap  pixels shared by neighbouring tiles: int or (rows, columns). The outputs are averaged where tiles
                 overlap (BSSTNet: the authors' blending, which first drops overlap / 2 px at every inner tile border)
   window        video models: frames per window; windows overlap by 4 frames and every frame is taken from a window
-                where it is at least 2 frames from the ends, as the benchmark runs the authors' code. Image models: no
+                where it is at least 2 frames from the ends, as the benchmark runs the authors' code (so at least 6
+                frames). Image models: no
   batch         tiles per network call (image models without tiles: frames per call): memory against speed
   precision     "fp32" or "fp16" (autocast)
   compile       False, True or a torch.compile mode: compile on the first call (BSSTNet: its heavy blocks one by one,
@@ -66,6 +67,8 @@ class Restorer:
             raise ValueError(f"out: 'float' or 'uint8', not {out!r}")
         if self.kind == "image" and window is not None:
             raise ValueError(f"{type(self).__name__} is an image model: window does not apply")
+        if self.kind == "video" and (not isinstance(o["window"], int) or o["window"] < 6):
+            raise ValueError(f"window: at least 6 frames (windows overlap by 4), not {o['window']!r}")
         if o["tile"] is not None:
             th, tw = _pair(o["tile"])
             oy, ox = _pair(o["tile_overlap"])

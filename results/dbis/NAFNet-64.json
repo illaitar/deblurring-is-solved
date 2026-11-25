@@ -1,8 +1,8 @@
 {
  "models": {
   "authors": "NAFNetLocal of megvii-research/NAFNet (TLC on, their GoPro test configuration), NAFNet-GoPro-width64.pth",
-  "dbis": "dbis-NAFNet-64 (dbis/nafnet.py, tlc=exact, dbis-NAFNet-64.safetensors)",
-  "dbisf": "dbisf-NAFNet-64 (dbis/nafnet.py, tlc=fast, dbisf-NAFNet-64.wpk: weights rounded per output channel to std / 48)",
+  "dbis": "dbis-NAFNet-64 (dbis/nafnet/, tlc=exact, dbis-NAFNet-64.safetensors)",
+  "dbisf": "dbisf-NAFNet-64 (dbis/nafnet/, tlc=fast, dbisf-NAFNet-64.wpk: weights rounded per output channel to std / 48)",
   "dbisf_q128": "the first dbisf weight file (24.11): one rounding step std / 128 per tensor, 76 MB"
  },
  "date": "2026-11-25",

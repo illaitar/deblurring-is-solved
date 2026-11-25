@@ -1,8 +1,8 @@
 {
  "models": {
   "authors": "BSST + RAFT of huicongzhang/BSSTNet (ModelBSST.get_bi_flows + test_by_patch as runs/baselines/bsstnet/run_bsst.py runs them: 48-frame windows, 256 px patches, 64 px overlap, fp16 autocast), BSST_gopro.pth + raft-things.pth",
-  "dbis": "dbis-BSSTNet (dbis/bsst.py, patch_batch=1, dbis-BSSTNet.safetensors): one patch per BSST call as the authors",
-  "dbisf": "dbisf-BSSTNet (dbis/bsst.py: window=24, patch_batch=14, stage_batch=4, nan_fallback, flow_cache, tf32, sdpa; compile_blocks() for the timing; dbisf-BSSTNet.wpk: weights rounded per output channel to std / 48)",
+  "dbis": "dbis-BSSTNet (dbis/bsst/, patch_batch=1, dbis-BSSTNet.safetensors): one patch per BSST call as the authors",
+  "dbisf": "dbisf-BSSTNet (dbis/bsst/: window=24, patch_batch=14, stage_batch=4, nan_fallback, flow_cache, tf32, sdpa; compile_blocks() for the timing; dbisf-BSSTNet.wpk: weights rounded per output channel to std / 48)",
   "dbisf_first": "the first dbisf of 25.11: 48-frame windows, patch_batch=14, nan_fallback, the same weight file, eager"
  },
  "date": "2026-11-25",
@@ -18,7 +18,7 @@
    "O32_1": 36.17983,
    "O32_14": 36.17988
   },
-  "keys": "A = authors, O = dbis/bsst.py; 16 = fp16 autocast, 32 = fp32; _N = patches per BSST call"
+  "keys": "A = authors, O = dbis/bsst/; 16 = fp16 autocast, 32 = fp32; _N = patches per BSST call"
  },
  "quality": {
   "run": "GoPro weights on the four video test sets, windows as the leaderboard's run of the authors' code (48 frames, 4 overlap, every frame written; dbisf: 24 frames, 4 overlap), 8-bit outputs, PSNR against the sharp frame; non-finite values become 0 as in the protocol. dbisf with its heavy blocks compiled as timed; dbisf_eager without",

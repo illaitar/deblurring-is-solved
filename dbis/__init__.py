@@ -14,6 +14,11 @@ The weight files are made locally from the authors' checkpoint:
     net = dbis.load("dbisf-NAFNet-64")                            # eval mode, on the GPU
     out = net.restore(frames)                                     # the same call for every model (dbis/restore.py):
     out = net.restore(frames, tile=512, precision="fp16")         # frames [T, 3, H, W], [B, T, 3, H, W] or [3, H, W]
+    enc = dbis.load_encoder("dbisf-NAFNet-64")                    # the encoder alone: enc(x) -> list of feature maps,
+    print(enc.feature_info)                                       # with their channels and reduction
+
+Every method has the same layout, dbis/<method>/: net.py (the full network and fold), encoder.py (its encoder, which
+the full network subclasses, so the encoder's weights keep their names), blocks/ (the building blocks).
 
 Dependencies: torch and numpy (BSSTNet: torchvision too); safetensors for dbis files, zstandard for dbisf files (the
 wpack codec, dbis/wpack.py).
@@ -85,8 +90,8 @@ def build(name, device="meta"):
         return getattr(_module(name), m["cls"])(**m["args"])
 
 
-def load(name, weights_dir=None, device="cuda"):
-    """The network of a model with its weights, in eval mode, on `device`."""
+def _weights(name, weights_dir, device):
+    """The state dict of a model's weight file on `device`."""
     import numpy as np
     import torch
     m = MODELS[name]
@@ -103,6 +108,25 @@ def load(name, weights_dir=None, device="cuda"):
         from . import wpack
         sd = {k: torch.from_numpy(v if v.flags.writeable else np.array(v)).to(device)
               for k, v in wpack.unpack(str(path), threads=8).items()}
+    return sd
+
+
+def load(name, weights_dir=None, device="cuda"):
+    """The network of a model with its weights, in eval mode, on `device`."""
     net = build(name)
-    net.load_state_dict(sd, strict=True, assign=True)
+    net.load_state_dict(_weights(name, weights_dir, device), strict=True, assign=True)
     return net.eval()
+
+
+def load_encoder(name, weights_dir=None, device="cuda"):
+    """The encoder of a model alone (dbis/<method>/encoder.py) with its weights from the model's weight file, in eval
+    mode, on `device`: enc(x) -> a list of feature maps, enc.feature_info their channels and reduction."""
+    import torch
+    m, mod = MODELS[name], _module(name)
+    with torch.device("meta"):
+        enc = getattr(mod, mod.ENCODER)(**m["args"])
+    pre, keys = mod.ENCODER_PREFIX, set(enc.state_dict())
+    sd = {k[len(pre):]: v for k, v in _weights(name, weights_dir, device).items()
+          if k.startswith(pre) and k[len(pre):] in keys}
+    enc.load_state_dict(sd, strict=True, assign=True)
+    return enc.eval()
