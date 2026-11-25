@@ -1,0 +1,550 @@
+{
+ "models": {
+  "authors": "DSTNetPlus_Final of sunny2109/DSTNet-plus (DSTNet+ L: 96 features, 5 kernel blocks, 25 residual blocks) with our patch (ext/DSTNet-plus.patch, frame_chunk), DSTNetPlus_L_gopro.pth, float32",
+  "dbis": "dbis-DSTNetPlus-L (dbis/dstnetplus/, float32, the dynamic conv rounded as the authors' CuPy kernel; dbis-DSTNetPlus-L.safetensors)",
+  "dbisf": "dbisf-DSTNetPlus-L (dbis/dstnetplus/: float16 autocast, the dynamic conv with addcmul, the propagation blocks compiled for the timing, keep=(0, 1) in the harness; dbisf-DSTNetPlus-L.wpk: weights rounded per output channel to std / 128)"
+ },
+ "date": "2026-11-25",
+ "rule": "dbisf: mean PSNR at most 0.05 dB below the authors' code on every test set (25.11); checked also without the 23 BSD frames where the authors' output is broken (4.8 to 13.9 dB)",
+ "exactness": {
+  "dbis": "bit-identical to the authors' code (run_dst.load_net, frame_chunk 10, float32, cudnn.benchmark) on the first 50-frame clip of GoPro test; the authors' code is itself deterministic run to run",
+  "clip": {
+   "frames": 50,
+   "seq": "GOPR0384_11_00 (the first GoPro test sequence), frames 0 to 49",
+   "ours_vs_authors": {
+    "bit_identical": true,
+    "max_abs": 0.0,
+    "mean_abs": 0.0,
+    "share_8bit_values_differing": 0.0
+   },
+   "authors_vs_authors": {
+    "bit_identical": true,
+    "max_abs": 0.0
+   },
+   "psnr": {
+    "authors": 36.73236,
+    "ours": 36.73236
+   },
+   "seconds": {
+    "authors": 13.95,
+    "authors_again": 6.16,
+    "ours": 6.99
+   },
+   "peak_gib": 36.91
+  },
+  "dynamic_conv": {
+   "dynconv_(1, 96, 360, 640)": {
+    "bit_identical": true,
+    "max_abs": 0.0,
+    "scale": 25.990442276000977
+   },
+   "dynconv_(2, 96, 45, 80)": {
+    "bit_identical": true,
+    "max_abs": 0.0,
+    "scale": 20.29905128479004
+   }
+  },
+  "why_float64": "the authors' CuPy kernel adds the nine products with fused multiply-adds; plain addcmul rounds twice and differs by 1 unit in the last place per call, which the 50-frame recurrence grows to 1.4e-3 (PSNR 36.73233 against 36.73236); the product in float64 and one rounding to float32 match it"
+ },
+ "quality": {
+  "run": "GoPro weights on the four video test sets, as the benchmark ran the authors' code: clips of 50 frames that do not overlap (the last one moved back), 8-bit outputs, PSNR against the sharp frame; dbis (bit for bit the authors' code) is the reference; dbisf with its propagation blocks compiled, as timed",
+  "mean_psnr_db": {
+   "gopro": {
+    "frames": 1111,
+    "authors": 35.70778,
+    "dbis": 35.70778,
+    "dbisf": 35.7002,
+    "leaderboard": 35.708
+   },
+   "reds_val": {
+    "frames": 3000,
+    "authors": 27.06894,
+    "dbis": 27.06894,
+    "dbisf": 27.07519,
+    "leaderboard": 27.0686
+   },
+   "bsd2": {
+    "frames": 3000,
+    "authors": 23.25417,
+    "dbis": 23.25417,
+    "dbisf": 23.27321,
+    "leaderboard": 23.2546
+   },
+   "dvd": {
+    "frames": 1000,
+    "authors": 32.03083,
+    "dbis": 32.03083,
+    "dbisf": 32.04384,
+    "leaderboard": 32.0315
+   }
+  },
+  "delta_vs_authors_db": {
+   "gopro": -0.00758,
+   "reds_val": 0.00625,
+   "bsd2": 0.01905,
+   "dvd": 0.01301
+  },
+  "delta_vs_authors_without_broken_db": {
+   "gopro": -0.00758,
+   "reds_val": 0.00625,
+   "bsd2": 0.01397,
+   "dvd": 0.01301
+  },
+  "frames_authors_broken": {
+   "gopro": 0,
+   "reds_val": 0,
+   "bsd2": 23,
+   "dvd": 0
+  },
+  "note": "the leaderboard's numbers come from the same outputs; their last digits differ by up to 0.0007 dB (the leaderboard averages per sequence)"
+ },
+ "latency_ms": {
+  "harness": "eval/adapters/bench_unified.py over the runs/pareto_bench Offline stepper, as the leaderboard: one A100, 1280x720, batch 1, a 27-frame window per output frame (the oldest frame emitted), all on one node (25.11). The authors' code has only mode d (its CuPy kernel has no float16); dbis is timed in mode d, the precision in which it is the authors' code; dbisf in its fastest valid mode, computing only the emitted frame (keep=(0, 1)).",
+  "authors": 3013.7,
+  "dbis": 3445.5,
+  "dbisf": 758.4,
+  "mode_used": {
+   "authors": "d",
+   "dbis": "d",
+   "dbisf": "b"
+  },
+  "peak_mem_gib": {
+   "authors": 18.79,
+   "dbis": 18.79,
+   "dbisf": 12.29
+  },
+  "modes": {
+   "authors": {
+    "c": {
+     "label": "fp16 autocast, eager",
+     "error": "CompileException: /tmp/tmpal4i1a_d/ffc92e12ebdeab708d4c8616812b32a13f10ece7.cubin.cu(6): error: identifier \"None\" is undefined\n  const None* bottom_data, const None* weight_data, None* top_data) {\n   "
+    },
+    "d": {
+     "label": "fp32 eager (TF32 convs allowed)",
+     "median_ms": 3013.7,
+     "n_timed": 50,
+     "peak_mem_gib": 18.79,
+     "check_mean_psnr_db": 34.72396,
+     "valid": true
+    }
+   },
+   "dbis": {
+    "d": {
+     "label": "fp32 eager (TF32 convs allowed)",
+     "median_ms": 3445.5,
+     "n_timed": 43,
+     "peak_mem_gib": 18.79,
+     "check_mean_psnr_db": 35.09697,
+     "valid": true
+    }
+   },
+   "dbisf_keep0": {
+    "b": {
+     "label": "fp16 autocast + compile max-autotune-no-cudagraphs of the propagation blocks",
+     "median_ms": 758.4,
+     "n_timed": 198,
+     "peak_mem_gib": 12.29,
+     "check_mean_psnr_db": 34.74455,
+     "valid": true
+    },
+    "c": {
+     "label": "fp16 autocast, eager",
+     "median_ms": 1138.5,
+     "n_timed": 131,
+     "peak_mem_gib": 12.28,
+     "check_mean_psnr_db": 34.74468,
+     "valid": true
+    },
+    "d": {
+     "label": "fp32 eager (TF32 convs allowed)",
+     "median_ms": 1610.2,
+     "n_timed": 93,
+     "peak_mem_gib": 20.44,
+     "check_mean_psnr_db": 34.74431,
+     "valid": true
+    }
+   }
+  },
+  "leaderboard_authors_ms": 3011.9
+ },
+ "speed_options": {
+  "run": "dst_speed_2511.py: one 27-frame GoPro window on an A100 against dbis (whole window and keep=(0, 1)); dst_sets_2511.py: the four test sets",
+  "one_window": {
+   "f16w": {
+    "what": "float16 weights",
+    "window_s": 3.303,
+    "keep0_s": 1.844,
+    "dbis_window_s": 3.675,
+    "speedup_window": 1.112,
+    "weights_bytes": 24089698,
+    "window_psnr_gt": 36.0388,
+    "window_psnr_gt_dbis": 36.0391
+   },
+   "fast32": {
+    "what": "dynamic conv with plain addcmul (float32)",
+    "window_s": 3.312,
+    "keep0_s": 1.848,
+    "dbis_window_s": 3.676,
+    "speedup_window": 1.11,
+    "weights_bytes": null,
+    "window_psnr_gt": 36.039,
+    "window_psnr_gt_dbis": 36.0391
+   },
+   "fp16": {
+    "what": "float16 autocast",
+    "window_s": 2.235,
+    "keep0_s": 1.222,
+    "dbis_window_s": 3.681,
+    "speedup_window": 1.647,
+    "weights_bytes": null,
+    "window_psnr_gt": 36.039,
+    "window_psnr_gt_dbis": 36.0391
+   },
+   "q128": {
+    "what": "weights per tensor std / 128",
+    "window_s": 3.305,
+    "keep0_s": 1.842,
+    "dbis_window_s": 3.666,
+    "speedup_window": 1.109,
+    "weights_bytes": 16081635,
+    "window_psnr_gt": 36.0589,
+    "window_psnr_gt_dbis": 36.0391
+   },
+   "qc128": {
+    "what": "weights per channel std / 128",
+    "window_s": 3.285,
+    "keep0_s": 1.834,
+    "dbis_window_s": 3.655,
+    "speedup_window": 1.112,
+    "weights_bytes": 16189395,
+    "window_psnr_gt": 36.0565,
+    "window_psnr_gt_dbis": 36.0391
+   },
+   "qc192": {
+    "what": "weights std / 192",
+    "window_s": 3.336,
+    "keep0_s": 1.862,
+    "dbis_window_s": 3.687,
+    "speedup_window": 1.105,
+    "weights_bytes": 17210874,
+    "window_psnr_gt": 36.0487,
+    "window_psnr_gt_dbis": 36.0391
+   },
+   "qc48": {
+    "what": "weights per channel std / 48",
+    "window_s": 3.308,
+    "keep0_s": 1.845,
+    "dbis_window_s": 3.675,
+    "speedup_window": 1.111,
+    "weights_bytes": null,
+    "window_psnr_gt": 36.002,
+    "window_psnr_gt_dbis": 36.0391
+   },
+   "qc48_fp16": {
+    "what": "float16, weights std / 48",
+    "window_s": 2.228,
+    "keep0_s": 1.22,
+    "dbis_window_s": 3.671,
+    "speedup_window": 1.648,
+    "weights_bytes": null,
+    "window_psnr_gt": 36.0018,
+    "window_psnr_gt_dbis": 36.0391
+   },
+   "qc48_fp16_cl": {
+    "what": "float16, weights std / 48, channels_last",
+    "window_s": 2.257,
+    "keep0_s": 1.195,
+    "dbis_window_s": 3.447,
+    "speedup_window": 1.527,
+    "weights_bytes": null,
+    "window_psnr_gt": 36.0018,
+    "window_psnr_gt_dbis": 36.0403
+   },
+   "qc48_fp16_comp": {
+    "what": "float16, weights std / 48, compiled blocks",
+    "window_s": 1.589,
+    "keep0_s": 0.888,
+    "dbis_window_s": 3.672,
+    "speedup_window": 2.311,
+    "weights_bytes": null,
+    "window_psnr_gt": 36.002,
+    "window_psnr_gt_dbis": 36.0391
+   },
+   "qc96": {
+    "what": "weights per channel std / 96",
+    "window_s": 3.305,
+    "keep0_s": 1.844,
+    "dbis_window_s": 3.673,
+    "speedup_window": 1.112,
+    "weights_bytes": 15433649,
+    "window_psnr_gt": 36.0063,
+    "window_psnr_gt_dbis": 36.0391
+   }
+  },
+  "test_sets": {
+   "qc48_fp16": {
+    "clip_frames": 50,
+    "attrs": {
+     "exact_dynconv": false,
+     "precision": "fp16"
+    },
+    "rule": "passes",
+    "delta_vs_authors_db": {
+     "gopro": -0.03095,
+     "reds_val": -0.00111,
+     "bsd2": 0.11343,
+     "dvd": -0.01076
+    },
+    "delta_vs_authors_without_broken_db": {
+     "gopro": -0.03095,
+     "reds_val": -0.00111,
+     "bsd2": 0.04933,
+     "dvd": -0.01076
+    }
+   },
+   "qc128_fp16": {
+    "clip_frames": 50,
+    "attrs": {
+     "exact_dynconv": false,
+     "precision": "fp16",
+     "store": [
+      "qc",
+      128
+     ]
+    },
+    "rule": "passes",
+    "delta_vs_authors_db": {
+     "gopro": -0.00757,
+     "reds_val": 0.00632,
+     "bsd2": 0.01941,
+     "dvd": 0.01316
+    },
+    "delta_vs_authors_without_broken_db": {
+     "gopro": -0.00757,
+     "reds_val": 0.00632,
+     "bsd2": 0.01438,
+     "dvd": 0.01316
+    }
+   },
+   "f16w_fp16": {
+    "clip_frames": 50,
+    "attrs": {
+     "exact_dynconv": false,
+     "precision": "fp16",
+     "store": [
+      "f16",
+      128
+     ]
+    },
+    "rule": "passes",
+    "delta_vs_authors_db": {
+     "gopro": -0.00011,
+     "reds_val": 0.00046,
+     "bsd2": 0.0032,
+     "dvd": 0.0002
+    },
+    "delta_vs_authors_without_broken_db": {
+     "gopro": -0.00011,
+     "reds_val": 0.00046,
+     "bsd2": 0.00051,
+     "dvd": 0.0002
+    }
+   },
+   "f16w_fp16_w27": {
+    "clip_frames": 27,
+    "attrs": {
+     "exact_dynconv": false,
+     "precision": "fp16",
+     "store": [
+      "f16",
+      128
+     ]
+    },
+    "rule": "fails",
+    "delta_vs_authors_db": {
+     "gopro": -0.04276,
+     "reds_val": -0.00403,
+     "bsd2": -0.06862,
+     "dvd": -0.01903
+    },
+    "delta_vs_authors_without_broken_db": {
+     "gopro": -0.04276,
+     "reds_val": -0.00403,
+     "bsd2": -0.0729,
+     "dvd": -0.01903
+    }
+   },
+   "f16w_fp16_w20": {
+    "clip_frames": 20,
+    "attrs": {
+     "exact_dynconv": false,
+     "precision": "fp16",
+     "store": [
+      "f16",
+      128
+     ]
+    },
+    "rule": "fails",
+    "delta_vs_authors_db": {
+     "gopro": -0.08676,
+     "reds_val": -0.00071,
+     "bsd2": 0.04268,
+     "dvd": -0.04166
+    },
+    "delta_vs_authors_without_broken_db": {
+     "gopro": -0.08676,
+     "reds_val": -0.00071,
+     "bsd2": 0.03946,
+     "dvd": -0.04166
+    }
+   },
+   "f16w_fp16_w15": {
+    "clip_frames": 15,
+    "attrs": {
+     "exact_dynconv": false,
+     "precision": "fp16",
+     "store": [
+      "f16",
+      128
+     ]
+    },
+    "rule": "fails",
+    "delta_vs_authors_db": {
+     "gopro": -0.13515,
+     "reds_val": -0.00783,
+     "bsd2": 0.15834,
+     "dvd": -0.08577
+    },
+    "delta_vs_authors_without_broken_db": {
+     "gopro": -0.13515,
+     "reds_val": -0.00783,
+     "bsd2": 0.07411,
+     "dvd": -0.08577
+    }
+   },
+   "f16w_fp16_w10": {
+    "clip_frames": 10,
+    "attrs": {
+     "exact_dynconv": false,
+     "precision": "fp16",
+     "store": [
+      "f16",
+      128
+     ]
+    },
+    "rule": "fails",
+    "delta_vs_authors_db": {
+     "gopro": -0.23502,
+     "reds_val": -0.00314,
+     "bsd2": 0.19461,
+     "dvd": -0.14942
+    },
+    "delta_vs_authors_without_broken_db": {
+     "gopro": -0.23502,
+     "reds_val": -0.00314,
+     "bsd2": 0.11266,
+     "dvd": -0.14942
+    }
+   },
+   "dbisf_comp": {
+    "clip_frames": 50,
+    "attrs": {
+     "compile": "default"
+    },
+    "rule": "passes",
+    "delta_vs_authors_db": {
+     "gopro": -0.00758,
+     "reds_val": 0.00625,
+     "bsd2": 0.01905,
+     "dvd": 0.01301
+    },
+    "delta_vs_authors_without_broken_db": {
+     "gopro": -0.00758,
+     "reds_val": 0.00625,
+     "bsd2": 0.01397,
+     "dvd": 0.01301
+    }
+   }
+  },
+  "not_used": "shorter clips (27 frames already cost 0.043 dB on GoPro and 0.073 dB on BSD), weights std / 48 (-0.031 dB on GoPro), channels_last (no gain)"
+ },
+ "load_s": {
+  "run": "a fresh Python process, from CUDA ready to the network with its weights on the GPU; median of 5 (authors: run_dst.load_net, imports of basicsr and CuPy, build, torch.load)",
+  "authors": 2.776,
+  "dbis": 0.538,
+  "dbisf": 0.6,
+  "all": {
+   "authors": [
+    5.209,
+    2.739,
+    2.776,
+    2.737,
+    2.782
+   ],
+   "dbis": [
+    0.684,
+    0.538,
+    0.537,
+    0.536,
+    0.55
+   ],
+   "dbisf": [
+    0.635,
+    0.586,
+    0.593,
+    0.622,
+    0.6
+   ]
+  }
+ },
+ "weights_bytes": {
+  "authors": 56497994,
+  "dbis": 56392588,
+  "dbisf": 16189274
+ },
+ "params": {
+  "values": 14087139,
+  "dropped": "wave.haar_weights (1,536 fixed values, rebuilt in code)"
+ },
+ "site": {
+  "title": "DSTNet+ L, GoPro weights",
+  "row_key": "dstnetplus_L",
+  "source": "DSTNetPlus-L",
+  "checkpoint": "DSTNetPlus_L_gopro.pth",
+  "pip": "torch numpy safetensors zstandard",
+  "models": {
+   "dbis": "dbis-DSTNetPlus-L",
+   "dbisf": "dbisf-DSTNetPlus-L"
+  },
+  "ext": {
+   "dbis": ".safetensors",
+   "dbisf": ".wpk"
+  },
+  "latency_ms": {
+   "authors": 3013.7,
+   "dbis": 3445.5,
+   "dbisf": 758.4
+  },
+  "weights_bytes": {
+   "authors": 56497994,
+   "dbis": 56392588,
+   "dbisf": 16189274
+  },
+  "load_s": {
+   "authors": 2.776,
+   "dbis": 0.538,
+   "dbisf": 0.6
+  },
+  "gopro_psnr": {
+   "authors": 35.70778,
+   "dbis": 35.70778,
+   "dbisf": 35.7002
+  },
+  "about": {
+   "dbis": "the authors' outputs bit for bit, their CuPy kernel replaced by PyTorch (rounded as it in float64, so 14 % slower)",
+   "dbisf": "float16 (the CuPy kernel had none), propagation blocks compiled, weights rounded per channel; computes only the frame it emits. 12 GiB of GPU memory (18.8 GiB for the authors' code)."
+  },
+  "time_mode": "a 27-frame window for every output frame as in the leaderboard; the authors' code and dbis in float32 (the authors' CuPy kernel has no float16), dbisf in float16 with its propagation blocks compiled",
+  "note": "One A100, 1280×720, a 27-frame window per output frame as in the leaderboard; PSNR on all 1,111 GoPro test frames, clips of 50 frames as the authors test."
+ }
+}

@@ -9,14 +9,16 @@ weights_only=True (no code in it runs) and checked against the md5 of the releas
 model tensors are folded by the fold() of dbis/<arch>/net.py, loaded strictly into every model made from this source, and
 written:
   .safetensors  float32 (dbis)
-  .wpk          wpack qc48: every weight tensor of 2+ dimensions rounded per output channel to std(channel) / 48,
-                entropy coded (dbisf); q128 (one step std / 128 per tensor) is the earlier store, still readable
+  .wpk          wpack (dbisf), store "qc<N>": every weight tensor of 2+ dimensions rounded per output channel to
+                std(channel) / N, entropy coded (NAFNet-64 and BSSTNet: qc48, DSTNet+ L: qc128); "q<N>": one step
+                std / N per tensor (q128, the first NAFNet-64 store); "f16": float16
 A JSON card is written next to each file. Its sha256 is compared with the one in dbis/__init__.py; a different BLAS
 can change the last bit of a folded bias, so a mismatch is reported in the card and on the screen, not an error.
 """
 import argparse
 import hashlib
 import json
+import re
 import sys
 import time
 from pathlib import Path
@@ -71,10 +73,12 @@ def main(argv=None):
             from safetensors.torch import save_file
             # one metadata key: safetensors keeps metadata in a hash map, so several keys come out in a random order
             save_file(sd, str(path), metadata={"dbis": json.dumps({**meta, "model": name}, sort_keys=True)})
-        elif m["store"] in ("q128", "qc48"):
+        elif re.fullmatch(r"(qc|q)\d+|f16", m["store"]):
             from . import wpack   # zstandard is needed only here (dbisf files)
-            tier, s = ("q", 128) if m["store"] == "q128" else ("qc", 48)
-            wpack.pack({k: v.numpy() for k, v in sd.items()}, str(path), tier, s, threads=8, meta={**meta, "model": name})
+            tier, s = ("f16", 128) if m["store"] == "f16" else re.fullmatch(r"(qc|q)(\d+)", m["store"]).groups()
+            # s as an int: it is written into the file's header, and the sha256 of the first files was taken with an int
+            wpack.pack({k: v.numpy() for k, v in sd.items()}, str(path), tier, int(s), threads=8,
+                       meta={**meta, "model": name})
         else:
             raise ValueError(m["store"])
         sha = digest(path, "sha256")

@@ -16,9 +16,10 @@ Options (None keeps the model's own setting; net.defaults lists them):
                 on 256 px patches only (its sparse attention is built for them)
   tile_overlap  pixels shared by neighbouring tiles: int or (rows, columns). The outputs are averaged where tiles
                 overlap (BSSTNet: the authors' blending, which first drops overlap / 2 px at every inner tile border)
-  window        video models: frames per window; windows overlap by 4 frames and every frame is taken from a window
-                where it is at least 2 frames from the ends, as the benchmark runs the authors' code (so at least 6
-                frames). Image models: no
+  window        video models: frames per window, laid out as the benchmark runs the authors' code (net._plan):
+                BSSTNet: windows overlap by 4 frames and every frame is taken from a window where it is at least 2
+                frames from the ends (so at least 6 frames); DSTNet+: clips that do not overlap, the last one moved back
+                to end at the last frame. Image models: no
   batch         tiles per network call (image models without tiles: frames per call): memory against speed
   precision     "fp32" or "fp16" (autocast)
   compile       False, True or a torch.compile mode: compile on the first call (BSSTNet: its heavy blocks one by one,
@@ -67,8 +68,8 @@ class Restorer:
             raise ValueError(f"out: 'float' or 'uint8', not {out!r}")
         if self.kind == "image" and window is not None:
             raise ValueError(f"{type(self).__name__} is an image model: window does not apply")
-        if self.kind == "video" and (not isinstance(o["window"], int) or o["window"] < 6):
-            raise ValueError(f"window: at least 6 frames (windows overlap by 4), not {o['window']!r}")
+        if self.kind == "video" and (not isinstance(o["window"], int) or o["window"] < 1):
+            raise ValueError(f"window: a positive int, not {o['window']!r}")
         if o["tile"] is not None:
             th, tw = _pair(o["tile"])
             oy, ox = _pair(o["tile_overlap"])
@@ -156,22 +157,32 @@ class Restorer:
         """Padding a video model needs: (multiple, minimum) of H and W; (1, 1) for none."""
         return 1, 1
 
-    def _restore_video(self, x, y, o, prep, put):
-        b, t, _, h, w = x.shape
-        n = o["window"]
-        if t < 4:
-            raise ValueError(f"{type(self).__name__} needs at least 4 frames, got {t}")
-        mult, least = self._pad(x)
-        ph, pw = max(least, -(-h // mult) * mult) - h, max(least, -(-w // mult) * mult) - w
+    min_frames = 4                  # video models: the fewest frames a window may have
+
+    def _plan(self, t, n):
+        """The windows of a clip of t frames: [(start, end, keep_from, keep_to)]. Default (BSSTNet, as
+        runs/baselines/bsstnet/run_bsst.py window_plan): n-frame windows that overlap by 4, every frame taken from a
+        window where it is at least 2 frames from the ends, except at the ends of the clip."""
+        if n < 6:
+            raise ValueError(f"window: at least 6 frames (windows overlap by 4), not {n}")
         starts = [0] if t <= n else list(range(0, t - n, n - 4)) + [t - n]
-        covered = 0
+        plan, covered = [], 0
         for k, s in enumerate(starts):
-            e = min(s + n, t)
             lo = 0 if k == 0 else max(s + 2, covered)
             hi = t if k == len(starts) - 1 else s + n - 2
+            plan.append((s, min(s + n, t), lo, hi))
+            covered = hi
+        return plan
+
+    def _restore_video(self, x, y, o, prep, put):
+        b, t, _, h, w = x.shape
+        if t < self.min_frames:
+            raise ValueError(f"{type(self).__name__} needs at least {self.min_frames} frames, got {t}")
+        mult, least = self._pad(x)
+        ph, pw = max(least, -(-h // mult) * mult) - h, max(least, -(-w // mult) * mult) - w
+        for s, e, lo, hi in self._plan(t, o["window"]):
             xw = prep(x[:, s:e])
             if ph or pw:
                 xw = F.pad(xw.flatten(0, 1), (0, pw, 0, ph), mode="replicate").view(b, e - s, 3, h + ph, w + pw)
             out = self._window(xw, o)[..., :h, :w]
             put(y[:, lo:hi], out[:, lo - s:hi - s].to(y.device))
-            covered = hi

@@ -44,10 +44,13 @@ is never more than 0.05 dB below the authors' code on any test set (DBIS.md has 
 | BSSTNet, authors' code | 209 MB | 3.50 s | 25.6 s | 35.9662 |
 | dbis-BSSTNet | 175 MB | 1.66 s | 30.6 s | 35.9662 |
 | dbisf-BSSTNet | 42 MB | 1.71 s | 4.6 s | 35.9425 |
+| DSTNet+ L, authors' code | 56 MB | 2.78 s | 3.01 s | 35.7078 |
+| dbis-DSTNetPlus-L | 56 MB | 0.54 s | 3.45 s | 35.7078 |
+| dbisf-DSTNetPlus-L | 16 MB | 0.60 s | 0.76 s | 35.7002 |
 
-BSSTNet is timed as in the leaderboard, with a window for every output frame (dbisf: 24 frames, the others 48), and
-each version runs in its fastest mode: the authors' code with `torch.compile`, dbis eager, dbisf with its heavy blocks
-compiled.
+BSSTNet and DSTNet+ L are timed as in the leaderboard, with a window for every output frame (BSSTNet: dbisf 24 frames,
+the others 48; DSTNet+ L: 27), each version in its fastest mode (DSTNet+ L: the authors' code and dbis in float32, as the
+authors' CuPy kernel has no float16).
 
 ```python
 import dbis                               # weights: python -m dbis.convert NAFNet-64 NAFNet-GoPro-width64.pth

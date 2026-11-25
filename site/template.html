@@ -755,6 +755,7 @@ pre.code { margin: 0; padding: .8rem 1rem; background: var(--paper-2); border-ra
     {{dbis_table}}
     <pre class="code">python -m dbis.convert NAFNet-64 NAFNet-GoPro-width64.pth          # the authors' checkpoint -> weights/dbis/
 python -m dbis.convert BSSTNet BSST_gopro.pth raft-things.pth      # BSST and its RAFT
+python -m dbis.convert DSTNetPlus-L DSTNetPlus_L_gopro.pth
 import dbis
 net = dbis.load("dbisf-BSSTNet")                                   # every model the same way
 out = net.restore(frames)              # options: tile, tile_overlap, window, batch, precision, compile, out</pre>
@@ -964,7 +965,7 @@ out = net.restore(frames)</pre></div>
       h("span", { class: "d" + (d && d[1] ? " good" : "") }, d ? d[0] : ""));
   }
   function openGet(r) {
-    var v = dbisOf(r), repo = (D.repo || {})[r.base];
+    var v = dbisOf(r), repo = (D.repo || {})[r.key] || (D.repo || {})[r.base];
     document.getElementById("getdlg-t").textContent = r.name;
     document.getElementById("getdlg-s").textContent = metaText(r) + " · trained on " + r.train;
     var left = h("section", { class: "gd-card gd-ours", "aria-label": "Our version" }), hd = h("div", { class: "gd-h" });
@@ -992,7 +993,7 @@ out = net.restore(frames)</pre></div>
     } else {
       var more = h("a", { href: "#dbis" }, "What dbis is");
       more.addEventListener("click", function () { dlg.close(); });
-      left.append(h("p", null, "We port methods one at a time and check every output against the authors' code. NAFNet-64 and BSSTNet are done; this method is not yet."),
+      left.append(h("p", null, "We port methods one at a time and check every output against the authors' code. NAFNet-64, BSSTNet and DSTNet+ L are done; this method is not yet."),
         h("p", { class: "gd-note" }, more));
     }
     var dl = h("dl", { class: "gd-dl" });

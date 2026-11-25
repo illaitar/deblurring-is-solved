@@ -94,5 +94,7 @@
  "VRNN": "https://github.com/Ydo-W/Versatile-recurrent-neural-network",
  "VRT": "https://github.com/JingyunLiang/VRT",
  "X-Restormer": "https://github.com/Andrew0613/X-Restormer",
- "XYScanNet": "https://github.com/HanzhouLiu/XYScanNet"
+ "XYScanNet": "https://github.com/HanzhouLiu/XYScanNet",
+ "dstnetplus_base": "https://github.com/sunny2109/DSTNet-plus",
+ "dstnetplus_L": "https://github.com/sunny2109/DSTNet-plus"
 }

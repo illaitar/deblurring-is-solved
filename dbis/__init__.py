@@ -9,6 +9,7 @@ The weight files are made locally from the authors' checkpoint:
 
     python -m dbis.convert NAFNet-64 NAFNet-GoPro-width64.pth     # -> weights/dbis/dbis-NAFNet-64.safetensors, dbisf-NAFNet-64.wpk
     python -m dbis.convert BSSTNet BSST_gopro.pth raft-things.pth # -> dbis-BSSTNet.safetensors, dbisf-BSSTNet.wpk (BSST + RAFT)
+    python -m dbis.convert DSTNetPlus-L DSTNetPlus_L_gopro.pth    # -> dbis-DSTNetPlus-L.safetensors, dbisf-DSTNetPlus-L.wpk
 
     import dbis
     net = dbis.load("dbisf-NAFNet-64")                            # eval mode, on the GPU
@@ -54,6 +55,15 @@ SOURCES = {
                    "authors' code loads it from model_zoos/, see the BSSTNet folder above)",
         }],
     },
+    "DSTNetPlus-L": {
+        "method": "DSTNet+ L", "paper": "Learning Efficient Deep Discriminative Spatial and Temporal Networks for Video "
+                                         "Deblurring", "venue": "TPAMI 2025",
+        "code": "https://github.com/sunny2109/DSTNet-plus", "commit": "54363c15d8b924aa1ae56b8f835c1f0289954e95",
+        "license": "Apache License 2.0 (LICENSE.txt of the repository)",
+        "url": "https://github.com/sunny2109/DSTNet-plus/releases/tag/v0.1.0 (also https://huggingface.co/Meloo/DSTNetPlus)",
+        "file": "DSTNetPlus_L_gopro.pth", "md5": "d7da9b176f72cd2c10c6c146fe481e65", "group": "params",
+        "trained_on": "GoPro", "arch": "dstnetplus",
+    },
 }
 
 # every model: its source, the class and arguments in dbis/<arch>.py, the weight file and how it is written
@@ -75,6 +85,16 @@ MODELS = {
                                "tf32": True, "sdpa": True},
                       "file": "dbisf-BSSTNet.wpk", "store": "qc48",
                       "sha256": "ac0db58978e14d60746a9ec89d272beb13922f2629f5eccf225c94d312de4fa8"},
+    # the authors' code as the benchmark runs it: float32, clips of 50 frames, 10 frames at a time through the
+    # full-resolution layers (DSTNetPlus defaults)
+    "dbis-DSTNetPlus-L": {"source": "DSTNetPlus-L", "cls": "DSTNetPlus", "args": {},
+                          "file": "dbis-DSTNetPlus-L.safetensors", "store": "float32",
+                          "sha256": "378a5fca3c72b17467ab5d9a39d7c43291b513891f9faa44f86aeb489a5bc3cd"},
+    # dbisf: float16 autocast (the authors' CuPy kernel had none), the dynamic conv with plain addcmul, weights rounded per
+    # channel to std / 128 (std / 48 costs 0.03 dB on GoPro here); clips stay 50 frames (27 already costs 0.04-0.07 dB)
+    "dbisf-DSTNetPlus-L": {"source": "DSTNetPlus-L", "cls": "DSTNetPlus", "args": {"precision": "fp16", "exact_dynconv": False},
+                           "file": "dbisf-DSTNetPlus-L.wpk", "store": "qc128",
+                           "sha256": "42a6934bce12fd88d30a1fe33de480070abb7d8311333a96f321f1de1a32cf1b"},
 }
 
 

@@ -18,6 +18,9 @@ Methods of the benchmark re-implemented in this repository, in the package `dbis
 | BSSTNet, authors' code (BSST + RAFT) | 209 MB, two `.pth` | 3.50 s | 25.6 s | 35.9662 |
 | **dbis-BSSTNet** | 175 MB `.safetensors` | 1.66 s | 30.6 s | 35.9662 |
 | **dbisf-BSSTNet** | 42 MB `.wpk` | 1.71 s | 4.6 s | 35.9425 (−0.024) |
+| DSTNet+ L, authors' code | 56 MB `.pth` | 2.78 s | 3.01 s | 35.7078 |
+| **dbis-DSTNetPlus-L** | 56 MB `.safetensors` | 0.54 s | 3.45 s | 35.7078 |
+| **dbisf-DSTNetPlus-L** | 16 MB `.wpk` | 0.60 s | 0.76 s | 35.7002 (−0.008) |
 
 Load: a fresh Python process, from CUDA ready to the network with its weights on the GPU (importing torch and starting
 CUDA take another 2.3 s for every model). Time: the benchmark's latency harness on one A100, 1280x720, batch 1, the
@@ -61,6 +64,18 @@ frames that overlap by 4; dbisf the same way with windows of 24 frames and its h
 | BSD 2ms/16ms | 3000 | 22.7700 | +1.777 | 376 | +0.037 | +1.808 |
 | DVD | 1000 | 32.6798 | −0.034 | 0 | −0.034 | −0.013 |
 
+**DSTNet+ L** (the four video test sets; the authors' code as the leaderboard runs it: float32, clips of 50 frames that
+do not overlap, the last one moved back; dbisf the same way, with its propagation blocks compiled, as timed)
+
+| Test set | Frames | Authors, dB | dbisf-DSTNetPlus-L | Frames the authors break | dbisf without them |
+|---|---:|---:|---:|---:|---:|
+| GoPro | 1111 | 35.7078 | −0.008 | 0 | −0.008 |
+| REDS val | 3000 | 27.0689 | +0.006 | 0 | +0.006 |
+| BSD 2ms/16ms | 3000 | 23.2542 | +0.019 | 23 | +0.014 |
+| DVD | 1000 | 32.0308 | +0.013 | 0 | +0.013 |
+
+On 23 BSD frames the authors' output itself scores 4.8 to 13.9 dB; the rule is checked without them as well.
+
 On REDS and BSD the authors' code writes NaN into some 256 px patches, which become black tiles in the 8-bit output.
 Two causes: float16 overflow, and the recurrent backward propagation, whose features grow out of the GoPro range until
 a LayerNorm overflows in float32 as well (the leaderboard's BSD row is the authors' code in float32, 23.7607 dB, and
@@ -78,6 +93,8 @@ pip install torch numpy safetensors zstandard   # BSSTNet: torchvision too
 python -m dbis.convert NAFNet-64 NAFNet-GoPro-width64.pth      # writes weights/dbis/, about 10 s
 # BSST_gopro.pth from https://github.com/huicongzhang/BSSTNet, raft-things.pth from https://github.com/princeton-vl/RAFT
 python -m dbis.convert BSSTNet BSST_gopro.pth raft-things.pth
+# DSTNetPlus_L_gopro.pth from https://github.com/sunny2109/DSTNet-plus/releases/tag/v0.1.0 (Apache License 2.0)
+python -m dbis.convert DSTNetPlus-L DSTNetPlus_L_gopro.pth
 ```
 
 Every model has the same inference call, `net.restore(frames, **options)` ([`dbis/restore.py`](dbis/restore.py)):
@@ -91,15 +108,15 @@ out = net.restore(frames, tile=512, tile_overlap=32, batch=4, precision="fp16", 
 print(net.defaults)                       # the model's own setting of every option
 ```
 
-| Option | Meaning | NAFNet-64 | BSSTNet |
-|---|---|---|---|
-| `tile` | tile size, int or (h, w) | whole frame | 256 only (its patches) |
-| `tile_overlap` | pixels shared by neighbouring tiles, int or (rows, columns); outputs averaged | 32 | 64 |
-| `window` | frames per window, windows overlap by 4 (as the benchmark runs the authors' code) | not used | dbis 48, dbisf 24 |
-| `batch` | tiles per network call (no tiles: frames per call) | 1 | 1 dbis, 14 dbisf |
-| `precision` | `"fp32"` or `"fp16"` (autocast) | fp32 | fp16 |
-| `compile` | `False`, `True` or a `torch.compile` mode, on the first call | the network | its heavy blocks |
-| `out` | `"float"` (float32, not clamped) or `"uint8"` (rounded as the benchmark) | float | float |
+| Option | Meaning | NAFNet-64 | BSSTNet | DSTNet+ L |
+|---|---|---|---|---|
+| `tile` | tile size, int or (h, w) | whole frame | 256 only (its patches) | whole frame only |
+| `tile_overlap` | pixels shared by neighbouring tiles, int or (rows, columns); outputs averaged | 32 | 64 | not used |
+| `window` | frames per window, laid out as the benchmark runs the authors' code | not used | dbis 48, dbisf 24, overlap 4 | 50, clips that do not overlap |
+| `batch` | tiles per network call (no tiles: frames per call) | 1 | 1 dbis, 14 dbisf | 10 frames through the full-size layers |
+| `precision` | `"fp32"` or `"fp16"` (autocast) | fp32 | fp16 | dbis fp32, dbisf fp16 |
+| `compile` | `False`, `True` or a `torch.compile` mode, on the first call | the network | its heavy blocks | its propagation blocks |
+| `out` | `"float"` (float32, not clamped) or `"uint8"` (rounded as the benchmark) | float | float | float |
 
 A long clip can stay on the CPU: `restore` moves one window (or frame) at a time to the GPU and writes the output on
 the device of `frames`. Frames are padded where a network needs it (BSSTNet: multiples of 16, at least 256) and the
@@ -138,6 +155,7 @@ enc.feature_info                            # channels, reduction and source mod
 |---|---|---|---:|
 | NAFNet-64 | intro conv, the four encoder stages, the middle blocks | 64 at 1, 128 at 2, 256 at 4, 512 at 8, 1024 at 16 | 62.5 M of 67.8 M |
 | BSSTNet | the per-frame encoder of BSST, before the temporal propagation | 64 at 1, 64 at 2, 192 at 4 | 1.9 M of 43.7 M |
+| DSTNet+ L | the first conv, the Haar split and the high-frequency branch, before the propagation | 96 at 1, 96 (low band) and 288 (high bands) at 2 | 0.06 M of 14.1 M |
 
 NAFNet's encoder pads the input to a multiple of 16 as the network does; BSSTNet's needs H and W multiples of 4. Both
 are the same modules with the same weights as in the full network (checked: equal features).
@@ -224,10 +242,51 @@ the frames without black tiles (it must stay above −0.05 dB).
 | 24-frame windows, heavy blocks compiled (in the harness) | 1.44× more | −0.034 | passes |
 | channels_last convolutions | does not run with the patch code's views | | |
 
+**dbis-DSTNetPlus-L**
+- The network is [`dbis/dstnetplus/`](dbis/dstnetplus), plain PyTorch, instead of the basicsr package with CuPy. On the
+  first 50-frame GoPro clip its outputs are bit for bit the authors' (float32, as the benchmark runs them).
+- The authors apply the dynamic depthwise conv (a 3x3 kernel predicted for every pixel and channel) with a CuPy kernel
+  that has no float16. Here it is nine `addcmul`. The kernel adds the products with fused multiply-adds; plain
+  `addcmul` rounds twice, 1 unit in the last place per call, which the 50-frame recurrence grows to 1.4e-3. dbis forms
+  the product in float64 and rounds the sum to float32 once, which matches the kernel bit for bit and costs 14 % of the
+  time (3.45 s per frame in the harness against the authors' 3.01 s).
+- The fixed Haar weights, which the authors keep as a parameter, are rebuilt in code; the weight file holds the rest.
+
+**dbisf-DSTNetPlus-L**
+- Float16 autocast, which the CuPy kernel prevented, and the dynamic conv with plain `addcmul`: 1.65 times faster.
+- The propagation blocks (fusion, dynamic conv, residual blocks) compiled with `torch.compile`: 2.3 times faster
+  than dbis on a 27-frame window.
+- Only the emitted frame is computed (`net(x, keep=(0, 1))`). The leaderboard's sliding window emits its oldest frame
+  and the forward propagation is causal, so one forward step instead of 27 gives the same output for that frame.
+- Weights rounded per output channel to std(channel) / 128: 16 MB, 3.5 times smaller than the checkpoint. The step
+  std / 48 of the other dbisf models costs 0.031 dB on GoPro for this 14 M-parameter network.
+- Clips stay 50 frames. Shorter clips would be faster but cost too much (27 frames: −0.043 dB on GoPro, −0.073 dB on
+  BSD; 10 frames: −0.24 dB on GoPro).
+- Together: 0.76 s per frame in the harness instead of 3.01 s (4.0 times faster), 12 GiB of GPU memory instead of
+  18.8, loading in 0.60 s instead of 2.78 s.
+
+What we tried for dbisf-DSTNetPlus-L. Time: one 27-frame GoPro window on an A100 against dbis (3.67 s); rule: the four
+test sets with clips of 50 frames unless stated.
+
+| Change | Faster | Worst difference, dB | |
+|---|---:|---:|---|
+| dynamic conv with plain `addcmul` (float32) | 1.11× | | |
+| float16 autocast | 1.65× | | |
+| float16, channels_last | 1.53× | | no gain |
+| float16, propagation blocks compiled | 2.31× | | |
+| only the emitted frame (keep), float16, compiled | 4.14× | | the same output for that frame |
+| float16, float16 weights (24 MB) | | −0.0001 | passes |
+| float16, weights std / 128 (16 MB) | | −0.008 | **dbisf** |
+| float16, weights std / 48 (14 MB) | | −0.031 | passes, less margin |
+| clips of 27 / 20 / 15 / 10 frames (float16 weights) | | −0.073 / −0.087 / −0.135 / −0.235 | fails |
+
 **Credits.** BSSTNet (Zhang, Xie and Yao, CVPR 2024; MIT License stated in its README) reuses code of ProPainter
 (Zhou et al., ICCV 2023; S-Lab License 1.0, non-commercial use only) for its sparse transformer and flow completion,
 of Shift-Net (Li et al., CVPR 2023), of RAFT (Teed and Deng, ECCV 2020; BSD 3-Clause) and of BasicVSR++ and RVRT.
 [`dbis/bsst/`](dbis/bsst) re-implements these parts; its `__init__.py` lists what comes from where, and the header of
 every file in `blocks/` names its source and license.
+
+DSTNet+ (Pan, Sun, Xu, Dong and Tang, TPAMI 2025; Apache License 2.0) is re-implemented in [`dbis/dstnetplus/`](dbis/dstnetplus);
+the CuPy kernel of its dynamic conv is replaced by PyTorch ops.
 
 Not in the leaderboard yet: dbis and dbisf are not rows of the tables.

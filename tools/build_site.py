@@ -253,7 +253,7 @@ def _tag(name):
 
 FACTS["tag_dbis"], FACTS["tag_dbisf"] = _tag("dbis-plain-css.svg"), _tag("dbisf-plain-css.svg")
 FACTS["tag_dbis_big"], FACTS["tag_dbisf_big"] = _tag("dbis-css.svg"), _tag("dbisf-css.svg")
-DBIS_FILES = ["NAFNet-64.json", "BSSTNet.json"]      # results/dbis/<file>, each with a "site" block
+DBIS_FILES = ["NAFNet-64.json", "BSSTNet.json", "DSTNetPlus-L.json"]      # results/dbis/<file>, each with a "site" block
 DBIS_URL = None   # base URL of the hosted weight files; None while they are not hosted (the popup shows "soon")
 MINUS = "−"
 DBS = [json.loads((RES / "dbis" / f).read_text(encoding="utf-8")) | {"_file": f} for f in DBIS_FILES]
@@ -263,7 +263,7 @@ def _faster(a, x):
 
 
 FACTS["dbisf_gains"] = ", ".join(       # the "What you get" row: time and weight size of every dbisf against the authors
-    f'{_J["site"]["source"]} <b>{_faster(_J["site"]["latency_ms"]["authors"], _J["site"]["latency_ms"]["dbisf"])}, weights '
+    f'{_J["site"]["title"].split(",")[0]} <b>{_faster(_J["site"]["latency_ms"]["authors"], _J["site"]["latency_ms"]["dbisf"])}, weights '
     f'{_J["site"]["weights_bytes"]["authors"] / _J["site"]["weights_bytes"]["dbisf"]:.1f}&times; smaller</b>'
     for _J in DBS)
 
@@ -346,7 +346,7 @@ data = {
     "rows": rows, "extra": sorted(iqa_have), "ref": iqa_ref, "videoSets": VIDEO_SETS,
     "trainGroups": [g for g in GROUP_ORDER if g != "GoPro" and any(r["tg"] == g for r in rows)],
     "dbis": {k: v for k, v in DBIS_PAY.items() if any(r["key"] == k for r in rows)},
-    "repo": {k: u for k, u in REPOS.items() if any(r["base"] == k for r in rows)},
+    "repo": {k: u for k, u in REPOS.items() if any(k in (r["base"], r["key"]) for r in rows)},   # base, or a row's key
     "tags": {"dbis": FACTS["tag_dbis"], "dbisf": FACTS["tag_dbisf"]},
 }
 
