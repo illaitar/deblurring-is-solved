@@ -756,7 +756,8 @@ pre.code { margin: 0; padding: .8rem 1rem; background: var(--paper-2); border-ra
     <pre class="code">python -m dbis.convert NAFNet-64 NAFNet-GoPro-width64.pth          # the authors' checkpoint -> weights/dbis/
 python -m dbis.convert BSSTNet BSST_gopro.pth raft-things.pth      # BSST and its RAFT
 import dbis
-net = dbis.load("dbisf-NAFNet-64")</pre>
+net = dbis.load("dbisf-BSSTNet")                                   # every model the same way
+out = net.restore(frames)              # options: tile, tile_overlap, window, batch, precision, compile, out</pre>
   </section>
 
   <section class="wrap sec" id="start" aria-label="Get started">
@@ -764,7 +765,8 @@ net = dbis.load("dbisf-NAFNet-64")</pre>
     <div class="steps">
       <div class="step"><b>1 &middot; Get the code</b><pre class="code">git clone https://github.com/illaitar/deblurring-is-solved</pre></div>
       <div class="step"><b>2 &middot; Load a model</b><pre class="code">import dbis
-net = dbis.load("dbisf-NAFNet-64")</pre></div>
+net = dbis.load("dbisf-NAFNet-64")
+out = net.restore(frames)</pre></div>
       <div class="step"><b>3 &middot; Take the numbers</b><p class="lead2">Every score: <a href="leaderboard.csv">leaderboard.csv</a>; per sequence and per frame: <code>results/</code> in the repository.</p></div>
     </div>
   </section>

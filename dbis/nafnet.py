@@ -20,6 +20,8 @@ tlc=None is the plain NAFNet (global channel attention).
 import torch.nn as nn
 import torch.nn.functional as F
 
+from .restore import Restorer
+
 
 def norm(x, eps=1e-6):
     """LayerNorm over the channels of an NCHW tensor, without scale and shift (folded into the next conv)."""
@@ -74,10 +76,13 @@ class Block(nn.Module):
         return y + self.conv5(a * b)
 
 
-class NAFNet(nn.Module):
+class NAFNet(Restorer, nn.Module):
     """U-Net of NAFBlocks. Defaults: NAFNet-64 of the GoPro release (enc 1, 1, 1, 28; middle 1; dec 1, 1, 1, 1).
     tlc: None (plain NAFNet), "exact" (dbis, the authors' test configuration) or "fast" (dbisf).
-    Input [B, 3, H, W] in [0, 1]; any H, W (zero-padded to a multiple of 16 inside, as the authors do)."""
+    restore(frames, ...) is the inference call (dbis/restore.py); forward(x) takes [B, 3, H, W] in [0, 1], any H, W
+    (zero-padded to a multiple of 16 inside, as the authors do). Defaults of restore: the whole frame, one frame per
+    call, float32 (as the quality of dbis and dbisf was measured)."""
+    kind = "image"
 
     def __init__(self, width=64, enc=(1, 1, 1, 28), middle=1, dec=(1, 1, 1, 1), tlc=None, train_crop=256):
         super().__init__()

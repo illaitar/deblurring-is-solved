@@ -80,25 +80,38 @@ python -m dbis.convert NAFNet-64 NAFNet-GoPro-width64.pth      # writes weights/
 python -m dbis.convert BSSTNet BSST_gopro.pth raft-things.pth
 ```
 
+Every model has the same inference call, `net.restore(frames, **options)` ([`dbis/restore.py`](dbis/restore.py)):
+
 ```python
 import dbis
-net = dbis.load("dbisf-NAFNet-64")        # or "dbis-NAFNet-64"; eval mode, on the GPU
-y = net(x)                                # x: [B, 3, H, W] in [0, 1], any size
-
-net = dbis.load("dbisf-BSSTNet")          # or "dbis-BSSTNet"
-y = net.video(x)                          # x: [B, L, 3, H, W] in [0, 1] on the GPU, H and W multiples of 16, >= 256:
-                                          # a whole clip, cut into windows of net.window frames (dbisf 24, dbis 48)
-y = net(x[:, :24])                        # or one window
-net.compile_blocks()                      # optional: 1.3x faster after about 3.5 min of compilation per frame size
+net = dbis.load("dbisf-BSSTNet")          # any model: dbis-/dbisf-NAFNet-64, dbis-/dbisf-BSSTNet; eval mode, on the GPU
+out = net.restore(frames)                 # frames: a clip [T, 3, H, W], clips [B, T, 3, H, W] or an image [3, H, W],
+                                          # uint8 or float in [0, 1], any device, any H and W -> the same shape
+out = net.restore(frames, tile=512, tile_overlap=32, batch=4, precision="fp16", compile=True, out="uint8")
+print(net.defaults)                       # the model's own setting of every option
 ```
+
+| Option | Meaning | NAFNet-64 | BSSTNet |
+|---|---|---|---|
+| `tile` | tile size, int or (h, w) | whole frame | 256 only (its patches) |
+| `tile_overlap` | pixels shared by neighbouring tiles, int or (rows, columns); outputs averaged | 32 | 64 |
+| `window` | frames per window, windows overlap by 4 (as the benchmark runs the authors' code) | not used | dbis 48, dbisf 24 |
+| `batch` | tiles per network call (no tiles: frames per call) | 1 | 1 dbis, 14 dbisf |
+| `precision` | `"fp32"` or `"fp16"` (autocast) | fp32 | fp16 |
+| `compile` | `False`, `True` or a `torch.compile` mode, on the first call | the network | its heavy blocks |
+| `out` | `"float"` (float32, not clamped) or `"uint8"` (rounded as the benchmark) | float | float |
+
+A long clip can stay on the CPU: `restore` moves one window (or frame) at a time to the GPU and writes the output on
+the device of `frames`. Frames are padded where a network needs it (BSSTNet: multiples of 16, at least 256) and the
+padding is cropped. `net(x)` is the bare network (NAFNet: [B, 3, H, W]; BSSTNet: one window [B, T, 3, H, W]).
 
 The converter checks the md5 of each checkpoint, reads it with `weights_only=True`, folds it and writes each model's
 file with a JSON card. It compares the file's sha256 with the one recorded in `dbis/__init__.py`; another BLAS can
 change the last bit of a folded bias, which the card reports. We do not host weight files yet.
 
 dbisf-BSSTNet takes 18 GiB of GPU memory at 1280x720 (the authors' code 9.4 GiB, the first dbisf with 48-frame windows
-36 GiB). On a smaller card give fewer patches per call, `net.patch_batch = 4` for example; it changes only float
-rounding.
+36 GiB). On a smaller card give fewer patches per call, `net.restore(frames, batch=4)` for example; it changes only
+float rounding.
 
 ## What changed
 
@@ -142,11 +155,11 @@ rounding.
   DVD against 48-frame windows; 32-frame windows cost less (0.003 and 0.009 dB) but save less (table below).
 - RAFT flows reused between windows. The sliding window moves by one frame, so the flows of all frame pairs but the
   newest are those of the previous window; RAFT computes every pair on its own, so this changes nothing but the batch
-  size of its kernels. `net.video()` reuses the pairs where its windows overlap.
+  size of its kernels. `net.restore()` reuses the pairs where its windows overlap.
 - TF32 for the float32 matrix products: torchvision's deformable convolution runs in float32 inside autocast and its
   GEMMs, like RAFT's correlation, use full float32 under PyTorch's default flags. The sparse attention and the Swin
   window attention call `scaled_dot_product_attention` (the same function as the authors' matrix products and softmax).
-- The heavy blocks compiled one by one (`net.compile_blocks()`: encoder, decoder, propagation backbones and offset
+- The heavy blocks compiled one by one (`net.restore(frames, compile=True)`: encoder, decoder, propagation backbones and offset
   convs, Swin reconstruction, fusion); the whole forward does not compile. 1.44 times faster in the harness (1.33 on a
   window without the flow cache), after about 3.5 minutes of compilation in torch's default mode.
 - 14 patches per BSST call: a 720p window has 28 patches, so two calls instead of 28. Inside a call the recurrent

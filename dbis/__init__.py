@@ -12,7 +12,8 @@ The weight files are made locally from the authors' checkpoint:
 
     import dbis
     net = dbis.load("dbisf-NAFNet-64")                            # eval mode, on the GPU
-    y = net(x)                                                    # x: [B, 3, H, W] in [0, 1]
+    out = net.restore(frames)                                     # the same call for every model (dbis/restore.py):
+    out = net.restore(frames, tile=512, precision="fp16")         # frames [T, 3, H, W], [B, T, 3, H, W] or [3, H, W]
 
 Dependencies: torch and numpy (BSSTNet: torchvision too); safetensors for dbis files, zstandard for dbisf files (the
 wpack codec, dbis/wpack.py).
@@ -59,7 +60,7 @@ MODELS = {
                         "file": "dbisf-NAFNet-64.wpk", "store": "qc48",
                         "sha256": "a62c8f19a5467009f68054db8990608594717bb55b10d6b721ee88b685e36914"},
     # patch_batch=1 gives the authors' outputs bit for bit (dbis). dbisf: 14 patches per call (2 BSST calls per 720p
-    # window), 24-frame windows (net.video(clip) cuts a clip into them), flows reused between overlapping windows, TF32
+    # window), 24-frame windows (net.restore(clip) cuts a clip into them), flows reused between overlapping windows, TF32
     # and fused attention, failed patches redone; net.compile_blocks() compiles the heavy blocks (1.3x)
     "dbis-BSSTNet": {"source": "BSSTNet", "cls": "BSSTNet", "args": {"patch_batch": 1},
                      "file": "dbis-BSSTNet.safetensors", "store": "float32",

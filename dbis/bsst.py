@@ -59,6 +59,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.ops import deform_conv2d
 
+from .restore import Restorer
+
 _CONST = {}
 
 
@@ -1279,8 +1281,11 @@ class RAFT(nn.Module):
 
 
 # ---------------------------------------------------------------------------------------------------- the method
-class BSSTNet(nn.Module):
+class BSSTNet(Restorer, nn.Module):
     """RAFT flows + BSST on overlapping patches of a window of frames (the authors' test_by_patch).
+
+    restore(frames, ...) is the inference call for a clip of any length (dbis/restore.py): windows of `window` frames,
+    tile = the 256 px patches, tile_overlap = overlap, batch = patch_batch, precision as below.
 
     forward(lqs (B, T, 3, H, W) in [0, 1], H and W multiples of 16, >= 256) -> (B, T, 3, H, W) float32 on lqs.device.
     patch_batch: patches per BSST call (1 = one patch per call as the authors, the same outputs bit for bit; default 14
@@ -1299,7 +1304,7 @@ class BSSTNet(nn.Module):
       dcn         "tv" (torchvision, as the authors), "tv_half" (torchvision in float16), "gs" (grid_sample sampling
                   in float32 and the 3x3 sum as a float16 1x1 conv, _dcn_gs)
       sdpa        scaled_dot_product_attention in the sparse attention and the Swin window attention
-      window      the number of frames of a window for video() and the benchmark's sliding window (the authors: 48)
+      window      the number of frames of a window for restore() and the benchmark's sliding window (the authors: 48)
       overlap     of the 256 px patches, one int or (rows, columns) (the authors: 64; 24 gives 3 x 6 = 18 patches for 720p
                   instead of 4 x 7 = 28, 48 gives 4 x 6 = 24, (24, 64) gives 3 x 7 = 21)"""
 
@@ -1331,21 +1336,33 @@ class BSSTNet(nn.Module):
             b.deform_align[k].conv_offset = torch.compile(b.deform_align[k].conv_offset, mode=mode, dynamic=False)
         return self
 
-    def video(self, lqs, overlap=4):
-        """A whole clip (B, L, 3, H, W) in windows of self.window frames that overlap by `overlap`, as the benchmark
-        runs the authors' code (runs/baselines/bsstnet/run_bsst.py window_plan: every frame is taken from a window
-        where it is at least 2 frames from the ends, except at the ends of the clip) -> (B, L, 3, H, W) float32."""
-        L, n = lqs.shape[1], self.window
-        if L <= n:
-            return self(lqs)
-        starts = list(range(0, L - n, n - overlap)) + [L - n]
-        out, covered = torch.empty_like(lqs, dtype=torch.float32), 0
-        for k, s in enumerate(starts):
-            lo = 0 if k == 0 else max(s + 2, covered)
-            hi = L if k == len(starts) - 1 else s + n - 2
-            out[:, lo:hi] = self(lqs[:, s:s + n])[:, lo - s:hi - s]
-            covered = hi
-        return out
+    # ------------------------------------------------------------ restore() (dbis/restore.py)
+    kind = "video"
+
+    def _defaults(self):
+        return {"tile": self.patch, "tile_overlap": self.overlap, "window": self.window, "batch": self.patch_batch,
+                "precision": self.precision}
+
+    def _check(self, o):
+        t = o["tile"]
+        if (t, t) != (self.patch, self.patch) if isinstance(t, int) else tuple(t) != (self.patch, self.patch):
+            raise ValueError(f"BSSTNet runs on {self.patch} px patches only (its sparse attention is built for them)")
+
+    def _pad(self, x):
+        return 16, self.patch
+
+    def _window(self, x, o):
+        saved = self.overlap
+        self.overlap = o["tile_overlap"]
+        try:
+            return self.forward(x, patch_batch=o["batch"], precision=o["precision"])
+        finally:
+            self.overlap = saved
+
+    def _compile(self, mode):
+        if not getattr(self, "_blocks_compiled", False):
+            self.compile_blocks(mode)
+            self._blocks_compiled = True
 
     def set_kernels(self, dcn="tv", sdpa=False):
         for m in self.modules():

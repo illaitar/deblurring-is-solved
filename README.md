@@ -52,6 +52,8 @@ compiled.
 ```python
 import dbis                               # weights: python -m dbis.convert NAFNet-64 NAFNet-GoPro-width64.pth
 net = dbis.load("dbisf-NAFNet-64")        # or "dbisf-BSSTNet" (python -m dbis.convert BSSTNet BSST_gopro.pth raft-things.pth)
+out = net.restore(frames)                 # the same call for every model; options: tile, tile_overlap, window, batch,
+                                          # precision, compile, out (DBIS.md)
 ```
 
 ## Leaderboard
