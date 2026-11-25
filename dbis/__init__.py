@@ -1,19 +1,19 @@
-"""DBIS and DBISF: methods of the benchmark re-implemented in this repository (see DBIS.md).
+"""dbis and dbisf: methods of the benchmark re-implemented in this repository (see DBIS.md).
 
-    DBIS-<method>    our code and weight file, the same outputs as the authors' code (largest difference of an output
+    dbis-<method>    our code and weight file, the same outputs as the authors' code (largest difference of an output
                      value about 1e-5, the same mean PSNR to the fourth decimal on the test set)
-    DBISF-<method>   our fast and light version: shorter run time and a smaller weight file, within 0.01 dB of the
+    dbisf-<method>   our fast and light version: shorter run time and a smaller weight file, within 0.01 dB of the
                      authors' mean PSNR on every test set measured so far
 
 The weight files are made locally from the authors' checkpoint:
 
-    python -m dbis.convert NAFNet-64 NAFNet-GoPro-width64.pth     # -> weights/dbis/DBIS-NAFNet-64.safetensors, DBISF-NAFNet-64.wpk
+    python -m dbis.convert NAFNet-64 NAFNet-GoPro-width64.pth     # -> weights/dbis/dbis-NAFNet-64.safetensors, dbisf-NAFNet-64.wpk
 
     import dbis
-    net = dbis.load("DBISF-NAFNet-64")                            # eval mode, on the GPU
+    net = dbis.load("dbisf-NAFNet-64")                            # eval mode, on the GPU
     y = net(x)                                                    # x: [B, 3, H, W] in [0, 1]
 
-Dependencies: torch and numpy; safetensors for DBIS files, zstandard for DBISF files (the wpack codec, dbis/wpack.py).
+Dependencies: torch and numpy; safetensors for dbis files, zstandard for dbisf files (the wpack codec, dbis/wpack.py).
 """
 import importlib
 from pathlib import Path
@@ -34,12 +34,12 @@ SOURCES = {
 
 # every model: its source, the class and arguments in dbis/<arch>.py, the weight file and how it is written
 MODELS = {
-    "DBIS-NAFNet-64": {"source": "NAFNet-64", "cls": "NAFNet", "args": {"tlc": "exact"},
-                       "file": "DBIS-NAFNet-64.safetensors", "store": "float32",
-                       "sha256": "7b9957b2a355e9238f81b3875e4c84555f34ab1e0d64e925fa0bcbb2b4ae446c"},
-    "DBISF-NAFNet-64": {"source": "NAFNet-64", "cls": "NAFNet", "args": {"tlc": "fast"},
-                        "file": "DBISF-NAFNet-64.wpk", "store": "q128",
-                        "sha256": "c3d362a6d8ed09fcd8dd94c0242480f48405c84978db60014bd1650fea823eca"},
+    "dbis-NAFNet-64": {"source": "NAFNet-64", "cls": "NAFNet", "args": {"tlc": "exact"},
+                       "file": "dbis-NAFNet-64.safetensors", "store": "float32",
+                       "sha256": None},
+    "dbisf-NAFNet-64": {"source": "NAFNet-64", "cls": "NAFNet", "args": {"tlc": "fast"},
+                        "file": "dbisf-NAFNet-64.wpk", "store": "q128",
+                        "sha256": None},
 }
 
 

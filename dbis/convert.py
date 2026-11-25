@@ -1,4 +1,4 @@
-"""Make the DBIS / DBISF weight files from the authors' checkpoint.
+"""Make the dbis / dbisf weight files from the authors' checkpoint.
 
     python -m dbis.convert SOURCE CHECKPOINT [--out DIR] [--force]
     python -m dbis.convert NAFNet-64 NAFNet-GoPro-width64.pth
@@ -6,8 +6,8 @@
 The checkpoint is read with weights_only=True (no code in it runs) and checked against the md5 of the released file
 (--force converts anyway). Its model tensors are folded by the fold() of dbis/<arch>.py, loaded strictly into every
 model made from this source, and written:
-  .safetensors  float32 (DBIS)
-  .wpk          wpack q128: every weight tensor of 2+ dimensions rounded to std / 128, entropy coded (DBISF)
+  .safetensors  float32 (dbis)
+  .wpk          wpack q128: every weight tensor of 2+ dimensions rounded to std / 128, entropy coded (dbisf)
 A JSON card is written next to each file. Its sha256 is compared with the one in dbis/__init__.py; a different BLAS
 can change the last bit of a folded bias, so a mismatch is reported in the card and on the screen, not an error.
 """
@@ -68,7 +68,8 @@ def main(argv=None):
                 "converted": time.strftime("%Y-%m-%d %H:%M"), "tool": "python -m dbis.convert"}
         path.with_suffix(".json").write_text(json.dumps(card, indent=1), encoding="utf-8")
         print(f"{name}: {path} ({path.stat().st_size / 2 ** 20:.1f} MiB), sha256 "
-              + ("as recorded" if card["matches_recorded"] else f"{sha} differs from the recorded {m['sha256']}"))
+              + ("as recorded" if card["matches_recorded"] else
+                 f"{sha} (none recorded yet)" if m["sha256"] is None else f"{sha} differs from the recorded {m['sha256']}"))
     print(f"done in {time.time() - t0:.1f} s")
 
 

@@ -1,9 +1,9 @@
-"""NAFNet (Chen et al., "Simple Baselines for Image Restoration", ECCV 2022) for inference: DBIS-NAFNet and DBISF-NAFNet.
+"""NAFNet (Chen et al., "Simple Baselines for Image Restoration", ECCV 2022) for inference: dbis-NAFNet and dbisf-NAFNet.
 
 Architecture and weights by the authors: https://github.com/megvii-research/NAFNet, MIT License,
 Copyright (c) 2022 megvii-model. This file is a re-implementation in plain PyTorch.
 
-DBIS-NAFNet (tlc="exact") gives the outputs of the authors' NAFNetLocal (basicsr/models/archs/NAFNet_arch.py and
+dbis-NAFNet (tlc="exact") gives the outputs of the authors' NAFNetLocal (basicsr/models/archs/NAFNet_arch.py and
 local_arch.py, the configuration of their GoPro results) with the weights written by `python -m dbis.convert`, which
 folds every affine step into the convolution after it:
   * the scale and shift of the two LayerNorms of a block go into conv1 and conv4,
@@ -12,7 +12,7 @@ TLC (test-time local statistics, Chu et al., ECCV 2022): the channel attention a
 the training crop at that scale, instead of over the whole image. The window sizes follow from the training crop, so
 the dry run of the authors' code at construction is not needed.
 
-DBISF-NAFNet (tlc="fast") averages that window on a map pooled into r x r cells, runs the attention's 1x1 conv there and
+dbisf-NAFNet (tlc="fast") averages that window on a map pooled into r x r cells, runs the attention's 1x1 conv there and
 upsamples bilinearly. Both steps are linear and the upsampling weights sum to 1, so moving the conv before the
 upsampling changes nothing; the cell pooling is the only approximation (see DBIS.md for its cost in dB).
 tlc=None is the plain NAFNet (global channel attention).
@@ -39,7 +39,7 @@ def window_mean(x, k):
 
 
 def cell(k, h, w):
-    """Cell size for DBISF: the largest of 8, 4, 2 that divides the map and keeps at least 12 cells per window; 1 = exact."""
+    """Cell size for dbisf: the largest of 8, 4, 2 that divides the map and keeps at least 12 cells per window; 1 = exact."""
     return next((r for r in (8, 4, 2) if k // r >= 12 and h % r == 0 and w % r == 0), 1)
 
 
@@ -76,7 +76,7 @@ class Block(nn.Module):
 
 class NAFNet(nn.Module):
     """U-Net of NAFBlocks. Defaults: NAFNet-64 of the GoPro release (enc 1, 1, 1, 28; middle 1; dec 1, 1, 1, 1).
-    tlc: None (plain NAFNet), "exact" (DBIS, the authors' test configuration) or "fast" (DBISF).
+    tlc: None (plain NAFNet), "exact" (dbis, the authors' test configuration) or "fast" (dbisf).
     Input [B, 3, H, W] in [0, 1]; any H, W (zero-padded to a multiple of 16 inside, as the authors do)."""
 
     def __init__(self, width=64, enc=(1, 1, 1, 28), middle=1, dec=(1, 1, 1, 1), tlc=None, train_crop=256):

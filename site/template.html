@@ -400,6 +400,77 @@ table.prof td.na { color: var(--ink-40); text-align: center; }
 table.prof .rk { display: block; font: 600 12px/1.2 var(--sans); color: var(--ink); font-variant-numeric: tabular-nums; }
 table.prof .dl { display: block; font: 400 10.5px/1.2 var(--sans); color: var(--ink-72); font-variant-numeric: tabular-nums; }
 table.prof .inv { color: var(--paper); }
+/* 25.11 layout: what the framework gives, numbered sections, data cards, dbis tags */
+/* phone width: long method names in the selects must not widen the page */
+.sec > * { min-width: 0; }
+.sel { max-width: 100%; min-width: 0; }
+.sel select { min-width: 0; max-width: 100%; flex: 1 1 auto; text-overflow: ellipsis; }
+svg.dtag { height: 1em; width: auto; display: inline-block; vertical-align: -0.14em; overflow: visible; }
+.bar nav a.navtag { display: inline-flex; align-items: center; }
+.why { padding-block: .25rem 0; }
+.whybox { border: 1px solid var(--ink-8); border-radius: .9rem; position: relative; } /* keeps absolutely placed screen-reader text inside the scroll box */
+.why-t { border-collapse: collapse; width: 100%; min-width: 46rem; font-size: var(--t-s); }
+.why-t th { font: 500 var(--t-xs)/1.2 var(--sans); color: var(--ink-56); text-align: left; padding: .7rem .9rem; border-bottom: 1px solid var(--ink-8); }
+.why-t td { padding: .75rem .9rem; border-bottom: 1px solid var(--ink-8); vertical-align: top; line-height: 1.45; }
+.why-t tbody tr:last-child td { border-bottom: 0; }
+.why-t td:first-child { font-weight: 600; width: 24%; }
+.why-t td.m { color: var(--ink-56); width: 30%; }
+.why-t td:last-child { white-space: nowrap; }
+.why-t .tg { display: block; margin-top: .35rem; font-size: 1.05rem; }
+/* phone: the five rows become cards, so the "with the framework" column is not hidden behind a sideways scroll */
+@media (max-width: 40rem) {
+  .why-t { min-width: 0; }
+  .why-t thead { display: none; }
+  .why-t, .why-t tbody, .why-t tr, .why-t td { display: block; }
+  .why-t tr { padding: .85rem .9rem; border-bottom: 1px solid var(--ink-8); }
+  .why-t tbody tr:last-child { border-bottom: 0; }
+  .why-t td, .why-t td:first-child, .why-t td.m { padding: 0; border: 0; width: auto; }
+  .why-t td + td { margin-top: .3rem; }
+  .why-t .tg { display: inline-block; margin: 0 0 0 .45rem; vertical-align: -.1em; }
+  .why-t td.m::before { content: "Today: "; font-weight: 600; }
+  .why-t td:nth-child(3)::before { content: "With the framework: "; font-weight: 600; }
+  .why-t td:last-child { white-space: normal; font-size: var(--t-xs); }
+  .why-t td:last-child a::before { content: "\2192\00a0"; }
+}
+.soon { display: inline-block; margin-left: .4rem; font: 500 var(--t-xs)/1.5 var(--mono); color: var(--ink-56); border: 1px solid var(--ink-16); border-radius: 999px; padding: 0 .45rem; vertical-align: 1px; }
+.sh { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem 1rem; }
+.sh .k { font: 600 var(--t-s)/1 var(--mono); color: var(--ink-56); flex-basis: 100%; }
+.sh h2 { margin: 0; }
+.sh .big svg.dtag { height: 1.9rem; vertical-align: middle; }
+.sh .h2s { font-weight: 500; color: var(--ink-72); }
+.lead2 { margin: 0; max-width: var(--read); color: var(--ink-72); }
+.dgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15.5rem), 1fr)); gap: .75rem; }
+.dc { border: 1px solid var(--ink-8); border-radius: .9rem; padding: .8rem .9rem; display: grid; gap: .45rem; align-content: start; min-width: 0; }
+.dc .top { display: flex; justify-content: space-between; gap: .5rem; align-items: baseline; }
+.dc .nm { font-weight: 600; }
+.dc .ct, .dc .ln { font-size: var(--t-xs); color: var(--ink-56); }
+.dc .fx { font-size: var(--t-s); color: var(--ink-72); }
+.dc img { width: 100%; height: 4.2rem; object-fit: cover; border-radius: .5rem; display: block; background: var(--ink-8); }
+.dc .ph { height: 4.2rem; border-radius: .5rem; background: var(--paper-2); display: flex; align-items: center; justify-content: center; font-size: var(--t-xs); color: var(--ink-56); }
+.dc .lk { font: inherit; font-size: var(--t-xs); background: none; border: 0; padding: 0; color: var(--ink); text-decoration: underline; cursor: pointer; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: .75rem; }
+.stat { border: 1px solid var(--ink-8); border-radius: .9rem; padding: .9rem 1rem; display: grid; gap: .2rem; }
+.stat b { font: 600 1.9rem/1.1 var(--display); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.stat span { font-size: var(--t-s); color: var(--ink-72); }
+@media (max-width: 40rem) {
+  .stat { grid-template-columns: 4.2rem 1fr; align-items: center; column-gap: .9rem; padding: .7rem .9rem; }
+  .stat b { font-size: 1.6rem; }
+}
+.chips2 { display: flex; flex-wrap: wrap; gap: .45rem; }
+.chips2 span { border: 1px solid var(--ink-8); border-radius: 999px; padding: .3rem .75rem; font-size: var(--t-s); }
+.dtags { display: inline-flex; align-items: center; gap: .3rem; margin-left: .45rem; vertical-align: middle; }
+.dpill { display: inline-flex; align-items: center; border: 1.5px solid var(--ink); border-radius: 999px; padding: .1rem .45rem; font-size: .78rem; }
+.dpill.f { border-color: #eb6834; background: color-mix(in srgb, #eb6834 10%, var(--paper)); }
+.dnote { font-size: var(--t-xs); color: var(--vid); }
+.dbt { border-collapse: collapse; width: 100%; min-width: 36rem; font-size: var(--t-s); font-variant-numeric: tabular-nums; }
+.dbt th, .dbt td { padding: .6rem .9rem; border-bottom: 1px solid var(--ink-8); text-align: right; white-space: nowrap; }
+.dbt tbody tr:last-child td { border-bottom: 0; }
+.dbt th:first-child, .dbt td:first-child { text-align: left; }
+.dbt th { font: 500 var(--t-xs)/1.2 var(--sans); color: var(--ink-56); }
+.dbt td:first-child svg.dtag { height: 1.05em; }
+pre.code { margin: 0; padding: .8rem 1rem; background: var(--paper-2); border-radius: .7rem; font: var(--t-s)/1.6 var(--mono); overflow-x: auto; }
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); gap: .75rem; }
+.step { border: 1px solid var(--ink-8); border-radius: .9rem; padding: .9rem 1rem; display: grid; gap: .55rem; align-content: start; min-width: 0; }
 </style>
 </head>
 <body>
@@ -408,12 +479,12 @@ table.prof .inv { color: var(--paper); }
   <div class="wrap">
     <a class="mark" href="#top"><span class="sr">d</span>{{logo_bar}}eblurring is solved?</a>
     <nav aria-label="Sections">
-      <a href="#pareto">Pareto front</a>
-      <a href="#leaderboard">Leaderboard</a>
-      <a href="#pairs">Two methods</a>
-      <a href="#method">One method</a>
-      <a href="#frames">Frames</a>
+      <a href="#data">Data</a>
+      <a href="#methods">Methods</a>
       <a href="#protocol">Protocol</a>
+      <a href="#analysis">Analysis</a>
+      <a href="#dbis" class="navtag" aria-label="dbis: our versions of the methods">{{tag_dbis}}</a>
+      <a href="#start">Get started</a>
     </nav>
     <button type="button" class="theme" id="theme" aria-label="Switch to the dark theme" title="Light or dark theme">
       <svg class="moon" viewBox="0 0 20 20" aria-hidden="true"><path d="M15.5 12.6A6.5 6.5 0 0 1 7.4 4.5a6.5 6.5 0 1 0 8.1 8.1Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
@@ -428,12 +499,76 @@ table.prof .inv { color: var(--paper); }
     <p class="eyebrow">Motion deblurring framework</p>
     <h1 class="wordmark"><span class="sr">d</span>{{logo_hero}}<span class="smear">eblurring</span> is solved?</h1>
     <p class="authors">{{authors_html}}{{stars_html}}</p>
-    <p class="lede">Motion deblurring methods with released weights, run with every released checkpoint on {{n_sets}} test sets under one protocol and scored frame by frame.</p>
+    <p class="lede">Motion deblurring is spread over dozens of datasets, codebases and ways to score results. This framework puts it in one place, so the question above can be answered.</p>
     </div>
     <div class="cloud" id="cloud" aria-hidden="true"><div class="cloud-in" id="cloud-in"></div><p class="cloud-cap" id="cloud-cap"></p></div>
   </section>
 
+  <section class="wrap why" aria-label="What the framework gives">
+    <div class="scroll whybox"><table class="why-t">
+      <thead><tr><th scope="col">What you get</th><th scope="col">Today</th><th scope="col">With the framework</th><th scope="col"><span class="sr">Section</span></th></tr></thead>
+      <tbody>
+        <tr><td>Clean, unified method code<span class="tg">{{tag_dbis}}</span></td><td class="m">every method in its own repository, training framework and custom layers</td><td>one file of plain PyTorch per method with <b>the authors' outputs</b>; NAFNet-64 imports in 4 ms instead of 1.6 s</td><td><a href="#dbis">dbis</a></td></tr>
+        <tr><td>Compact test sets</td><td class="m">&asymp;82 GB of archives on several hosts, each in its own layout</td><td><b>&asymp;10.7 GB</b> in one format, only the frames that are scored, a CRC on every frame<span class="soon">in preparation</span></td><td><a href="#data">Data</a></td></tr>
+        <tr><td>Same harness and requirements</td><td class="m">own dependencies and versions for every method</td><td><b>{{n_methods}} methods</b> run from one harness on pinned environments</td><td><a href="#methods">Methods</a></td></tr>
+        <tr><td>Unified benchmarking protocol</td><td class="m">own crops, padding, metrics and hardware in every paper</td><td><b>{{n_rows}} variants &times; {{n_sets}} test sets &times; 10 metrics</b>, latency on one A100</td><td><a href="#protocol">Protocol</a></td></tr>
+        <tr><td>Our versions with small patches<span class="tg">{{tag_dbisf}}</span></td><td class="m">released once and never updated, though simple fixes would help</td><td>faster, lighter, same quality: NAFNet-64 <b>{{dbisf_speed}} faster, weights {{dbisf_size}}&times; smaller</b></td><td><a href="#dbis">dbisf</a></td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="wrap sec" id="data" aria-label="Data">
+    <div class="sh"><span class="k">01</span><h2>Data: the test sets in one format</h2></div>
+    <p class="lead2">The frames every method is scored on. They are being packaged as lossless FFV1 with a CRC on every frame, &asymp;10.7 GB instead of &asymp;82 GB of the authors' archives; until then each card links to the authors' release.</p>
+    <div class="dgrid">{{data_cards}}</div>
+  </section>
+
+  <section class="wrap sec" id="methods" aria-label="Methods">
+    <div class="sh"><span class="k">02</span><h2>Methods: one harness for all of them</h2></div>
+    <p class="lead2">Every method with released weights, image and video, runs through the same harness with the same inputs, and every released checkpoint is scored.</p>
+    <div class="stats">
+      <div class="stat"><b>{{n_methods}}</b><span>methods with released weights</span></div>
+      <div class="stat"><b>{{n_ckpt}}</b><span>released checkpoints, trained on GoPro, REDS, BSD, DVD, RealBlur or mixes</span></div>
+      <div class="stat"><b>{{n_rows}}</b><span>variants: whole frame, tiles, test-time local converter, temporal schemes</span></div>
+    </div>
+  </section>
+
+  <section class="wrap sec" id="protocol" aria-label="Protocol">
+    <div class="sh"><span class="k">03</span><h2>Protocol: one way to measure</h2></div>
+    <div class="chips2">
+      <span>every released checkpoint, whole frame, batch 1</span><span>each variant scored on its own: whole frame, tiles, TLC</span>
+      <span>8-bit outputs, every frame scored</span><span>RealBlur after the official ECC alignment</span>
+      <span>10 metrics, full-reference and no-reference</span><span>latency per output frame, 1280&times;720, one A100</span>
+    </div>
+    <div class="scroll">
+      <table class="plain">
+        <thead><tr><th>Set</th><th class="n">Sequences</th><th class="n">Frames</th><th>Resolution</th><th class="n">Blurry input PSNR</th><th>Input</th></tr></thead>
+        <tbody>
+          <tr><td>GoPro test</td><td class="n">11</td><td class="n">1,111</td><td>1280&times;720</td><td class="n">25.64</td><td><code>blur</code></td></tr>
+          <tr><td>REDS val</td><td class="n">30</td><td class="n">3,000</td><td>1280&times;720</td><td class="n">26.27</td><td><code>val_blur</code></td></tr>
+          <tr><td>BSD 2ms/16ms test</td><td class="n">20</td><td class="n">3,000</td><td>640&times;480</td><td class="n">26.63</td><td><code>Blur/RGB</code></td></tr>
+          <tr><td>DVD test</td><td class="n">10</td><td class="n">1,000</td><td>1280&times;720</td><td class="n">27.29</td><td><code>input</code></td></tr>
+          <tr><td>RealBlur-J test</td><td class="n">50 scenes</td><td class="n">980</td><td>about 670&times;763</td><td class="n" id="in-rbj">–</td><td><code>blur</code></td></tr>
+          <tr><td>RealBlur-R test</td><td class="n">50 scenes</td><td class="n">980</td><td>about 670&times;763</td><td class="n" id="in-rbr">–</td><td><code>blur</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ul class="notes">
+      <li>Every released checkpoint of a method runs on every test set: video methods on the four video sets, image methods also on RealBlur-J and RealBlur-R, which hold single images. <i>Trained on</i> picks the checkpoints shown: GoPro (the default), the training split of the current test set, any set, or one training set.</li>
+      <li>On RealBlur, PSNR and SSIM follow the dataset's official evaluation: each output is aligned to the sharp image by an ECC homography and scored on the valid region (scikit-image 0.17.2, OpenCV 4.2, as the script requires). LPIPS and the other metrics use the unaligned output.</li>
+      <li>PSNR and SSIM are computed per frame on 8-bit RGB outputs against the sharp frame and averaged over all frames of the set. LPIPS uses the AlexNet backbone.</li>
+      <li>A score is final when at least 95&nbsp;% of the frames of the set are scored. Runs below that are shown under <i>unfinished runs</i>.</li>
+      <li>Each row is one variant of a method: the whole frame at once, tiles, test-time local converter (TLC), or the temporal scheme of a video method.</li>
+      <li>Compute (GMAC) and latency are measured per output frame at 1280&times;720, batch 1, on one A100. A method that
+        needs a window of frames to emit one frame is charged for the whole window.</li>
+      <li>Frame characteristics come from the sharp frame and its blurry input: blur as the PSNR of the input and the share of gradient left after blur, texture, brightness, contrast, clipped highlights, input noise (Immerkaer) and colorfulness. Motion on the four video sets is the optical flow between consecutive sharp frames (MEMFOF). Every frame with its characteristics and every method's score on it is in <code>results/frames/bench.sqlite</code>.</li>
+      {{iqa_note}}
+      {{based_note}}
+    </ul>
+  </section>
+
   <section class="wrap panel" id="sets" aria-label="Test sets, Pareto front and leaderboard">
+    <div class="sh" id="analysis"><span class="k">04</span><h2>Analysis: the full picture</h2></div>
     <div class="tabs" role="tablist" aria-label="Test set" id="tabs"></div>
     <div class="dcard" id="dcard" aria-label="About this test set"></div>
 
@@ -557,33 +692,23 @@ table.prof .inv { color: var(--paper); }
     <p class="fig-note" id="fv-note"></p>
   </section>
 
-  <section class="wrap sec" id="protocol" aria-label="Protocol">
-    <p class="kicker">Protocol</p>
-    <div class="scroll">
-      <table class="plain">
-        <thead><tr><th>Set</th><th class="n">Sequences</th><th class="n">Frames</th><th>Resolution</th><th class="n">Blurry input PSNR</th><th>Input</th></tr></thead>
-        <tbody>
-          <tr><td>GoPro test</td><td class="n">11</td><td class="n">1,111</td><td>1280&times;720</td><td class="n">25.64</td><td><code>blur</code></td></tr>
-          <tr><td>REDS val</td><td class="n">30</td><td class="n">3,000</td><td>1280&times;720</td><td class="n">26.27</td><td><code>val_blur</code></td></tr>
-          <tr><td>BSD 2ms/16ms test</td><td class="n">20</td><td class="n">3,000</td><td>640&times;480</td><td class="n">26.63</td><td><code>Blur/RGB</code></td></tr>
-          <tr><td>DVD test</td><td class="n">10</td><td class="n">1,000</td><td>1280&times;720</td><td class="n">27.29</td><td><code>input</code></td></tr>
-          <tr><td>RealBlur-J test</td><td class="n">50 scenes</td><td class="n">980</td><td>about 670&times;763</td><td class="n" id="in-rbj">–</td><td><code>blur</code></td></tr>
-          <tr><td>RealBlur-R test</td><td class="n">50 scenes</td><td class="n">980</td><td>about 670&times;763</td><td class="n" id="in-rbr">–</td><td><code>blur</code></td></tr>
-        </tbody>
-      </table>
+  <section class="wrap sec" id="dbis" aria-label="dbis and dbisf">
+    <div class="sh"><span class="k">05</span><span class="big">{{tag_dbis_big}}</span><span class="big">{{tag_dbisf_big}}</span><h2 class="h2s">our versions of the methods</h2></div>
+    <p class="lead2"><b>dbis</b> gives the authors' outputs from one file of plain PyTorch and a safetensors file. <b>dbisf</b> is faster and lighter and stays within 0.01&nbsp;dB of the authors' PSNR. What changed in each method: <a href="https://github.com/illaitar/deblurring-is-solved/blob/main/DBIS.md">DBIS.md</a>.</p>
+    {{dbis_table}}
+    <pre class="code">python -m dbis.convert NAFNet-64 NAFNet-GoPro-width64.pth   # the authors' checkpoint -> weights/dbis/
+import dbis
+net = dbis.load("dbisf-NAFNet-64")</pre>
+  </section>
+
+  <section class="wrap sec" id="start" aria-label="Get started">
+    <div class="sh"><span class="k">06</span><h2>Get started</h2></div>
+    <div class="steps">
+      <div class="step"><b>1 &middot; Get the code</b><pre class="code">git clone https://github.com/illaitar/deblurring-is-solved</pre></div>
+      <div class="step"><b>2 &middot; Load a model</b><pre class="code">import dbis
+net = dbis.load("dbisf-NAFNet-64")</pre></div>
+      <div class="step"><b>3 &middot; Take the numbers</b><p class="lead2">Every score: <a href="leaderboard.csv">leaderboard.csv</a>; per sequence and per frame: <code>results/</code> in the repository.</p></div>
     </div>
-    <ul class="notes">
-      <li>Every released checkpoint of a method runs on every test set: video methods on the four video sets, image methods also on RealBlur-J and RealBlur-R, which hold single images. <i>Trained on</i> picks the checkpoints shown: GoPro (the default), the training split of the current test set, any set, or one training set.</li>
-      <li>On RealBlur, PSNR and SSIM follow the dataset's official evaluation: each output is aligned to the sharp image by an ECC homography and scored on the valid region (scikit-image 0.17.2, OpenCV 4.2, as the script requires). LPIPS and the other metrics use the unaligned output.</li>
-      <li>PSNR and SSIM are computed per frame on 8-bit RGB outputs against the sharp frame and averaged over all frames of the set. LPIPS uses the AlexNet backbone.</li>
-      <li>A score is final when at least 95&nbsp;% of the frames of the set are scored. Runs below that are shown under <i>unfinished runs</i>.</li>
-      <li>Each row is one variant of a method: the whole frame at once, tiles, test-time local converter (TLC), or the temporal scheme of a video method.</li>
-      <li>Compute (GMAC) and latency are measured per output frame at 1280&times;720, batch 1, on one A100. A method that
-        needs a window of frames to emit one frame is charged for the whole window.</li>
-      <li>Frame characteristics come from the sharp frame and its blurry input: blur as the PSNR of the input and the share of gradient left after blur, texture, brightness, contrast, clipped highlights, input noise (Immerkaer) and colorfulness. Motion on the four video sets is the optical flow between consecutive sharp frames (MEMFOF). Every frame with its characteristics and every method's score on it is in <code>results/frames/bench.sqlite</code>.</li>
-      {{iqa_note}}
-      {{based_note}}
-    </ul>
   </section>
 </main>
 
@@ -722,6 +847,25 @@ table.prof .inv { color: var(--paper); }
     document.dispatchEvent(new CustomEvent("dbis:set", { detail: d }));
   }
 
+  /* data cards (section 01) open their set in the analysis */
+  document.querySelectorAll("[data-pick]").forEach(function (bt) {
+    bt.addEventListener("click", function () {
+      var d = bt.getAttribute("data-pick");
+      if (SETS.indexOf(d) < 0) return;
+      pickSet(d);
+      var a = document.getElementById("analysis"); if (a) a.scrollIntoView();
+    });
+  });
+  /* our versions of a method (dbis: same outputs, dbisf: faster and lighter), as tags in its row */
+  function dtags(r) {
+    var v = (D.dbis || {})[r.key];
+    if (!v) return null;
+    var sp = h("span", { class: "dtags", title: "Our versions of this method: dbis (the authors' outputs) and dbisf (faster, lighter)" });
+    sp.innerHTML = (v.dbis ? "<span class='dpill'>" + D.tags.dbis + "</span>" : "") + (v.dbisf ? "<span class='dpill f'>" + D.tags.dbisf + "</span>" : "")
+      + (v.note ? "<span class='dnote'>" + v.note + "</span>" : "");
+    return sp;
+  }
+
   /* ---------- filters ---------- */
   var types = document.getElementById("types");
   [["image", "Image"], ["video", "Video"]].forEach(function (t) {
@@ -821,7 +965,7 @@ table.prof .inv { color: var(--paper); }
       var open = !!ST.open[r.key];
       var btn = h("button", { type: "button", class: "rowbtn", "aria-expanded": open ? "true" : "false" },
         h("span", { class: "nm" }, r.name),
-        h("span", { class: "sub" }, metaText(r), r.gopro_trained ? null : h("span", { class: "chip" }, "trained on " + r.train),
+        h("span", { class: "sub" }, metaText(r), dtags(r), r.gopro_trained ? null : h("span", { class: "chip" }, "trained on " + r.train),
           (r.s[ST.ds] || {}).seen ? h("span", { class: "chip", title: "The training data of this checkpoint includes these test clips" }, "test clips seen in training") : null));
       btn.addEventListener("click", function () { ST.open[r.key] = !ST.open[r.key]; renderTable(); });
       var tr = h("tr", { class: open ? "open" : null, "data-k": r.key },

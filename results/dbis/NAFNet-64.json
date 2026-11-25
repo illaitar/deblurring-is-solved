@@ -1,30 +1,30 @@
 {
  "models": {"authors": "NAFNetLocal of megvii-research/NAFNet (TLC on, their GoPro test configuration), NAFNet-GoPro-width64.pth",
-            "DBIS": "DBIS-NAFNet-64 (dbis/nafnet.py, tlc=exact, DBIS-NAFNet-64.safetensors)",
-            "DBISF": "DBISF-NAFNet-64 (dbis/nafnet.py, tlc=fast, DBISF-NAFNet-64.wpk)"},
+            "dbis": "dbis-NAFNet-64 (dbis/nafnet.py, tlc=exact, dbis-NAFNet-64.safetensors)",
+            "dbisf": "dbisf-NAFNet-64 (dbis/nafnet.py, tlc=fast, dbisf-NAFNet-64.wpk)"},
  "date": "2026-11-24",
  "quality": {
   "test_set": "GoPro test, 1111 frames, the benchmark's frame order",
   "run": "every network on every frame in one process, float32 with TF32 off, outputs rounded to 8 bits as in the protocol, PSNR against the sharp frame",
-  "mean_psnr_db": {"authors": 33.71031, "DBIS": 33.71031, "DBISF": 33.71029},
-  "DBIS": {"mean_delta_db": 0.0, "largest_output_difference": 2.3e-06, "share_of_8bit_values_differing": 6.0e-06},
-  "DBISF": {"mean_delta_db": -0.00002, "frame_delta_db_min": -0.1194, "frame_delta_db_max": 0.2953},
+  "mean_psnr_db": {"authors": 33.71031, "dbis": 33.71031, "dbisf": 33.71029},
+  "dbis": {"mean_delta_db": 0.0, "largest_output_difference": 2.3e-06, "share_of_8bit_values_differing": 6.0e-06},
+  "dbisf": {"mean_delta_db": -0.00002, "frame_delta_db_min": -0.1194, "frame_delta_db_max": 0.2953},
   "parts_mean_delta_db": {"fast_tlc_with_float32_weights": 0.0028, "q128_weights_with_exact_tlc": -0.00284,
                           "float16_weights": 0.00004, "q64_weights": -0.01376, "authors_fast_imp_tlc": -0.01899,
                           "no_tlc": -0.62969}
  },
  "latency_ms": {
   "run": "benchmark harness on one A100 node: 250 GoPro frames at 1280x720, batch 1, median of 200 timed steps; all networks on the same node",
-  "fp16_compile_cudagraphs": {"authors": 34.93, "DBIS": 33.46, "DBISF": 26.56, "authors_without_tlc": 25.85},
-  "fp16_eager": {"authors": 115.11, "DBIS": 98.94, "DBISF": 90.33, "authors_without_tlc": 90.64},
-  "fp32_eager": {"authors": 126.57, "DBIS": 112.76, "DBISF": 103.78, "authors_without_tlc": 103.5}
+  "fp16_compile_cudagraphs": {"authors": 34.93, "dbis": 33.46, "dbisf": 26.56, "authors_without_tlc": 25.85},
+  "fp16_eager": {"authors": 115.11, "dbis": 98.94, "dbisf": 90.33, "authors_without_tlc": 90.64},
+  "fp32_eager": {"authors": 126.57, "dbis": 112.76, "dbisf": 103.78, "authors_without_tlc": 103.5}
  },
  "load_s": {
   "run": "a fresh Python process, from CUDA ready to the network with its weights on the GPU; median of 5",
-  "authors": 3.06, "DBIS": 0.70, "DBISF": 0.83,
+  "authors": 3.06, "dbis": 0.70, "dbisf": 0.83,
   "authors_steps": {"import_code": 1.64, "build_with_dry_run": 1.16, "read_weights": 0.17, "to_gpu": 0.09},
   "before_that_for_all": {"import_torch": 1.61, "cuda_init": 0.65}
  },
- "weights_bytes": {"authors_pth": 271778961, "DBIS": 271196556, "DBISF": 75937263},
- "params": {"authors": 67888835, "DBIS": 67788227, "DBISF": 67788227}
+ "weights_bytes": {"authors_pth": 271778961, "dbis": 271196556, "dbisf": 75937263},
+ "params": {"authors": 67888835, "dbis": 67788227, "dbisf": 67788227}
 }

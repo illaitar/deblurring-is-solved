@@ -243,6 +243,53 @@ if (COLLAGE / "index.json").exists():
                                     "lo": c["frames"][0]["psnr_in"], "hi": c["frames"][-1]["psnr_in"],
                                     "unit": "scene" if ds.startswith("realblur") else "sequence"}
 
+# ---------------------------------------------------------------- 25.11 layout: tags, data cards, dbis numbers
+TAGS = ROOT / "site" / "tags"
+
+
+def _tag(name):
+    return (TAGS / name).read_text(encoding="utf-8").replace("<svg ", '<svg class="dtag" ', 1)
+
+
+FACTS["tag_dbis"], FACTS["tag_dbisf"] = _tag("dbis-plain-css.svg"), _tag("dbisf-plain-css.svg")
+FACTS["tag_dbis_big"], FACTS["tag_dbisf_big"] = _tag("dbis-css.svg"), _tag("dbisf-css.svg")
+DB = json.loads((RES / "dbis" / "NAFNet-64.json").read_text(encoding="utf-8"))
+_lat, _wb, _ld = DB["latency_ms"]["fp16_compile_cudagraphs"], DB["weights_bytes"], DB["load_s"]
+FACTS["dbisf_speed"] = f"{100 * (1 - _lat['dbisf'] / _lat['authors']):.0f}&nbsp;%"
+FACTS["dbisf_size"] = f"{_wb['authors_pth'] / _wb['dbisf']:.1f}"
+_ps = DB["quality"]["mean_psnr_db"]
+FACTS["dbis_table"] = (
+    '<div class="scroll whybox"><table class="dbt"><thead><tr><th scope="col">NAFNet-64, GoPro weights</th><th scope="col">Weights</th>'
+    '<th scope="col">Load</th><th scope="col">ms per 720p frame</th><th scope="col">GoPro PSNR</th></tr></thead><tbody>'
+    f'<tr><td>authors\' code</td><td>{_wb["authors_pth"] / 1e6:.0f} MB</td><td>{_ld["authors"]:.2f} s</td><td>{_lat["authors"]:.1f}</td><td>{_ps["authors"]:.4f}</td></tr>'
+    f'<tr><td>{FACTS["tag_dbis"]}</td><td>{_wb["dbis"] / 1e6:.0f} MB</td><td>{_ld["dbis"]:.2f} s</td><td>{_lat["dbis"]:.1f}</td><td>{_ps["dbis"]:.4f}</td></tr>'
+    f'<tr><td>{FACTS["tag_dbisf"]}</td><td><b>{_wb["dbisf"] / 1e6:.0f} MB</b></td><td>{_ld["dbisf"]:.2f} s</td><td><b>{_lat["dbisf"]:.1f}</b></td><td>{_ps["dbisf"]:.4f}</td></tr>'
+    '</tbody></table></div><p class="fig-note">Load: a fresh process, from CUDA ready to the network with its weights on the GPU. '
+    'Speed: one A100, 1280&times;720, batch 1, fp16 with torch.compile and CUDA graphs, all three on the same node. '
+    'PSNR: all 1,111 GoPro test frames. Every number: <a href="https://github.com/illaitar/deblurring-is-solved/blob/main/results/dbis/NAFNet-64.json">results/dbis/NAFNet-64.json</a>.</p>')
+# the leaderboard rows that have our versions (key of the row in the master table)
+DBIS_ROWS = {"NAFNet": {"dbis": True, "dbisf": True, "note": f"dbisf {_lat['dbisf']:.1f} ms, {_wb['dbisf'] / 1e6:.0f} MB"}}
+DATA_CARDS = [  # set, name, pairs, size, blur, license, authors' page
+    ("gopro", "GoPro", "1,111 pairs", "1280&times;720", "", "CC BY 4.0", "https://seungjunnah.github.io/Datasets/gopro.html"),
+    ("reds_val", "REDS val", "3,000 pairs", "1280&times;720", "", "CC BY 4.0", "https://seungjunnah.github.io/Datasets/reds.html"),
+    ("bsd2", "BSD 2ms/16ms", "3,000 pairs", "640&times;480", "real blur", "no license stated", "https://github.com/zzh-tech/ESTRNN"),
+    ("dvd", "DVD", "1,000 pairs", "1280&times;720", "", "no license stated", "https://www.cs.ubc.ca/labs/imager/tr/2017/DeepVideoDeblurring/"),
+    ("realblur_j", "RealBlur-J", "980 images", "&asymp;670&times;760", "real blur", "CC BY 4.0", "https://github.com/rimchang/RealBlur"),
+    ("realblur_r", "RealBlur-R", "980 images", "&asymp;680&times;773", "real blur", "CC BY 4.0", "https://github.com/rimchang/RealBlur"),
+    ("gsblur", "GS-Blur", "1,000 images", "mixed sizes", "", "no license stated", "https://github.com/dongwoohhh/GS-Blur"),
+    ("miore", "MIORe", "300 pairs", "1920&times;1080", "", "no license stated", "https://github.com/george200150/MIORe"),
+]
+_cards = []
+for ds, nm, n, size, blur, lic, url in DATA_CARDS:
+    col = cards.get(ds, {}).get("collage")
+    img = (f'<img src="{col["src"]}" alt="Blurry frames of {nm}" loading="lazy">' if col else '<span class="ph">being scored</span>')
+    inp = f"input {INPUT_PSNR[ds]:.2f} dB" if ds in INPUT_PSNR and INPUT_PSNR[ds] is not None else "scores coming"
+    facts = " &middot; ".join(x for x in (size, inp, blur) if x)
+    pick = (f'<button type="button" class="lk" data-pick="{ds}">Leaderboard</button> &middot; ' if ds in SETS else "")
+    _cards.append(f'<div class="dc"><div class="top"><span class="nm">{nm}</span><span class="ct">{n}</span></div>{img}'
+                  f'<span class="fx">{facts}</span><span class="ln">{pick}<a href="{url}" target="_blank" rel="noopener">authors\' release</a> &middot; {lic}</span></div>')
+FACTS["data_cards"] = "".join(_cards)
+
 data = {
     "datasets": cards, "imgBase": IMG_BASE,
     "sets": SETS, "setLabel": SET_LABEL, "full": FULL, "input": INPUT_PSNR,
@@ -250,6 +297,8 @@ data = {
                                         for s in seq_names[ds]] for ds in SETS},
     "rows": rows, "extra": sorted(iqa_have), "ref": iqa_ref, "videoSets": VIDEO_SETS,
     "trainGroups": [g for g in GROUP_ORDER if g != "GoPro" and any(r["tg"] == g for r in rows)],
+    "dbis": {k: v for k, v in DBIS_ROWS.items() if any(r["key"] == k for r in rows)},
+    "tags": {"dbis": FACTS["tag_dbis"], "dbisf": FACTS["tag_dbisf"]},
 }
 
 # ---------------------------------------------------------------- page
