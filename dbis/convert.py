@@ -6,7 +6,7 @@
 
 The checkpoint (and the further checkpoints a source lists under "extra", e.g. the RAFT weights of BSSTNet) is read with
 weights_only=True (no code in it runs) and checked against the md5 of the released file (--force converts anyway). Its
-model tensors are folded by the fold() of dbis/<arch>.py, loaded strictly into every model made from this source, and
+model tensors are folded by the fold() of dbis/<arch>/net.py, loaded strictly into every model made from this source, and
 written:
   .safetensors  float32 (dbis)
   .wpk          wpack qc48: every weight tensor of 2+ dimensions rounded per output channel to std(channel) / 48,
