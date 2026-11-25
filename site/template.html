@@ -38,7 +38,7 @@
   --vid: #eb6834;
   --focus: #2a78d6;
   --bar-bg: rgba(255, 255, 255, .9);
-  --logo-ghost: #55585f;
+  --logo-ghost: #55585f; --fast: #c4501f; --on-img: #ffffff;
   /* Geologica: a geometric sans whose d, b, o and p have nearly round counters (the d of the title carries the iris) */
   --sans: "Geologica", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --display: "Geologica", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -57,13 +57,13 @@
   :root:not([data-theme="light"]) {
     color-scheme: dark; --paper: #0e1013; --paper-2: #171a1f; --ink: #eef0f3; --ink-rgb: 238, 240, 243; --ink-72: #b9bdc5;
     --ink-56: #9198a2; --ink-40: #6c727c; --ink-16: #353a42; --ink-8: #23272e; --img: #5c9bea; --vid: #f07d4f; --focus: #5c9bea;
-    --bar-bg: rgba(14, 16, 19, .88); --logo-ghost: #c3c6cc;
+    --bar-bg: rgba(14, 16, 19, .88); --logo-ghost: #c3c6cc; --fast: #f28a5e; --on-img: #0e1013;
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark; --paper: #0e1013; --paper-2: #171a1f; --ink: #eef0f3; --ink-rgb: 238, 240, 243; --ink-72: #b9bdc5;
   --ink-56: #9198a2; --ink-40: #6c727c; --ink-16: #353a42; --ink-8: #23272e; --img: #5c9bea; --vid: #f07d4f; --focus: #5c9bea;
-  --bar-bg: rgba(14, 16, 19, .88); --logo-ghost: #c3c6cc;
+  --bar-bg: rgba(14, 16, 19, .88); --logo-ghost: #c3c6cc; --fast: #f28a5e; --on-img: #0e1013;
 }
 
 * { box-sizing: border-box; }
@@ -471,6 +471,62 @@ svg.dtag { height: 1em; width: auto; display: inline-block; vertical-align: -0.1
 pre.code { margin: 0; padding: .8rem 1rem; background: var(--paper-2); border-radius: .7rem; font: var(--t-s)/1.6 var(--mono); overflow-x: auto; }
 .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); gap: .75rem; }
 .step { border: 1px solid var(--ink-8); border-radius: .9rem; padding: .9rem 1rem; display: grid; gap: .55rem; align-content: start; min-width: 0; }
+/* 26.11: "dbis available", the orange dbis latency, the download button and its popup */
+.cn { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.cn .rowbtn { min-width: 0; flex: 1 1 auto; }
+.getbtn { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 1.9rem; height: 1.9rem; padding: 0;
+  border-radius: 50%; border: 1px solid var(--ink-16); background: var(--paper); color: var(--ink-56); cursor: pointer; }
+.getbtn:hover { color: var(--ink); border-color: var(--ink-40); }
+.getbtn.has { color: var(--img); border-color: color-mix(in srgb, var(--img) 55%, transparent); background: color-mix(in srgb, var(--img) 9%, var(--paper)); }
+.getbtn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.dav { display: inline-flex; align-items: center; gap: .3rem; margin-left: .45rem; padding: .05rem .5rem .05rem .4rem; border: 1px solid var(--ink-16);
+  border-radius: 999px; color: var(--ink); font-size: .74rem; line-height: 1.5; vertical-align: 1px; white-space: nowrap; }
+.dav svg.dtag { height: .95em; }
+.fastv { display: block; color: var(--fast); font-weight: 600; margin-top: .1rem; }
+.getdlg { padding: 0; border: 1px solid var(--ink-16); border-radius: 1rem; background: var(--paper); color: var(--ink);
+  width: min(56rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); overflow: auto; box-shadow: 0 24px 64px rgba(0, 0, 0, .28); }
+.getdlg::backdrop { background: rgba(10, 12, 16, .55); }
+.gd-in { padding: 1.1rem 1.2rem 1.2rem; display: grid; gap: 1rem; }
+.gd-top { display: flex; justify-content: space-between; align-items: start; gap: 1rem; }
+.gd-top h3 { margin: 0; font: 600 1.35rem/1.2 var(--display); }
+.gd-top .sub { margin: .25rem 0 0; }
+.gd-x { flex: none; width: 2rem; height: 2rem; border-radius: 50%; border: 1px solid var(--ink-8); background: var(--paper); color: var(--ink-56);
+  font-size: 1.25rem; line-height: 1; cursor: pointer; }
+.gd-x:hover { color: var(--ink); }
+.gd-cards { display: grid; grid-template-columns: 1.45fr 1fr; gap: .8rem; }
+@media (max-width: 44rem) { .gd-cards { grid-template-columns: 1fr; } }
+.gd-card { border-radius: .9rem; padding: .95rem 1rem; display: grid; gap: .75rem; align-content: start; min-width: 0; border: 1px solid var(--ink-8); }
+.gd-ours { background: color-mix(in srgb, var(--img) 9%, var(--paper)); border-color: color-mix(in srgb, var(--img) 40%, transparent); }
+.gd-h { display: flex; align-items: center; gap: .5rem; font-weight: 600; font-size: 1.05rem; }
+.gd-h svg.dtag { height: 1.15em; }
+.gd-card p { margin: 0; font-size: var(--t-s); line-height: 1.5; }
+.gd-opt { background: var(--paper); border: 1px solid color-mix(in srgb, var(--img) 25%, var(--ink-8)); border-radius: .75rem; padding: .75rem .8rem; display: grid; gap: .6rem; min-width: 0; }
+.gd-on { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .2rem .6rem; align-items: baseline; }
+.gd-on code { font: 600 var(--t-s)/1.3 var(--mono); }
+.gd-kind { font-size: var(--t-xs); color: var(--ink-56); }
+.gd-kind.f { color: var(--fast); font-weight: 600; }
+.gd-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .5rem; }
+@media (max-width: 30rem) { .gd-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.gd-st { display: grid; gap: .1rem; min-width: 0; align-content: start; }
+.gd-st .l { font-size: .7rem; color: var(--ink-56); line-height: 1.2; }
+.gd-st .val { font: 600 1rem/1.25 var(--display); font-variant-numeric: tabular-nums; }
+.gd-st .d { font-size: .72rem; color: var(--ink-56); }
+.gd-st .d.good { color: var(--fast); font-weight: 600; }
+.gd-btn { display: inline-flex; align-items: center; justify-content: center; gap: .45rem; border-radius: 999px; padding: .5rem 1rem; font: 600 var(--t-s)/1.2 var(--sans);
+  text-decoration: none; cursor: pointer; border: 1px solid transparent; justify-self: start; max-width: 100%; }
+.gd-btn.pri { background: var(--img); color: var(--on-img); }
+.gd-btn.pri[aria-disabled="true"] { background: var(--ink-8); color: var(--ink-56); cursor: default; }
+.gd-btn.ghost { border-color: var(--ink-16); color: var(--ink); background: var(--paper); overflow-wrap: anywhere; }
+.gd-btn.ghost:hover { border-color: var(--ink-40); }
+.gd-note { font-size: var(--t-xs); color: var(--ink-56); }
+.gd-base { font-size: var(--t-xs); color: var(--ink-72); }
+.gd-code { position: relative; min-width: 0; }
+.gd-code pre.code { font-size: .72rem; padding-right: 4rem; }
+.gd-copy { position: absolute; top: .45rem; right: .45rem; font: 500 .7rem/1 var(--sans); border: 1px solid var(--ink-16); background: var(--paper);
+  color: var(--ink-72); border-radius: 999px; padding: .3rem .55rem; cursor: pointer; }
+.gd-dl { display: grid; grid-template-columns: auto 1fr; gap: .3rem .8rem; margin: 0; font-size: var(--t-s); }
+.gd-dl dt { color: var(--ink-56); }
+.gd-dl dd { margin: 0; min-width: 0; }
 </style>
 </head>
 <body>
@@ -712,6 +768,14 @@ net = dbis.load("dbisf-NAFNet-64")</pre></div>
   </section>
 </main>
 
+<dialog id="getdlg" class="getdlg" aria-labelledby="getdlg-t">
+  <div class="gd-in">
+    <div class="gd-top"><div><h3 id="getdlg-t"></h3><p class="sub" id="getdlg-s"></p></div>
+      <button type="button" class="gd-x" id="getdlg-x" aria-label="Close">&times;</button></div>
+    <div class="gd-cards" id="getdlg-c"></div>
+  </div>
+</dialog>
+
 <footer>
   <div class="wrap">
     <span>deblurring is solved? &middot; {{authors}}</span>
@@ -856,14 +920,84 @@ net = dbis.load("dbisf-NAFNet-64")</pre></div>
       var a = document.getElementById("analysis"); if (a) a.scrollIntoView();
     });
   });
-  /* our versions of a method (dbis: same outputs, dbisf: faster and lighter), as tags in its row */
+  /* our versions of a method: "dbis available" in its row, the dbis latency in orange, the download popup */
+  var DL_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 4v11m-5-5 5 5 5-5M5 20h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  function dbisOf(r) { return (D.dbis || {})[r.key] || null; }
   function dtags(r) {
-    var v = (D.dbis || {})[r.key];
-    if (!v) return null;
-    var sp = h("span", { class: "dtags", title: "Our versions of this method: dbis (the authors' outputs) and dbisf (faster, lighter)" });
-    sp.innerHTML = (v.dbis ? "<span class='dpill'>" + D.tags.dbis + "</span>" : "") + (v.dbisf ? "<span class='dpill f'>" + D.tags.dbisf + "</span>" : "")
-      + (v.note ? "<span class='dnote'>" + v.note + "</span>" : "");
+    if (!dbisOf(r)) return null;
+    var sp = h("span", { class: "dav", title: "Our version of this method is available: the download button of this row" });
+    sp.innerHTML = D.tags.dbis + "<span>available</span>";
     return sp;
+  }
+  function fastMs(r) {
+    var v = dbisOf(r), b = null;
+    if (v) v.models.forEach(function (m) { if (m.ms != null && (!b || m.ms < b.ms)) b = m; });
+    return b;
+  }
+  function getBtn(r) {
+    var has = !!dbisOf(r);
+    var b = h("button", { type: "button", class: "getbtn" + (has ? " has" : ""), "aria-label": "Download " + r.name,
+      title: has ? "Download: our version or the authors' code" : "Download: the authors' code" });
+    b.innerHTML = DL_ICON;
+    b.addEventListener("click", function (ev) { ev.stopPropagation(); openGet(r); });
+    return b;
+  }
+  var dlg = document.getElementById("getdlg");
+  document.getElementById("getdlg-x").addEventListener("click", function () { dlg.close(); });
+  dlg.addEventListener("click", function (ev) { if (ev.target === dlg) dlg.close(); });
+  function copyBox(text) {
+    var pre = h("pre", { class: "code" }, text), b = h("button", { type: "button", class: "gd-copy" }, "Copy");
+    var select = function () { var rg = document.createRange(); rg.selectNodeContents(pre); var s = getSelection(); s.removeAllRanges(); s.addRange(rg); };
+    b.addEventListener("click", function () {
+      var done = function () { b.textContent = "Copied"; setTimeout(function () { b.textContent = "Copy"; }, 1500); };
+      try { navigator.clipboard.writeText(text).then(done, select); } catch (err) { select(); }
+    });
+    return h("div", { class: "gd-code" }, pre, b);
+  }
+  function stat(label, val, d) {
+    return h("div", { class: "gd-st" }, h("span", { class: "l" }, label), h("span", { class: "val" }, val),
+      h("span", { class: "d" + (d && d[1] ? " good" : "") }, d ? d[0] : ""));
+  }
+  function openGet(r) {
+    var v = dbisOf(r), repo = (D.repo || {})[r.base];
+    document.getElementById("getdlg-t").textContent = r.name;
+    document.getElementById("getdlg-s").textContent = metaText(r) + " · trained on " + r.train;
+    var left = h("section", { class: "gd-card gd-ours", "aria-label": "Our version" }), hd = h("div", { class: "gd-h" });
+    hd.innerHTML = D.tags.dbis;
+    hd.append(h("span", null, v ? "our version" : "our version: not yet"));
+    left.append(hd);
+    if (v) {
+      var a = v.authors;
+      left.append(h("p", { class: "gd-base" }, "Compared with the authors' code: " + a.mb + " MB, " + fx(a.ms, 1) + " ms per frame, load " + fx(a.load, 2) + " s, GoPro PSNR " + fx(a.psnr, 4) + " dB."));
+      v.models.forEach(function (m) {
+        var o = h("div", { class: "gd-opt" },
+          h("div", { class: "gd-on" }, h("code", null, m.name), h("span", { class: "gd-kind" + (m.kind === "dbisf" ? " f" : "") }, m.kind === "dbisf" ? "fast and light" : "same outputs as the authors")),
+          h("div", { class: "gd-stats" }, stat("Weights", m.mb + " MB", m.d_mb), stat("ms per 720p frame", fx(m.ms, 1), m.d_ms),
+            stat("Load", fx(m.load, 2) + " s", m.d_load), stat("GoPro PSNR", fx(m.psnr, 4), m.d_psnr)));
+        if (m.url) o.append(h("a", { class: "gd-btn pri", href: m.url, download: m.file }, "Download " + m.ext));
+        else o.append(h("span", { class: "gd-btn pri", "aria-disabled": "true", title: "The weight files are not hosted yet" }, "Download · soon"));
+        left.append(o);
+      });
+      left.append(h("p", { class: "gd-note" }, "Until the files are hosted, the converter makes them from the authors' checkpoint (" + v.checkpoint + "):"),
+        copyBox("pip install torch numpy safetensors zstandard\npython -m dbis.convert " + v.source + " " + v.checkpoint + "\npython -c \"import dbis; net = dbis.load('" + v.models[v.models.length - 1].name + "')\""),
+        h("p", { class: "gd-note" }, "One A100, 1280×720, batch 1, fp16 with torch.compile; PSNR on all 1,111 GoPro test frames. ",
+          h("a", { href: "https://github.com/illaitar/deblurring-is-solved/blob/main/DBIS.md", target: "_blank", rel: "noopener" }, "What changed")));
+    } else {
+      var more = h("a", { href: "#dbis" }, "What dbis is");
+      more.addEventListener("click", function () { dlg.close(); });
+      left.append(h("p", null, "We port methods one at a time and check every output against the authors' code. NAFNet-64 is the first; this method is not done yet."),
+        h("p", { class: "gd-note" }, more));
+    }
+    var dl = h("dl", { class: "gd-dl" });
+    var add = function (k, x) { if (x) dl.append(h("dt", null, k), h("dd", null, x)); };
+    add("Venue", ((r.venue ? r.venue + " " : "") + (r.year || "")).trim()); add("Variant", variantText(r)); add("Trained on", r.train);
+    add("Parameters", r.params ? fx(r.params, 1) + " M" : null); add("Latency", r.ms ? fx(r.ms, 1) + " ms per frame" : null);
+    var right = h("section", { class: "gd-card gd-orig", "aria-label": "Original" }, h("div", { class: "gd-h" }, h("span", null, "Original")),
+      h("p", { class: "gd-note" }, "The authors' code and released checkpoint, as scored in this leaderboard."),
+      repo ? h("a", { class: "gd-btn ghost", href: repo, target: "_blank", rel: "noopener" }, repo.replace("https://", "") + " ↗")
+           : h("p", { class: "gd-note" }, "No public repository."), dl);
+    document.getElementById("getdlg-c").replaceChildren(left, right);
+    dlg.showModal();
   }
 
   /* ---------- filters ---------- */
@@ -970,11 +1104,14 @@ net = dbis.load("dbisf-NAFNet-64")</pre></div>
       btn.addEventListener("click", function () { ST.open[r.key] = !ST.open[r.key]; renderTable(); });
       var tr = h("tr", { class: open ? "open" : null, "data-k": r.key },
         h("td", { class: "c-rank n" }, String(rank)),
-        h("td", { class: "c-name" }, btn),
+        h("td", { class: "c-name" }, h("div", { class: "cn" }, btn, getBtn(r))),
         h("td", null, h("span", { class: "ty" }, h("i", { class: "sw " + r.task }), r.task)));
+      var fm = fastMs(r);
       COLS.slice(0, SIZECOLS.length).forEach(function (k) {
         var v = r[k[0]];
-        tr.append(h("td", { class: "n" }, v ? (k[0] === "year" ? String(v) : fx(v, v < 10 && k[0] !== "gmac" ? 2 : SIZE[k[0]].nd)) : h("span", { class: "na" }, "–")));
+        var td = h("td", { class: "n" }, v ? (k[0] === "year" ? String(v) : fx(v, v < 10 && k[0] !== "gmac" ? 2 : SIZE[k[0]].nd)) : h("span", { class: "na" }, "–"));
+        if (k[0] === "ms" && fm) td.append(h("span", { class: "fastv", title: fm.name + ": " + fx(fm.ms, 1) + " ms per frame, same harness and GPU" }, fx(fm.ms, 1)));
+        tr.append(td);
       });
       ms.forEach(function (m) {
         var v = c[m], td = h("td", { class: "n sc" + (m === ST.sort ? " on" : "") + (c.ok ? "" : " part") });

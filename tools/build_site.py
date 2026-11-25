@@ -116,7 +116,7 @@ for ds in SETS:
 rows = []
 for r in master:
     row = {
-        "key": r["key"], "name": r["name"], "variant": r["variant"], "task": r["task"],
+        "key": r["key"], "base": r["base"], "name": r["name"], "variant": r["variant"], "task": r["task"],
         "family": r["cluster"], "year": int(r["year"]) if str(r["year"]).isdigit() else None,
         "venue": r["venue"] if r["venue"] not in ("-", "unknown") else "",
         "train": TRAIN_LABEL.get(r["train"], r["train"]), "tr": r["train"], "tg": TRAIN_GROUP.get(r["train"], ""),
@@ -267,8 +267,39 @@ FACTS["dbis_table"] = (
     '</tbody></table></div><p class="fig-note">Load: a fresh process, from CUDA ready to the network with its weights on the GPU. '
     'Speed: one A100, 1280&times;720, batch 1, fp16 with torch.compile and CUDA graphs, all three on the same node. '
     'PSNR: all 1,111 GoPro test frames. Every number: <a href="https://github.com/illaitar/deblurring-is-solved/blob/main/results/dbis/NAFNet-64.json">results/dbis/NAFNet-64.json</a>.</p>')
-# the leaderboard rows that have our versions (key of the row in the master table)
-DBIS_ROWS = {"NAFNet": {"dbis": True, "dbisf": True, "note": f"dbisf {_lat['dbisf']:.1f} ms, {_wb['dbisf'] / 1e6:.0f} MB"}}
+# the leaderboard rows that have our versions (key of the row in the master table); numbers from results/dbis/
+DBIS_SRC = {"NAFNet": {"json": "NAFNet-64.json", "source": "NAFNet-64", "checkpoint": "NAFNet-GoPro-width64.pth",
+                       "models": [("dbis-NAFNet-64", "dbis", ".safetensors"), ("dbisf-NAFNet-64", "dbisf", ".wpk")]}}
+DBIS_URL = None   # base URL of the hosted weight files; None while they are not hosted (the popup shows "soon")
+MINUS = "−"
+
+
+def _times(a, x, word):
+    q = a / x
+    return ["same", False] if abs(q - 1) < .05 else [f"{q:.1f}× {word}", q > 1]
+
+
+def _pct(x, a):
+    p = 100 * (x / a - 1)
+    return ["same", False] if abs(p) < 1 else [f"{MINUS if p < 0 else '+'}{abs(p):.0f} %", p < 0]
+
+
+def _dpsnr(d):
+    return ["same", False] if abs(d) < 5e-6 else [f"{MINUS if d < 0 else '+'}{abs(d):.5f} dB", False]
+
+
+DBIS_PAY = {}
+for _k, _s in DBIS_SRC.items():
+    _J = json.loads((RES / "dbis" / _s["json"]).read_text(encoding="utf-8"))
+    _L, _W, _T, _P = (_J["latency_ms"]["fp16_compile_cudagraphs"], _J["weights_bytes"], _J["load_s"], _J["quality"]["mean_psnr_db"])
+    DBIS_PAY[_k] = {"source": _s["source"], "checkpoint": _s["checkpoint"],
+                    "authors": {"mb": round(_W["authors_pth"] / 1e6), "ms": _L["authors"], "load": _T["authors"], "psnr": _P["authors"]},
+                    "models": [{"name": n, "kind": kd, "ext": ext, "file": n + ext, "mb": round(_W[kd] / 1e6), "ms": _L[kd],
+                                "load": _T[kd], "psnr": _P[kd], "d_mb": _times(_W["authors_pth"], _W[kd], "smaller"),
+                                "d_ms": _pct(_L[kd], _L["authors"]), "d_load": _times(_T["authors"], _T[kd], "faster"),
+                                "d_psnr": _dpsnr(_P[kd] - _P["authors"]), "url": DBIS_URL + n + ext if DBIS_URL else None}
+                               for n, kd, ext in _s["models"]]}
+REPOS = json.loads((ROOT / "site" / "method_repos.json").read_text(encoding="utf-8"))
 DATA_CARDS = [  # set, name, pairs, size, blur, license, authors' page
     ("gopro", "GoPro", "1,111 pairs", "1280&times;720", "", "CC BY 4.0", "https://seungjunnah.github.io/Datasets/gopro.html"),
     ("reds_val", "REDS val", "3,000 pairs", "1280&times;720", "", "CC BY 4.0", "https://seungjunnah.github.io/Datasets/reds.html"),
@@ -297,7 +328,8 @@ data = {
                                         for s in seq_names[ds]] for ds in SETS},
     "rows": rows, "extra": sorted(iqa_have), "ref": iqa_ref, "videoSets": VIDEO_SETS,
     "trainGroups": [g for g in GROUP_ORDER if g != "GoPro" and any(r["tg"] == g for r in rows)],
-    "dbis": {k: v for k, v in DBIS_ROWS.items() if any(r["key"] == k for r in rows)},
+    "dbis": {k: v for k, v in DBIS_PAY.items() if any(r["key"] == k for r in rows)},
+    "repo": {k: u for k, u in REPOS.items() if any(r["base"] == k for r in rows)},
     "tags": {"dbis": FACTS["tag_dbis"], "dbisf": FACTS["tag_dbisf"]},
 }
 
