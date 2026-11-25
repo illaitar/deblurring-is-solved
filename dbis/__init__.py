@@ -91,8 +91,11 @@ MODELS = {
                           "file": "dbis-DSTNetPlus-L.safetensors", "store": "float32",
                           "sha256": "378a5fca3c72b17467ab5d9a39d7c43291b513891f9faa44f86aeb489a5bc3cd"},
     # dbisf: float16 autocast (the authors' CuPy kernel had none), the dynamic conv with plain addcmul, weights rounded per
-    # channel to std / 128 (std / 48 costs 0.03 dB on GoPro here); clips stay 50 frames (27 already costs 0.04-0.07 dB)
-    "dbisf-DSTNetPlus-L": {"source": "DSTNetPlus-L", "cls": "DSTNetPlus", "args": {"precision": "fp16", "exact_dynconv": False},
+    # channel to std / 128 (std / 48 costs 0.03 dB on GoPro here); clips stay 50 frames (27 already costs 0.04-0.07 dB).
+    # 26.11: the encoder folded into two convs, the propagation in channels_last, the dynamic conv autotuned when compiled
+    "dbisf-DSTNetPlus-L": {"source": "DSTNetPlus-L", "cls": "DSTNetPlus",
+                           "args": {"precision": "fp16", "exact_dynconv": False, "fold_encoder": True,
+                                    "prop_channels_last": True, "autotune": True},
                            "file": "dbisf-DSTNetPlus-L.wpk", "store": "qc128",
                            "sha256": "42a6934bce12fd88d30a1fe33de480070abb7d8311333a96f321f1de1a32cf1b"},
 }

@@ -46,7 +46,7 @@ is never more than 0.05 dB below the authors' code on any test set (DBIS.md has 
 | dbisf-BSSTNet | 42 MB | 1.71 s | 4.6 s | 35.9425 |
 | DSTNet+ L, authors' code | 56 MB | 2.78 s | 3.01 s | 35.7078 |
 | dbis-DSTNetPlus-L | 56 MB | 0.54 s | 3.45 s | 35.7078 |
-| dbisf-DSTNetPlus-L | 16 MB | 0.60 s | 0.76 s | 35.7002 |
+| dbisf-DSTNetPlus-L | 16 MB | 0.60 s | 0.58 s | 35.6999 |
 
 BSSTNet and DSTNet+ L are timed as in the leaderboard, with a window for every output frame (BSSTNet: dbisf 24 frames,
 the others 48; DSTNet+ L: 27), each version in its fastest mode (DSTNet+ L: the authors' code and dbis in float32, as the
@@ -64,7 +64,7 @@ enc = dbis.load_encoder("dbisf-NAFNet-64")  # the encoder alone: enc(x) -> featu
 
 <!-- generated:start (tools/build_site.py writes this block; edit the script, not the text) -->
 > [!NOTE]
-> Numbers as of 2026-11-25: 267 of 268 variants scored on all their sets (six for image methods, four for video methods), 0 on some. GoPro-trained weights (other training sets are on the site), PSNR in dB (RealBlur: official ECC-aligned PSNR), sorted by PSNR. The full table is in [`docs/leaderboard.csv`](docs/leaderboard.csv) and on the [interactive leaderboard](https://illaitar.github.io/deblurring-is-solved/).
+> Numbers as of 2026-11-26: 267 of 268 variants scored on all their sets (six for image methods, four for video methods), 0 on some. GoPro-trained weights (other training sets are on the site), PSNR in dB (RealBlur: official ECC-aligned PSNR), sorted by PSNR. The full table is in [`docs/leaderboard.csv`](docs/leaderboard.csv) and on the [interactive leaderboard](https://illaitar.github.io/deblurring-is-solved/).
 
 ### GoPro
 

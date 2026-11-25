@@ -20,7 +20,7 @@ Methods of the benchmark re-implemented in this repository, in the package `dbis
 | **dbisf-BSSTNet** | 42 MB `.wpk` | 1.71 s | 4.6 s | 35.9425 (−0.024) |
 | DSTNet+ L, authors' code | 56 MB `.pth` | 2.78 s | 3.01 s | 35.7078 |
 | **dbis-DSTNetPlus-L** | 56 MB `.safetensors` | 0.54 s | 3.45 s | 35.7078 |
-| **dbisf-DSTNetPlus-L** | 16 MB `.wpk` | 0.60 s | 0.76 s | 35.7002 (−0.008) |
+| **dbisf-DSTNetPlus-L** | 16 MB `.wpk` | 0.60 s | 0.58 s | 35.6999 (−0.008) |
 
 Load: a fresh Python process, from CUDA ready to the network with its weights on the GPU (importing torch and starting
 CUDA take another 2.3 s for every model). Time: the benchmark's latency harness on one A100, 1280x720, batch 1, the
@@ -28,9 +28,11 @@ three versions of a method on the same node. NAFNet: fp16 autocast, `torch.compi
 as in the leaderboard, a window for every output frame (dbisf: 24 frames, the others 48), and each version in its
 fastest mode that runs: the authors' code with fp16 autocast and `torch.compile` (20 minutes of compilation), dbis fp16
 eager (`torch.compile` fails on it), dbisf fp16 with its heavy blocks compiled one by one (`net.compile_blocks()`; the
-whole forward does not compile). Without compilation the three take 34.9, 30.6 and 6.6 s. PSNR: all 1111 GoPro test
-frames, 8-bit outputs. Every number is in
-[`results/dbis/NAFNet-64.json`](results/dbis/NAFNet-64.json) and [`results/dbis/BSSTNet.json`](results/dbis/BSSTNet.json).
+whole forward does not compile). Without compilation the three take 34.9, 30.6 and 6.6 s. DSTNet+ L: as in the
+leaderboard, a 27-frame window for every output frame; the authors' code and dbis in float32 (the authors' CuPy kernel
+has no float16), dbisf in float16 with its propagation blocks compiled (0.87 s without). PSNR: all 1111 GoPro test
+frames, 8-bit outputs. Every number is in [`results/dbis/NAFNet-64.json`](results/dbis/NAFNet-64.json),
+[`results/dbis/BSSTNet.json`](results/dbis/BSSTNet.json) and [`results/dbis/DSTNetPlus-L.json`](results/dbis/DSTNetPlus-L.json).
 
 ## dbisf on every test set
 
@@ -67,12 +69,12 @@ frames that overlap by 4; dbisf the same way with windows of 24 frames and its h
 **DSTNet+ L** (the four video test sets; the authors' code as the leaderboard runs it: float32, clips of 50 frames that
 do not overlap, the last one moved back; dbisf the same way, with its propagation blocks compiled, as timed)
 
-| Test set | Frames | Authors, dB | dbisf-DSTNetPlus-L | Frames the authors break | dbisf without them |
-|---|---:|---:|---:|---:|---:|
-| GoPro | 1111 | 35.7078 | −0.008 | 0 | −0.008 |
-| REDS val | 3000 | 27.0689 | +0.006 | 0 | +0.006 |
-| BSD 2ms/16ms | 3000 | 23.2542 | +0.019 | 23 | +0.014 |
-| DVD | 1000 | 32.0308 | +0.013 | 0 | +0.013 |
+| Test set | Frames | Authors, dB | dbisf-DSTNetPlus-L | Frames the authors break | dbisf without them | first dbisf (25.11) |
+|---|---:|---:|---:|---:|---:|---:|
+| GoPro | 1111 | 35.7078 | −0.008 | 0 | −0.008 | −0.008 |
+| REDS val | 3000 | 27.0689 | +0.007 | 0 | +0.007 | +0.006 |
+| BSD 2ms/16ms | 3000 | 23.2542 | +0.020 | 23 | +0.015 | +0.019 |
+| DVD | 1000 | 32.0308 | +0.013 | 0 | +0.013 | +0.013 |
 
 On 23 BSD frames the authors' output itself scores 4.8 to 13.9 dB; the rule is checked without them as well.
 
@@ -115,7 +117,7 @@ print(net.defaults)                       # the model's own setting of every opt
 | `window` | frames per window, laid out as the benchmark runs the authors' code | not used | dbis 48, dbisf 24, overlap 4 | 50, clips that do not overlap |
 | `batch` | tiles per network call (no tiles: frames per call) | 1 | 1 dbis, 14 dbisf | 10 frames through the full-size layers |
 | `precision` | `"fp32"` or `"fp16"` (autocast) | fp32 | fp16 | dbis fp32, dbisf fp16 |
-| `compile` | `False`, `True` or a `torch.compile` mode, on the first call | the network | its heavy blocks | its propagation blocks |
+| `compile` | `False`, `True` or a `torch.compile` mode, on the first call | the network | its heavy blocks | its propagation blocks (dbisf: the dynamic conv with max-autotune) |
 | `out` | `"float"` (float32, not clamped) or `"uint8"` (rounded as the benchmark) | float | float | float |
 
 A long clip can stay on the CPU: `restore` moves one window (or frame) at a time to the GPU and writes the output on
@@ -258,12 +260,21 @@ the frames without black tiles (it must stay above −0.05 dB).
   than dbis on a 27-frame window.
 - Only the emitted frame is computed (`net(x, keep=(0, 1))`). The leaderboard's sliding window emits its oldest frame
   and the forward propagation is causal, so one forward step instead of 27 gives the same output for that frame.
+- The encoder folded into two convs. The first conv (3x3), the Haar split (2x2, stride 2) and the first 1x1 conv of the
+  high bands are linear with no activation between them, so the low band and the high bands are each one 4x4
+  stride-2 conv of the frame. The 96-channel full-resolution map (177 MB per 720p frame in float16) is never formed:
+  the encoder of a 27-frame window takes 11 ms instead of 161 ms, and the high bands are made only for the emitted
+  frame. In float32 the outputs stay within 2e-6 of the plain path.
+- The propagation in channels_last, its dynamic conv compiled with max-autotune: one propagation step in 20.1 ms
+  instead of 23.1 ms. Of these, the 25 residual blocks take 14.9 ms at 128 TFLOPS, the speed of a matrix multiply of
+  the same size on the A100. In float16 the 28 steps of a window therefore cannot take less than about 0.42 s.
 - Weights rounded per output channel to std(channel) / 128: 16 MB, 3.5 times smaller than the checkpoint. The step
   std / 48 of the other dbisf models costs 0.031 dB on GoPro for this 14 M-parameter network.
 - Clips stay 50 frames. Shorter clips would be faster but cost too much (27 frames: −0.043 dB on GoPro, −0.073 dB on
   BSD; 10 frames: −0.24 dB on GoPro).
-- Together: 0.76 s per frame in the harness instead of 3.01 s (4.0 times faster), 12 GiB of GPU memory instead of
-  18.8, loading in 0.60 s instead of 2.78 s.
+- Together: 0.58 s per frame in the harness instead of 3.01 s (5.2 times faster), 3.8 GiB of GPU memory instead of
+  18.8 GiB, loading in 0.60 s instead of 2.78 s. The first dbisf (25.11, without the folded encoder, channels_last and
+  max-autotune) took 0.76 s and 12.3 GiB.
 
 What we tried for dbisf-DSTNetPlus-L. Time: one 27-frame GoPro window on an A100 against dbis (3.67 s); rule: the four
 test sets with clips of 50 frames unless stated.
@@ -275,8 +286,14 @@ test sets with clips of 50 frames unless stated.
 | float16, channels_last | 1.53× | | no gain |
 | float16, propagation blocks compiled | 2.31× | | |
 | only the emitted frame (keep), float16, compiled | 4.14× | | the same output for that frame |
+| + the encoder folded into two convs | 5.80× | | the same maths |
+| + the propagation in channels_last | 5.83× | | |
+| + the dynamic conv compiled with max-autotune | 6.29× | −0.008 | **dbisf** (26.11) |
+| CUDA graphs over a whole propagation step | | | no gain (0.5 %) |
+| channels_last for the whole network | | | slower (the encoder) |
+| fused dynamic conv: the kernel values made at the three low resolutions and upsampled inside the application, so the 864-channel kernel map is never written | | | slower: 9.5 ms compiled from PyTorch, 6.2 ms with a Triton kernel (a second Triton kernel was slower still), against 4.4 ms |
 | float16, float16 weights (24 MB) | | −0.0001 | passes |
-| float16, weights std / 128 (16 MB) | | −0.008 | **dbisf** |
+| float16, weights std / 128 (16 MB) | | −0.008 | weights of **dbisf** |
 | float16, weights std / 48 (14 MB) | | −0.031 | passes, less margin |
 | clips of 27 / 20 / 15 / 10 frames (float16 weights) | | −0.073 / −0.087 / −0.135 / −0.235 | fails |
 

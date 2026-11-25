@@ -2,9 +2,10 @@
  "models": {
   "authors": "DSTNetPlus_Final of sunny2109/DSTNet-plus (DSTNet+ L: 96 features, 5 kernel blocks, 25 residual blocks) with our patch (ext/DSTNet-plus.patch, frame_chunk), DSTNetPlus_L_gopro.pth, float32",
   "dbis": "dbis-DSTNetPlus-L (dbis/dstnetplus/, float32, the dynamic conv rounded as the authors' CuPy kernel; dbis-DSTNetPlus-L.safetensors)",
-  "dbisf": "dbisf-DSTNetPlus-L (dbis/dstnetplus/: float16 autocast, the dynamic conv with addcmul, the propagation blocks compiled for the timing, keep=(0, 1) in the harness; dbisf-DSTNetPlus-L.wpk: weights rounded per output channel to std / 128)"
+  "dbisf": "dbisf-DSTNetPlus-L (dbis/dstnetplus/: float16 autocast, the dynamic conv with addcmul, the encoder folded into two 4x4 stride-2 convs, the propagation in channels_last, its blocks compiled for the timing (the dynamic conv with max-autotune), keep=(0, 1) in the harness; dbisf-DSTNetPlus-L.wpk: weights rounded per output channel to std / 128)",
+  "dbisf_2511": "the dbisf of 25.11: the same without the folded encoder, channels_last and max-autotune"
  },
- "date": "2026-11-25",
+ "date": "2026-11-26",
  "rule": "dbisf: mean PSNR at most 0.05 dB below the authors' code on every test set (25.11); checked also without the 23 BSD frames where the authors' output is broken (4.8 to 13.9 dB)",
  "exactness": {
   "dbis": "bit-identical to the authors' code (run_dst.load_net, frame_chunk 10, float32, cudnn.benchmark) on the first 50-frame clip of GoPro test; the authors' code is itself deterministic run to run",
@@ -44,7 +45,8 @@
     "scale": 20.29905128479004
    }
   },
-  "why_float64": "the authors' CuPy kernel adds the nine products with fused multiply-adds; plain addcmul rounds twice and differs by 1 unit in the last place per call, which the 50-frame recurrence grows to 1.4e-3 (PSNR 36.73233 against 36.73236); the product in float64 and one rounding to float32 match it"
+  "why_float64": "the authors' CuPy kernel adds the nine products with fused multiply-adds; plain addcmul rounds twice and differs by 1 unit in the last place per call, which the 50-frame recurrence grows to 1.4e-3 (PSNR 36.73233 against 36.73236); the product in float64 and one rounding to float32 match it",
+  "dbisf_options": "the folded encoder and channels_last are the same maths in another order: in float32 the network's outputs stay within 2e-6 of the plain path (whole clips, keep, batch 2, odd sizes; diag/clean/dst/test_dst_fast_2511.py)"
  },
  "quality": {
   "run": "GoPro weights on the four video test sets, as the benchmark ran the authors' code: clips of 50 frames that do not overlap (the last one moved back), 8-bit outputs, PSNR against the sharp frame; dbis (bit for bit the authors' code) is the reference; dbisf with its propagation blocks compiled, as timed",
@@ -53,42 +55,42 @@
     "frames": 1111,
     "authors": 35.70778,
     "dbis": 35.70778,
-    "dbisf": 35.7002,
+    "dbisf": 35.69991,
     "leaderboard": 35.708
    },
    "reds_val": {
     "frames": 3000,
     "authors": 27.06894,
     "dbis": 27.06894,
-    "dbisf": 27.07519,
+    "dbisf": 27.07618,
     "leaderboard": 27.0686
    },
    "bsd2": {
     "frames": 3000,
     "authors": 23.25417,
     "dbis": 23.25417,
-    "dbisf": 23.27321,
+    "dbisf": 23.27439,
     "leaderboard": 23.2546
    },
    "dvd": {
     "frames": 1000,
     "authors": 32.03083,
     "dbis": 32.03083,
-    "dbisf": 32.04384,
+    "dbisf": 32.04386,
     "leaderboard": 32.0315
    }
   },
   "delta_vs_authors_db": {
-   "gopro": -0.00758,
-   "reds_val": 0.00625,
-   "bsd2": 0.01905,
-   "dvd": 0.01301
+   "gopro": -0.00787,
+   "reds_val": 0.00724,
+   "bsd2": 0.02022,
+   "dvd": 0.01303
   },
   "delta_vs_authors_without_broken_db": {
-   "gopro": -0.00758,
-   "reds_val": 0.00625,
-   "bsd2": 0.01397,
-   "dvd": 0.01301
+   "gopro": -0.00787,
+   "reds_val": 0.00724,
+   "bsd2": 0.01515,
+   "dvd": 0.01303
   },
   "frames_authors_broken": {
    "gopro": 0,
@@ -96,22 +98,32 @@
    "bsd2": 23,
    "dvd": 0
   },
+  "delta_vs_authors_db_dbisf_2511": {
+   "gopro": -0.00758,
+   "reds_val": 0.00625,
+   "bsd2": 0.01905,
+   "dvd": 0.01301
+  },
   "note": "the leaderboard's numbers come from the same outputs; their last digits differ by up to 0.0007 dB (the leaderboard averages per sequence)"
  },
  "latency_ms": {
   "harness": "eval/adapters/bench_unified.py over the runs/pareto_bench Offline stepper, as the leaderboard: one A100, 1280x720, batch 1, a 27-frame window per output frame (the oldest frame emitted), all on one node (25.11). The authors' code has only mode d (its CuPy kernel has no float16); dbis is timed in mode d, the precision in which it is the authors' code; dbisf in its fastest valid mode, computing only the emitted frame (keep=(0, 1)).",
   "authors": 3013.7,
   "dbis": 3445.5,
-  "dbisf": 758.4,
+  "dbisf": 584.9,
+  "dbisf_2511": 758.4,
+  "dbisf_2511_retimed_in_the_job_of_dbisf_ms": 765.5,
   "mode_used": {
    "authors": "d",
    "dbis": "d",
-   "dbisf": "b"
+   "dbisf": "b",
+   "dbisf_2511": "b"
   },
   "peak_mem_gib": {
    "authors": 18.79,
    "dbis": 18.79,
-   "dbisf": 12.29
+   "dbisf": 3.84,
+   "dbisf_2511": 12.29
   },
   "modes": {
    "authors": {
@@ -138,7 +150,33 @@
      "valid": true
     }
    },
-   "dbisf_keep0": {
+   "dbisf": {
+    "b": {
+     "label": "fp16 autocast + compile max-autotune-no-cudagraphs of the propagation blocks",
+     "median_ms": 584.9,
+     "n_timed": 200,
+     "peak_mem_gib": 3.84,
+     "check_mean_psnr_db": 34.74381,
+     "valid": true
+    },
+    "c": {
+     "label": "fp16 autocast, eager",
+     "median_ms": 870.4,
+     "n_timed": 173,
+     "peak_mem_gib": 3.86,
+     "check_mean_psnr_db": 34.74376,
+     "valid": true
+    },
+    "d": {
+     "label": "fp32 eager (TF32 convs allowed)",
+     "median_ms": 1566.4,
+     "n_timed": 96,
+     "peak_mem_gib": 7.35,
+     "check_mean_psnr_db": 34.74442,
+     "valid": true
+    }
+   },
+   "dbisf_2511": {
     "b": {
      "label": "fp16 autocast + compile max-autotune-no-cudagraphs of the propagation blocks",
      "median_ms": 758.4,
@@ -170,6 +208,16 @@
  "speed_options": {
   "run": "dst_speed_2511.py: one 27-frame GoPro window on an A100 against dbis (whole window and keep=(0, 1)); dst_sets_2511.py: the four test sets",
   "one_window": {
+   "dbisf_comp": {
+    "what": "the dbisf of 25.11: float16, weights std / 128, propagation blocks compiled",
+    "window_s": 1.579,
+    "keep0_s": 0.882,
+    "dbis_window_s": 3.652,
+    "speedup_window": 2.312,
+    "weights_bytes": null,
+    "window_psnr_gt": 36.0565,
+    "window_psnr_gt_dbis": 36.0391
+   },
    "f16w": {
     "what": "float16 weights",
     "window_s": 3.303,
@@ -188,6 +236,36 @@
     "speedup_window": 1.11,
     "weights_bytes": null,
     "window_psnr_gt": 36.039,
+    "window_psnr_gt_dbis": 36.0391
+   },
+   "fast_comp": {
+    "what": "+ the dynamic conv compiled with max-autotune: the dbisf of 26.11",
+    "window_s": 1.353,
+    "keep0_s": 0.579,
+    "dbis_window_s": 3.67,
+    "speedup_window": 2.712,
+    "weights_bytes": null,
+    "window_psnr_gt": 36.0561,
+    "window_psnr_gt_dbis": 36.0391
+   },
+   "fold_cl_comp": {
+    "what": "+ the propagation in channels_last",
+    "window_s": 1.45,
+    "keep0_s": 0.63,
+    "dbis_window_s": 3.674,
+    "speedup_window": 2.534,
+    "weights_bytes": null,
+    "window_psnr_gt": 36.0562,
+    "window_psnr_gt_dbis": 36.0391
+   },
+   "fold_comp": {
+    "what": "+ the encoder folded into two convs (26.11)",
+    "window_s": 1.463,
+    "keep0_s": 0.636,
+    "dbis_window_s": 3.687,
+    "speedup_window": 2.521,
+    "weights_bytes": null,
+    "window_psnr_gt": 36.0562,
     "window_psnr_gt_dbis": 36.0391
    },
    "fp16": {
@@ -464,9 +542,76 @@
      "bsd2": 0.01397,
      "dvd": 0.01301
     }
+   },
+   "fast_comp": {
+    "clip_frames": 50,
+    "attrs": {
+     "fold_encoder": true,
+     "prop_channels_last": true,
+     "autotune": true,
+     "compile": "default"
+    },
+    "rule": "passes",
+    "delta_vs_authors_db": {
+     "gopro": -0.00787,
+     "reds_val": 0.00724,
+     "bsd2": 0.02022,
+     "dvd": 0.01303
+    },
+    "delta_vs_authors_without_broken_db": {
+     "gopro": -0.00787,
+     "reds_val": 0.00724,
+     "bsd2": 0.01515,
+     "dvd": 0.01303
+    }
    }
   },
-  "not_used": "shorter clips (27 frames already cost 0.043 dB on GoPro and 0.073 dB on BSD), weights std / 48 (-0.031 dB on GoPro), channels_last (no gain)"
+  "not_used": "shorter clips (27 frames already cost 0.043 dB on GoPro and 0.073 dB on BSD), weights std / 48 (-0.031 dB on GoPro), channels_last on the whole network (the encoder gets slower), CUDA graphs (0.5 %), a fused dynamic conv (below)"
+ },
+ "profile_2611": {
+  "run": "diag/clean/dst/prof_dst_2511.py and prof_dyn_2511.py: one propagation step (PAGF fusion, dynamic conv, 25 residual blocks) at half resolution, 96 x 360 x 640, float16, A100, CUDA events; a harness window with keep=(0, 1) is 27 backward steps and 1 forward step",
+  "step_ms": {
+   "dbisf_2511": {
+    "step": 23.134,
+    "fusion": 0.753,
+    "dynconv": 7.843,
+    "resblocks": 14.933
+   },
+   "channels_last_max_autotune": {
+    "step": 20.114,
+    "fusion": 0.742,
+    "dynconv": 4.488,
+    "resblocks": 15.05
+   }
+  },
+  "resblocks_tflops": 128.0,
+  "same_size_matmul_tflops": 116.2,
+  "note": "the residual blocks (50 convs 3x3 96->96 per step) run at the speed of a matrix multiply of the same size, so in float16 the 28 steps of a window cannot go below about 28 x 15 ms = 0.42 s",
+  "encoder_27_frames_ms": {
+   "plain": 160.786,
+   "folded (low band of 27, high bands of 1)": 11.284
+  },
+  "dynamic_conv_parts_ms": {
+   "whole_ms": 4.447,
+   "pre_ms": 3.445,
+   "blocks_only_ms": 1.548,
+   "tokernel_ms": 0.796,
+   "apply_ms": 0.365
+  },
+  "fused_dynamic_conv_dropped": {
+   "idea": "tokernel (1x1) and bilinear upsampling are both linear, so the kernel values can be made at the three low resolutions and upsampled inside the application, never writing the 864-channel map",
+   "compiler_fused_pytorch_ms": 9.533,
+   "plain_compiled_ms": 5.093,
+   "triton_pixel_x_channel_tiles_ms": {
+    "whole_dynamic_conv": 6.184,
+    "kernel_alone_best_tile": 3.459
+   },
+   "triton_pixel_x_channel_x_tap_tiles_ms": {
+    "kernel_alone_best_tile": 3.778
+   },
+   "parts_it_replaces_ms": 3.058,
+   "note": "the three versions are right (float32 within 5e-5 of the plain conv) but slower than the compiled plain path (4.4 ms); not in dbisf"
+  }
  },
  "load_s": {
   "run": "a fresh Python process, from CUDA ready to the network with its weights on the GPU; median of 5 (authors: run_dst.load_net, imports of basicsr and CuPy, build, torch.load)",
@@ -523,7 +668,7 @@
   "latency_ms": {
    "authors": 3013.7,
    "dbis": 3445.5,
-   "dbisf": 758.4
+   "dbisf": 584.9
   },
   "weights_bytes": {
    "authors": 56497994,
@@ -538,11 +683,11 @@
   "gopro_psnr": {
    "authors": 35.70778,
    "dbis": 35.70778,
-   "dbisf": 35.7002
+   "dbisf": 35.69991
   },
   "about": {
    "dbis": "the authors' outputs bit for bit, their CuPy kernel replaced by PyTorch (rounded as it in float64, so 14 % slower)",
-   "dbisf": "float16 (the CuPy kernel had none), propagation blocks compiled, weights rounded per channel; computes only the frame it emits. 12 GiB of GPU memory (18.8 GiB for the authors' code)."
+   "dbisf": "float16 (the CuPy kernel had none), the encoder folded into two convs, the propagation in channels_last with its blocks compiled, weights rounded per channel; computes only the frame it emits. 3.8 GiB of GPU memory (18.8 GiB for the authors' code)."
   },
   "time_mode": "a 27-frame window for every output frame as in the leaderboard; the authors' code and dbis in float32 (the authors' CuPy kernel has no float16), dbisf in float16 with its propagation blocks compiled",
   "note": "One A100, 1280×720, a 27-frame window per output frame as in the leaderboard; PSNR on all 1,111 GoPro test frames, clips of 50 frames as the authors test."

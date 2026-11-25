@@ -47,7 +47,9 @@ class PAGF(nn.Module):
 
 class Propagation(nn.Module):
     """One direction (backward: from the last frame to the first, the outputs returned in frame order).
-    forward(feature (b, t, c, h, w)) -> (b, t, c, h, w)."""
+    forward(feature (b, t, c, h, w)) -> (b, t, c, h, w). channels_last: every step's features in channels_last (set
+    with the weights' layout by DSTNetPlus.prop_channels_last)."""
+    channels_last = False
 
     def __init__(self, c, num_kernel_block, num_block, backward):
         super().__init__()
@@ -61,8 +63,12 @@ class Propagation(nn.Module):
         b, t, c, h, w = feature.size()
         outs = []
         feat_prop = feature.new_zeros(b, c, h, w)
+        mf = torch.channels_last if self.channels_last else None
+        if mf:
+            feat_prop = feat_prop.contiguous(memory_format=mf)
         for i in (range(t - 1, -1, -1) if self.backward else range(t)):
-            feat_prop = self.fusion(feature[:, i], feat_prop)
+            x = feature[:, i] if mf is None else feature[:, i].contiguous(memory_format=mf)
+            feat_prop = self.fusion(x, feat_prop)
             feat_prop = self.kernel_conv_pixel(feat_prop)
             feat_prop = self.resblock_bcakward2d(feat_prop)
             outs.append(feat_prop)
