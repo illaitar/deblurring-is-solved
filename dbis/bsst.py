@@ -296,8 +296,42 @@ class SkipUpSample(nn.Module):
 
 
 # ------------------------------------------------------------------------------------- deformable alignment modules
+def _dcn_gs(x, offset, weight, bias, mask):
+    """Modulated deformable 3x3 conv (stride 1, padding 1), the function of torchvision's deform_conv2d: the 9 sampled
+    copies of x (per offset group) by grid_sample in the dtype autocast gives it (float32), then the 3x3 sum as one
+    1x1 conv over cin * 9 channels, which runs in float16 on tensor cores under autocast (torchvision: float32 GEMM)."""
+    n, cin, h, w = x.shape
+    g = mask.shape[1] // 9
+    dt = torch.float32
+    key = ("dcn_base", h, w, x.device)
+    by, bx = _const(key, lambda: (
+        (torch.arange(h, device=x.device, dtype=dt).view(1, 1, 1, h, 1)
+         + torch.arange(-1, 2, device=x.device, dtype=dt).repeat_interleave(3).view(1, 1, 9, 1, 1)),
+        (torch.arange(w, device=x.device, dtype=dt).view(1, 1, 1, 1, w)
+         + torch.arange(-1, 2, device=x.device, dtype=dt).repeat(3).view(1, 1, 9, 1, 1))))
+    off = offset.view(n, g, 9, 2, h, w).to(dt)                      # torchvision: (dy, dx) of kernel point i * 3 + j
+    grid = torch.stack((2 * (bx + off[:, :, :, 1]) / (w - 1) - 1, 2 * (by + off[:, :, :, 0]) / (h - 1) - 1), -1)
+    s = F.grid_sample(x.to(dt).reshape(n * g, cin // g, h, w), grid.view(n * g, 9 * h, w, 2), mode="bilinear",
+                      padding_mode="zeros", align_corners=True)
+    s = s.view(n, g, cin // g, 9, h, w) * mask.view(n, g, 1, 9, h, w).to(dt)
+    return F.conv2d(s.view(n, cin * 9, h, w), weight.reshape(weight.shape[0], cin * 9, 1, 1), bias).float()
+
+
+def _dcn(kind, x, offset, weight, bias, mask):
+    """kind "tv": torchvision (the authors' patched code; float32 inside autocast); "tv_half": torchvision in float16;
+    "gs": _dcn_gs."""
+    if kind == "gs":
+        return _dcn_gs(x, offset, weight, bias, mask)
+    if kind == "tv_half":
+        with torch.autocast(x.device.type, enabled=False):
+            return deform_conv2d(x.half(), offset.half(), weight.half(), bias.half(), (1, 1), (1, 1), (1, 1),
+                                 mask.half()).float()
+    return deform_conv2d(x, offset, weight, bias, (1, 1), (1, 1), (1, 1), mask)
+
+
 class BlurGuidedAlignment(nn.Module):
     """SecondOrderDeformableAlignmentWithBlurmapguide: offsets = flow + 5 tanh(.), masks shifted by the blur maps."""
+    dcn = "tv"
 
     def __init__(self, cin, cout, groups=16, max_residue_magnitude=5):
         super().__init__()
@@ -322,11 +356,12 @@ class BlurGuidedAlignment(nn.Module):
         mask_1 = mask_1 + blur_map_1.repeat(1, mask_1.size(1), 1, 1)
         mask_2 = mask_2 + blur_map_2.repeat(1, mask_1.size(1), 1, 1)
         mask = torch.sigmoid(torch.cat([mask_1, mask_2], dim=1))
-        return deform_conv2d(x, offset, self.weight, self.bias, (1, 1), (1, 1), (1, 1), mask)
+        return _dcn(self.dcn, x, offset, self.weight, self.bias, mask)
 
 
 class FlowAlignment(nn.Module):
     """SecondOrderDeformableAlignment of ProPainter's flow completion net (mmcv DCN -> torchvision, as patched)."""
+    dcn = "tv"
 
     def __init__(self, cin, cout, groups=16, max_residue_magnitude=5):
         super().__init__()
@@ -341,7 +376,7 @@ class FlowAlignment(nn.Module):
         o1, o2, mask = torch.chunk(self.conv_offset(extra_feat), 3, dim=1)
         offset = self.max_residue_magnitude * torch.tanh(torch.cat((o1, o2), dim=1))
         # (the authors split offset in two and concatenate it again: the same tensor)
-        return deform_conv2d(x, offset, self.weight, self.bias, (1, 1), (1, 1), (1, 1), torch.sigmoid(mask))
+        return _dcn(self.dcn, x, offset, self.weight, self.bias, torch.sigmoid(mask))
 
 
 # ------------------------------------------------------------------------- flow completion (ProPainter, BSSTNet copy)
@@ -504,6 +539,8 @@ class Mlp(nn.Module):
 
 
 class WindowAttention(nn.Module):
+    sdpa = False      # True: F.scaled_dot_product_attention with bias (+ shift mask) as a float16 attn_mask
+
     def __init__(self, dim, window_size, num_heads):
         super().__init__()
         self.window_size = tuple(window_size)
@@ -519,9 +556,21 @@ class WindowAttention(nn.Module):
         b_, n, c = x.shape
         qkv = self.qkv_self(x).reshape(b_, n, 3, self.num_heads, c // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]
-        attn = (q * self.scale) @ k.transpose(-2, -1)
         index = relative_position_index(self.window_size, x.device)
         bias = self.relative_position_bias_table[index[:n, :n].reshape(-1)].reshape(n, n, -1)
+        if self.sdpa:     # windows of a sample are consecutive in b_: fold them into the head dimension
+            nw = mask.shape[0] if mask is not None else 1
+            m = bias.permute(2, 0, 1).unsqueeze(0)                                      # (1, heads, n, n)
+            if mask is not None:
+                m = m + mask[:, :n, :n].unsqueeze(1)                                    # (nw, heads, n, n)
+            m = m.reshape(1, nw * self.num_heads, n, n).to(q.dtype)
+            d = c // self.num_heads
+            y = F.scaled_dot_product_attention(q.reshape(b_ // nw, nw * self.num_heads, n, d),
+                                               k.reshape(b_ // nw, nw * self.num_heads, n, d),
+                                               v.reshape(b_ // nw, nw * self.num_heads, n, d), attn_mask=m,
+                                               scale=self.scale)
+            return self.proj(y.reshape(b_, self.num_heads, n, d).transpose(1, 2).reshape(b_, n, c))
+        attn = (q * self.scale) @ k.transpose(-2, -1)
         attn = attn + bias.permute(2, 0, 1).unsqueeze(0)
         if mask is not None:
             nw = mask.shape[0]
@@ -718,6 +767,8 @@ def sparse_attention_constants(window_size, device="cpu"):
 
 
 class SparseWindowAttention(nn.Module):
+    sdpa = False      # True: F.scaled_dot_product_attention (flash) for both attention products
+
     def __init__(self, dim, n_head, window_size, pool_size=(4, 4)):
         super().__init__()
         self.key = nn.Linear(dim, dim, True)
@@ -793,8 +844,11 @@ class SparseWindowAttention(nn.Module):
                 win_v_t = win_v_t.permute(0, 2, 1, 3, 4).reshape(n_win, self.n_head, t_token * kv_win_token, c_head)
                 win_q_t = win_q_t.view(n_win, t_token, self.n_head, nt, c_head)
                 win_q_t = win_q_t.permute(0, 2, 1, 3, 4).reshape(n_win, self.n_head, t_token * nt, c_head)
-                att_t = (win_q_t @ win_k_t.transpose(-2, -1)) * (1.0 / math.sqrt(win_q_t.size(-1)))
-                y_t = F.softmax(att_t, dim=-1) @ win_v_t
+                if self.sdpa:
+                    y_t = F.scaled_dot_product_attention(win_q_t, win_k_t, win_v_t)
+                else:
+                    att_t = (win_q_t @ win_k_t.transpose(-2, -1)) * (1.0 / math.sqrt(win_q_t.size(-1)))
+                    y_t = F.softmax(att_t, dim=-1) @ win_v_t
                 y_t = y_t.view(n_win, self.n_head, t_token, nt, c_head)
                 y_t = y_t.permute(0, 2, 1, 3, 4).reshape(n_win * t_token, self.n_head, nt, c_head)
                 out[i, mask_ind_i] = y_t.view(-1, self.n_head, nt, c_head)
@@ -809,8 +863,11 @@ class SparseWindowAttention(nn.Module):
             win_k_s = win_k_s.permute(0, 2, 1, 3, 4).reshape(n_un_token, self.n_head, t_token * nt, c_head)
             win_v_s = win_v_s.view(-1, t_token, self.n_head, nt, c_head)
             win_v_s = win_v_s.permute(0, 2, 1, 3, 4).reshape(n_un_token, self.n_head, t_token * nt, c_head)
-            att_s = (win_q_s @ win_k_s.transpose(-2, -1)) * (1.0 / math.sqrt(win_q_s.size(-1)))
-            y_s = F.softmax(att_s, dim=-1) @ win_v_s
+            if self.sdpa:
+                y_s = F.scaled_dot_product_attention(win_q_s, win_k_s, win_v_s)
+            else:
+                att_s = (win_q_s @ win_k_s.transpose(-2, -1)) * (1.0 / math.sqrt(win_q_s.size(-1)))
+                y_s = F.softmax(att_s, dim=-1) @ win_v_s
             y_s = y_s.view(n_un_token, self.n_head, t_token, nt, c_head)
             out[i, unmask_ind_i] = y_s.permute(0, 2, 1, 3, 4).reshape(n_un_token * t_token, self.n_head, nt, c_head)
         out = out.view(b, n_wh, n_ww, t, self.n_head, w_h, w_w, c_head)
@@ -1234,15 +1291,86 @@ class BSSTNet(nn.Module):
     again in float32; self.fallbacks counts those patches. Values that stay non-finite in float32 too come from the
     recurrent propagation, whose features grow until a LayerNorm overflows (out of domain; the authors' float32 code
     gives the same black tiles): with nan_fallback those pixels take the input frame (blurry, not black);
-    self.input_fallbacks counts the patches."""
+    self.input_fallbacks counts the patches.
+    Speed options (25.11 tests; all off for dbis):
+      flow_cache  keep the flows of the last window; a window that repeats its frames shifted by k (a sliding window)
+                  runs RAFT only on its k new pairs (RAFT works per pair, so only the batch size of its kernels changes)
+      tf32        float32 matrix products in TF32 inside forward (torchvision's deform_conv2d GEMMs, RAFT correlation)
+      dcn         "tv" (torchvision, as the authors), "tv_half" (torchvision in float16), "gs" (grid_sample sampling
+                  in float32 and the 3x3 sum as a float16 1x1 conv, _dcn_gs)
+      sdpa        scaled_dot_product_attention in the sparse attention and the Swin window attention
+      window      the number of frames of a window for video() and the benchmark's sliding window (the authors: 48)
+      overlap     of the 256 px patches, one int or (rows, columns) (the authors: 64; 24 gives 3 x 6 = 18 patches for 720p
+                  instead of 4 x 7 = 28, 48 gives 4 x 6 = 24, (24, 64) gives 3 x 7 = 21)"""
 
-    def __init__(self, patch_batch=14, precision="fp16", stage_batch=4, patch=256, overlap=64, nan_fallback=False):
+    def __init__(self, patch_batch=14, precision="fp16", stage_batch=4, patch=256, overlap=64, nan_fallback=False,
+                 flow_cache=False, tf32=False, dcn="tv", sdpa=False, window=48):
         super().__init__()
         self.bsst = BSST()
         self.raft = RAFT()
         self.patch_batch, self.precision, self.stage_batch = patch_batch, precision, stage_batch
         self.patch, self.overlap, self.nan_fallback = patch, overlap, nan_fallback
         self.fallbacks = self.input_fallbacks = 0
+        self.flow_cache, self.tf32, self._cache = flow_cache, tf32, None
+        self.window = window
+        self.set_kernels(dcn, sdpa)
+
+    COMPILE_BLOCKS = ("concat", "down01", "encoder_level1", "encoder_level1_1", "down12", "encoder_level2",
+                      "encoder_level2_1", "decoder_level1", "decoder_level1_1", "skip_attn1", "upsample0", "skip_conv",
+                      "out_conv", "up21", "reconstruction", "cabattn")
+
+    def compile_blocks(self, mode="default"):
+        """torch.compile of the heavy blocks of BSST one by one, each its own graph (the whole BSST forward does not
+        compile): 1.3x faster on an A100 after about 3.5 min of compilation (mode "default") for each frame size; the
+        outputs change by float rounding only."""
+        b = self.bsst
+        for name in self.COMPILE_BLOCKS:
+            setattr(b, name, torch.compile(getattr(b, name), mode=mode, dynamic=False))
+        for k in list(b.backbone):
+            b.backbone[k] = torch.compile(b.backbone[k], mode=mode, dynamic=False)
+            b.deform_align[k].conv_offset = torch.compile(b.deform_align[k].conv_offset, mode=mode, dynamic=False)
+        return self
+
+    def video(self, lqs, overlap=4):
+        """A whole clip (B, L, 3, H, W) in windows of self.window frames that overlap by `overlap`, as the benchmark
+        runs the authors' code (runs/baselines/bsstnet/run_bsst.py window_plan: every frame is taken from a window
+        where it is at least 2 frames from the ends, except at the ends of the clip) -> (B, L, 3, H, W) float32."""
+        L, n = lqs.shape[1], self.window
+        if L <= n:
+            return self(lqs)
+        starts = list(range(0, L - n, n - overlap)) + [L - n]
+        out, covered = torch.empty_like(lqs, dtype=torch.float32), 0
+        for k, s in enumerate(starts):
+            lo = 0 if k == 0 else max(s + 2, covered)
+            hi = L if k == len(starts) - 1 else s + n - 2
+            out[:, lo:hi] = self(lqs[:, s:s + n])[:, lo - s:hi - s]
+            covered = hi
+        return out
+
+    def set_kernels(self, dcn="tv", sdpa=False):
+        for m in self.modules():
+            if isinstance(m, (BlurGuidedAlignment, FlowAlignment)):
+                m.dcn = dcn
+            elif isinstance(m, (WindowAttention, SparseWindowAttention)):
+                m.sdpa = sdpa
+
+    def cached_flows(self, lqs):
+        """flows(lqs), reusing the pairs of the previous window when lqs[:, :t-k] equals its frames [k:]."""
+        t, c = lqs.shape[1], self._cache
+        ff = fb = None
+        if c is not None and c[0].shape == lqs.shape:
+            for k in range(1, t - 1):
+                if torch.equal(lqs[:, 0], c[0][:, k]) and torch.equal(lqs[:, :t - k], c[0][:, k:]):
+                    nf, nb = self.flows(lqs[:, t - k - 1:])
+                    ff, fb = torch.cat([c[1][:, k:], nf], 1), torch.cat([c[2][:, k:], nb], 1)
+                    self.cache_hits += 1
+                    break
+        if ff is None:
+            ff, fb = self.flows(lqs)
+        self._cache = (lqs.clone(), ff, fb)
+        return ff, fb
+
+    cache_hits = 0
 
     def flows(self, lq):
         """get_bi_flows of the authors: (forward, backward) flows (B, T-1, 2, H/4, W/4), RAFT in float32."""
@@ -1259,31 +1387,44 @@ class BSSTNet(nn.Module):
         return fwd.view(b, t - 1, 2, h // 4, w // 4) / 2, bwd.view(b, t - 1, 2, h // 4, w // 4) / 2
 
     def band_mask(self, i, j, hs, ws, device):
-        """1 inside, 0 on the 32 px bands the authors zero (sides that have a neighbouring patch)."""
-        p, half = self.patch, self.overlap // 2
+        """1 inside, 0 on the overlap / 2 bands the authors zero (sides that have a neighbouring patch; 32 px)."""
+        p = self.patch
+        oy, ox = (self.overlap, self.overlap) if isinstance(self.overlap, int) else self.overlap
+        hy, hx = oy // 2, ox // 2
         m = torch.ones(p, p, device=device)
         if i < hs[-1]:
-            m[-half:, :] = 0
+            m[-hy:, :] = 0
         if j < ws[-1]:
-            m[:, -half:] = 0
+            m[:, -hx:] = 0
         if i > hs[0]:
-            m[:half, :] = 0
+            m[:hy, :] = 0
         if j > ws[0]:
-            m[:, :half] = 0
+            m[:, :hx] = 0
         return m
 
     @torch.no_grad()
     def forward(self, lqs, patch_batch=None, precision=None, stage_batch=None):
+        if not self.tf32:
+            return self._forward(lqs, patch_batch, precision, stage_batch)
+        prev = torch.backends.cuda.matmul.allow_tf32
+        torch.backends.cuda.matmul.allow_tf32 = True
+        try:
+            return self._forward(lqs, patch_batch, precision, stage_batch)
+        finally:
+            torch.backends.cuda.matmul.allow_tf32 = prev
+
+    def _forward(self, lqs, patch_batch=None, precision=None, stage_batch=None):
         pb = patch_batch or self.patch_batch
         sb = stage_batch or self.stage_batch
         precision = precision or self.precision
         b, t, c, h, w = lqs.shape
         if h % 16 or w % 16 or h < self.patch or w < self.patch:
             raise ValueError(f"BSSTNet needs H and W multiples of 16 and at least {self.patch}, got {h} x {w}")
-        flows_f, flows_b = self.flows(lqs)
-        p, stride, q = self.patch, self.patch - self.overlap, self.patch // 4
-        hs = list(range(0, h - p, stride)) + [max(0, h - p)]
-        ws = list(range(0, w - p, stride)) + [max(0, w - p)]
+        flows_f, flows_b = self.cached_flows(lqs) if self.flow_cache else self.flows(lqs)
+        p, q = self.patch, self.patch // 4
+        oy, ox = (self.overlap, self.overlap) if isinstance(self.overlap, int) else self.overlap   # (rows, columns)
+        hs = list(range(0, h - p, p - oy)) + [max(0, h - p)]
+        ws = list(range(0, w - p, p - ox)) + [max(0, w - p)]
         coords = [(i, j) for i in hs for j in ws]
         acc = torch.zeros(b, t, c, h, w, device=lqs.device)
         cnt = torch.zeros_like(acc)

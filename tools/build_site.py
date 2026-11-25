@@ -257,9 +257,14 @@ DBIS_FILES = ["NAFNet-64.json", "BSSTNet.json"]      # results/dbis/<file>, each
 DBIS_URL = None   # base URL of the hosted weight files; None while they are not hosted (the popup shows "soon")
 MINUS = "−"
 DBS = [json.loads((RES / "dbis" / f).read_text(encoding="utf-8")) | {"_file": f} for f in DBIS_FILES]
+def _faster(a, x):
+    """The time of dbisf against the authors': "24 % faster" (less time) below 1.5 times, else "5.6× faster"."""
+    return f"{a / x:.1f}&times; faster" if a / x >= 1.5 else f"{100 * (1 - x / a):.0f}&nbsp;% faster"
+
+
 FACTS["dbisf_gains"] = ", ".join(       # the "What you get" row: time and weight size of every dbisf against the authors
-    f'{_J["site"]["source"]} <b>{100 * (1 - _J["site"]["latency_ms"]["dbisf"] / _J["site"]["latency_ms"]["authors"]):.0f}&nbsp;% '
-    f'faster, weights {_J["site"]["weights_bytes"]["authors"] / _J["site"]["weights_bytes"]["dbisf"]:.1f}&times; smaller</b>'
+    f'{_J["site"]["source"]} <b>{_faster(_J["site"]["latency_ms"]["authors"], _J["site"]["latency_ms"]["dbisf"])}, weights '
+    f'{_J["site"]["weights_bytes"]["authors"] / _J["site"]["weights_bytes"]["dbisf"]:.1f}&times; smaller</b>'
     for _J in DBS)
 
 
@@ -308,7 +313,7 @@ for _J in DBS:
         "authors": {"mb": round(_W["authors"] / 1e6), "ms": _L["authors"], "load": _T["authors"], "psnr": _P["authors"]},
         "models": [{"name": _s["models"][kd], "kind": kd, "ext": _s["ext"][kd], "file": _s["models"][kd] + _s["ext"][kd],
                     "about": _s.get("about", {}).get(kd), "mb": round(_W[kd] / 1e6), "ms": _L[kd], "load": _T[kd],
-                    "psnr": _P[kd], "d_mb": _times(_W["authors"], _W[kd], "smaller"), "d_ms": _pct(_L[kd], _L["authors"]),
+                    "psnr": _P[kd], "d_mb": _times(_W["authors"], _W[kd], "smaller"), "d_ms": _times(_L["authors"], _L[kd], "faster") if _L["authors"] / _L[kd] >= 1.5 else _pct(_L[kd], _L["authors"]),
                     "d_load": _times(_T["authors"], _T[kd], "faster"), "d_psnr": _dpsnr(_P[kd] - _P["authors"]),
                     "url": DBIS_URL + _s["models"][kd] + _s["ext"][kd] if DBIS_URL else None} for kd in ("dbis", "dbisf")]}
 REPOS = json.loads((ROOT / "site" / "method_repos.json").read_text(encoding="utf-8"))

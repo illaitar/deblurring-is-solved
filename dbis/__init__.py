@@ -58,12 +58,15 @@ MODELS = {
     "dbisf-NAFNet-64": {"source": "NAFNet-64", "cls": "NAFNet", "args": {"tlc": "fast"},
                         "file": "dbisf-NAFNet-64.wpk", "store": "qc48",
                         "sha256": "a62c8f19a5467009f68054db8990608594717bb55b10d6b721ee88b685e36914"},
-    # patch_batch=1 gives the authors' outputs bit for bit (dbis); 14 patches per call (2 BSST calls per 720p window)
-    # is 2.2x faster and differs by float16 rounding only (dbisf, with the weights rounded per channel)
+    # patch_batch=1 gives the authors' outputs bit for bit (dbis). dbisf: 14 patches per call (2 BSST calls per 720p
+    # window), 24-frame windows (net.video(clip) cuts a clip into them), flows reused between overlapping windows, TF32
+    # and fused attention, failed patches redone; net.compile_blocks() compiles the heavy blocks (1.3x)
     "dbis-BSSTNet": {"source": "BSSTNet", "cls": "BSSTNet", "args": {"patch_batch": 1},
                      "file": "dbis-BSSTNet.safetensors", "store": "float32",
                      "sha256": "cc35ec20c837463413060557cc8671c614ce9e2a8402465daff56c82c45a928a"},
-    "dbisf-BSSTNet": {"source": "BSSTNet", "cls": "BSSTNet", "args": {"patch_batch": 14, "stage_batch": 4, "nan_fallback": True},
+    "dbisf-BSSTNet": {"source": "BSSTNet", "cls": "BSSTNet",
+                      "args": {"patch_batch": 14, "stage_batch": 4, "nan_fallback": True, "window": 24, "flow_cache": True,
+                               "tf32": True, "sdpa": True},
                       "file": "dbisf-BSSTNet.wpk", "store": "qc48",
                       "sha256": "ac0db58978e14d60746a9ec89d272beb13922f2629f5eccf225c94d312de4fa8"},
 }

@@ -1,11 +1,12 @@
 {
  "models": {
-  "authors": "BSST + RAFT of huicongzhang/BSSTNet (ModelBSST.get_bi_flows + test_by_patch as runs/baselines/bsstnet/run_bsst.py runs them: 256 px patches, 64 px overlap, fp16 autocast), BSST_gopro.pth + raft-things.pth",
+  "authors": "BSST + RAFT of huicongzhang/BSSTNet (ModelBSST.get_bi_flows + test_by_patch as runs/baselines/bsstnet/run_bsst.py runs them: 48-frame windows, 256 px patches, 64 px overlap, fp16 autocast), BSST_gopro.pth + raft-things.pth",
   "dbis": "dbis-BSSTNet (dbis/bsst.py, patch_batch=1, dbis-BSSTNet.safetensors): one patch per BSST call as the authors",
-  "dbisf": "dbisf-BSSTNet (dbis/bsst.py, patch_batch=14, stage_batch=4, nan_fallback; dbisf-BSSTNet.wpk: weights rounded per output channel to std / 48, tier qc of dbis/wpack.py)"
+  "dbisf": "dbisf-BSSTNet (dbis/bsst.py: window=24, patch_batch=14, stage_batch=4, nan_fallback, flow_cache, tf32, sdpa; compile_blocks() for the timing; dbisf-BSSTNet.wpk: weights rounded per output channel to std / 48)",
+  "dbisf_first": "the first dbisf of 25.11: 48-frame windows, patch_batch=14, nan_fallback, the same weight file, eager"
  },
  "date": "2026-11-25",
- "rule": "dbisf: mean PSNR at most 0.05 dB below the authors' code on every test set (25.11)",
+ "rule": "dbisf: mean PSNR at most 0.05 dB below the authors' code on every test set (25.11); checked here also on the frames where the authors' output has no black tile",
  "exactness": {
   "dbis": "patch_batch=1 is bit-identical to the authors' runner (flows, patch calls, whole windows) on GOPR0384_11_00 and GOPR0862_11_00 frames 0..47, fp16 autocast and fp32",
   "two_windows_mean_psnr_db": {
@@ -20,57 +21,91 @@
   "keys": "A = authors, O = dbis/bsst.py; 16 = fp16 autocast, 32 = fp32; _N = patches per BSST call"
  },
  "quality": {
-  "run": "GoPro weights on the four video test sets, the leaderboard's windows (48 frames, 4 overlap, every frame written), 8-bit outputs, PSNR against the sharp frame; non-finite values become 0 as in the protocol",
+  "run": "GoPro weights on the four video test sets, windows as the leaderboard's run of the authors' code (48 frames, 4 overlap, every frame written; dbisf: 24 frames, 4 overlap), 8-bit outputs, PSNR against the sharp frame; non-finite values become 0 as in the protocol. dbisf with its heavy blocks compiled as timed; dbisf_eager without",
   "mean_psnr_db": {
    "gopro": {
     "frames": 1111,
     "authors": 35.96622,
     "dbis": 35.96622,
-    "dbisf": 35.95617,
-    "dbisf_without_fallback": 35.95614,
+    "dbisf": 35.94247,
+    "dbisf_eager": 35.94247,
+    "dbisf_first": 35.95617,
+    "dbisf_first_without_fallback": 35.95614,
     "leaderboard": 35.9662
    },
    "reds_val": {
     "frames": 3000,
     "authors": 24.39008,
     "dbis": 24.39008,
-    "dbisf": 27.74146,
-    "dbisf_without_fallback": 24.46036,
+    "dbisf": 27.747,
+    "dbisf_eager": 27.74714,
+    "dbisf_first": 27.74146,
+    "dbisf_first_without_fallback": 24.46036,
     "leaderboard": 24.3907
    },
    "bsd2": {
     "frames": 3000,
     "authors": 22.76997,
     "dbis": 22.76997,
-    "dbisf": 24.57815,
-    "dbisf_without_fallback": 22.74345,
+    "dbisf": 24.54673,
+    "dbisf_eager": 24.55583,
+    "dbisf_first": 24.57815,
+    "dbisf_first_without_fallback": 22.74345,
     "leaderboard": 23.7607
    },
    "dvd": {
     "frames": 1000,
     "authors": 32.67983,
     "dbis": 32.67983,
-    "dbisf": 32.66714,
-    "dbisf_without_fallback": 32.66715,
+    "dbisf": 32.64589,
+    "dbisf_eager": 32.64593,
+    "dbisf_first": 32.66714,
+    "dbisf_first_without_fallback": 32.66715,
     "leaderboard": 32.6798
    }
   },
   "delta_vs_authors_db": {
    "gopro": {
-    "dbisf": -0.01005,
-    "dbisf_without_fallback": -0.01008
+    "dbisf": -0.02375,
+    "dbisf_eager": -0.02375,
+    "dbisf_first": -0.01005,
+    "dbisf_first_without_fallback": -0.01008
    },
    "reds_val": {
-    "dbisf": 3.35138,
-    "dbisf_without_fallback": 0.07029
+    "dbisf": 3.35693,
+    "dbisf_eager": 3.35707,
+    "dbisf_first": 3.35138,
+    "dbisf_first_without_fallback": 0.07029
    },
    "bsd2": {
-    "dbisf": 1.80818,
-    "dbisf_without_fallback": -0.02652
+    "dbisf": 1.77677,
+    "dbisf_eager": 1.78586,
+    "dbisf_first": 1.80818,
+    "dbisf_first_without_fallback": -0.02652
    },
    "dvd": {
-    "dbisf": -0.01268,
-    "dbisf_without_fallback": -0.01267
+    "dbisf": -0.03394,
+    "dbisf_eager": -0.0339,
+    "dbisf_first": -0.01268,
+    "dbisf_first_without_fallback": -0.01267
+   }
+  },
+  "delta_vs_authors_without_black_frames_db": {
+   "gopro": {
+    "dbisf": -0.02375,
+    "dbisf_first": -0.01005
+   },
+   "reds_val": {
+    "dbisf": -0.03073,
+    "dbisf_first": -0.02732
+   },
+   "bsd2": {
+    "dbisf": 0.03711,
+    "dbisf_first": 0.04822
+   },
+   "dvd": {
+    "dbisf": -0.03394,
+    "dbisf_first": -0.01268
    }
   },
   "black_tiles": {
@@ -78,76 +113,158 @@
    "frames_with_nonfinite_values": {
     "gopro": {
      "authors_fp16": 0,
-     "dbisf_without_fallback": 0,
-     "dbisf": 0
+     "dbisf": 0,
+     "dbisf_first": 0
     },
     "reds_val": {
      "authors_fp16": 466,
-     "dbisf_without_fallback": 456,
-     "dbisf": 0
+     "dbisf": 0,
+     "dbisf_first": 0
     },
     "bsd2": {
      "authors_fp16": 376,
-     "dbisf_without_fallback": 404,
-     "dbisf": 0
+     "dbisf": 0,
+     "dbisf_first": 0
     },
     "dvd": {
      "authors_fp16": 0,
-     "dbisf_without_fallback": 0,
-     "dbisf": 0
+     "dbisf": 0,
+     "dbisf_first": 0
     }
    },
-   "dbisf_patches_redone_in_float32": {
+   "dbisf_first_patches_redone_in_float32": {
     "gopro": 0,
     "reds_val": 117,
     "bsd2": 29,
     "dvd": 0
    },
-   "dbisf_patches_kept_as_input": {
+   "dbisf_first_patches_kept_as_input": {
     "gopro": 0,
     "reds_val": 115,
     "bsd2": 14,
     "dvd": 0
    },
-   "delta_without_those_frames_db": {
-    "gopro": -0.01005,
-    "reds_val": -0.02732,
-    "bsd2": 0.04822,
-    "dvd": -0.01268
-   },
    "leaderboard_bsd": "the leaderboard's BSD row is the authors' code in fp32 (23.7607), REDS and the others fp16"
   }
  },
  "latency_ms": {
-  "harness": "eval/adapters/bench_unified.py over the runs/pareto_bench Offline stepper, as the leaderboard: one A100, 1280x720, batch 1, a 48-frame window per output frame (window position 2 emitted), the first 250 GoPro test frames; slower than 0.5 s per step: 5 warm-up steps, 5 to 9 timed steps, median. Each version in its fastest valid mode (the leaderboard's rule), the three on the same node and GPU (cn10, 25.11).",
-  "authors": 25721.6,
-  "dbis": 30368.1,
-  "dbisf": 15999.6,
+  "harness": "eval/adapters/bench_unified.py over the runs/pareto_bench Offline stepper, as the leaderboard: one A100, 1280x720, batch 1, one window per output frame (window position 2 emitted; 48 frames for the authors' code and dbis, 24 for dbisf), the first 250 GoPro test frames; slower than 0.5 s per step: 5 warm-up steps, 5 to 32 timed steps, median. Each version in its fastest valid mode (the leaderboard's rule), all on the same node (25.11).",
+  "authors": 25555.3,
+  "dbis": 30582.5,
+  "dbisf": 4579.4,
   "mode_used": {
-   "authors": "b: fp16 autocast + torch.compile(max-autotune-no-cudagraphs), 18.5 min of compilation",
-   "dbis": "c: fp16 eager (b fails: torch.compile AssertionError 'incorrect out shape after application of ViewMeta sequence')",
-   "dbisf": "c: fp16 eager (b: torch.compile did not finish within the harness's 30 min)"
+   "authors": "b: fp16 autocast + compile max-autotune-no-cudagraphs",
+   "dbis": "c: fp16 autocast, eager (b fails on dbis: torch.compile AssertionError 'incorrect out shape after application of ViewMeta sequence')",
+   "dbisf": "b: fp16 autocast + compile max-autotune-no-cudagraphs of the heavy blocks (the whole BSST forward does not compile)"
+  },
+  "peak_mem_gib": {
+   "authors": 9.45,
+   "dbis": 8.64,
+   "dbisf": 17.79
   },
   "fp16_eager": {
-   "authors": 34852.3,
-   "dbis": 30368.1,
-   "dbisf": 15999.6
+   "authors": 34880.4,
+   "dbis": 30582.5,
+   "dbisf": 6607.9,
+   "dbisf_first": 16104.8
   },
   "modes": {
+   "authors": {
+    "b": {
+     "label": "fp16 autocast + compile max-autotune-no-cudagraphs",
+     "median_ms": 25555.3,
+     "n_timed": 5,
+     "peak_mem_gib": 9.45,
+     "check_mean_psnr_db": 36.02733,
+     "valid": false,
+     "first_call_s": 1111.5
+    },
+    "c": {
+     "label": "fp16 autocast, eager",
+     "median_ms": 34880.4,
+     "n_timed": 5,
+     "peak_mem_gib": 9.6,
+     "check_mean_psnr_db": 36.02572,
+     "valid": false,
+     "first_call_s": 44.23
+    }
+   },
+   "dbis-BSSTNet": {
+    "c": {
+     "label": "fp16 autocast, eager",
+     "median_ms": 30582.5,
+     "n_timed": 5,
+     "peak_mem_gib": 8.64,
+     "check_mean_psnr_db": 36.02597,
+     "valid": false,
+     "first_call_s": 39.76
+    }
+   },
+   "dbisf-BSSTNet": {
+    "c": {
+     "label": "fp16 autocast, eager",
+     "median_ms": 16104.8,
+     "n_timed": 9,
+     "peak_mem_gib": 36.41,
+     "check_mean_psnr_db": 36.02771,
+     "valid": false,
+     "first_call_s": 37.07
+    }
+   },
+   "dbisf-BSSTNet_kern_cache_w24": {
+    "b": {
+     "label": "fp16 autocast + compile max-autotune-no-cudagraphs of the heavy blocks (the whole BSST forward does not compile)",
+     "median_ms": 4579.4,
+     "n_timed": 32,
+     "peak_mem_gib": 17.79,
+     "check_mean_psnr_db": 36.6618,
+     "valid": true,
+     "first_call_s": 311.35
+    },
+    "c": {
+     "label": "fp16 autocast, eager",
+     "median_ms": 6607.9,
+     "n_timed": 22,
+     "peak_mem_gib": 17.82,
+     "check_mean_psnr_db": 36.25933,
+     "valid": true,
+     "first_call_s": 22.25
+    },
+    "d": {
+     "label": "fp32 eager (TF32 convs allowed)",
+     "median_ms": 8676.6,
+     "n_timed": 17,
+     "peak_mem_gib": 22.03,
+     "check_mean_psnr_db": 35.22567,
+     "valid": true,
+     "first_call_s": 20.32
+    }
+   }
+  },
+  "lookahead_frames": {
+   "authors": 45,
+   "dbisf": 21
+  },
+  "validity": "a mode is valid within 0.05 dB of the same stepper's fp32 eager run on the first GoPro outputs (dbis: of the authors' fp32 eager, its outputs being theirs)",
+  "first_run_other_node": {
    "authors": {
     "b": {
      "label": "fp16 autocast + compile max-autotune-no-cudagraphs",
      "median_ms": 25721.6,
      "n_timed": 5,
      "peak_mem_gib": 9.45,
-     "check_mean_psnr_db": 36.02701
+     "check_mean_psnr_db": 36.02701,
+     "valid": false,
+     "first_call_s": 1110.1
     },
     "c": {
      "label": "fp16 autocast, eager",
      "median_ms": 34852.3,
      "n_timed": 5,
      "peak_mem_gib": 9.6,
-     "check_mean_psnr_db": 36.02569
+     "check_mean_psnr_db": 36.02569,
+     "valid": false,
+     "first_call_s": 45.32
     }
    },
    "dbis-BSSTNet": {
@@ -160,7 +277,9 @@
      "median_ms": 30368.1,
      "n_timed": 5,
      "peak_mem_gib": 8.64,
-     "check_mean_psnr_db": 36.02592
+     "check_mean_psnr_db": 36.02592,
+     "valid": false,
+     "first_call_s": 40.23
     }
    },
    "dbisf-BSSTNet": {
@@ -173,16 +292,520 @@
      "median_ms": 15999.6,
      "n_timed": 9,
      "peak_mem_gib": 36.41,
-     "check_mean_psnr_db": 36.02771
+     "check_mean_psnr_db": 36.02771,
+     "valid": false,
+     "first_call_s": 35.85
     }
    }
   },
-  "validity": {
-   "reference": "fp32 eager of the leaderboard run (01.11), mean PSNR of the first 20 outputs of the first GoPro sequence",
-   "fp32_eager_check_psnr_db": 36.02779,
-   "rule": "a mode is valid within 0.05 dB of it; every timed mode above is"
-  },
   "leaderboard_authors_ms": 25530.8
+ },
+ "speed_options": {
+  "run": "speed_opts_2511.py: one 48-frame GoPro window (shorter windows: their first frames) next to the first dbisf, fp16 eager, one A100; the flow cache on the window shifted by one frame after the first. Sets: bsst_opts_sets_2511.py on the four test sets (without the cache, which does nothing on separate windows). The rule is applied to the whole sets and to the frames without black tiles",
+  "variants": {
+   "dcn_gs": {
+    "what": "deformable conv as grid_sample (float32) + one float16 1x1 conv",
+    "window_frames": 48,
+    "window_s": 15.241,
+    "first_dbisf_window_s": 16.115,
+    "speedup": 1.057,
+    "peak_gib": 37.91,
+    "output_psnr_vs_first_dbisf_db": 70.01
+   },
+   "dcn_tv_half": {
+    "what": "torchvision deformable conv in float16",
+    "window_frames": 48,
+    "window_s": 14.803,
+    "first_dbisf_window_s": 16.058,
+    "speedup": 1.085,
+    "peak_gib": 37.91,
+    "output_psnr_vs_first_dbisf_db": 67.88
+   },
+   "flow_cache": {
+    "what": "RAFT flows of the previous (sliding) window reused: RAFT on the new pair only",
+    "window_frames": 48,
+    "window_s": 14.836,
+    "first_dbisf_window_s": 16.05,
+    "speedup": 1.082,
+    "peak_gib": 38.4,
+    "output_psnr_vs_first_dbisf_db": 70.1
+   },
+   "kern": {
+    "what": "TF32 + sdpa",
+    "window_frames": 48,
+    "window_s": 14.357,
+    "first_dbisf_window_s": 16.051,
+    "speedup": 1.118,
+    "peak_gib": 36.41,
+    "output_psnr_vs_first_dbisf_db": 70.0,
+    "sets_delta_vs_authors_db": {
+     "gopro": -0.01009,
+     "reds_val": 3.35154,
+     "bsd2": 1.81082,
+     "dvd": -0.01264
+    },
+    "sets_delta_vs_authors_without_black_frames_db": {
+     "gopro": -0.01009,
+     "reds_val": -0.02731,
+     "bsd2": 0.04838,
+     "dvd": -0.01264
+    },
+    "rule": "passes",
+    "worst_delta_db": -0.0273
+   },
+   "kern_cache": {
+    "what": "TF32 + sdpa + flow cache",
+    "window_frames": 48,
+    "window_s": 13.188,
+    "first_dbisf_window_s": 16.068,
+    "speedup": 1.218,
+    "peak_gib": 36.9,
+    "output_psnr_vs_first_dbisf_db": 69.96,
+    "sets_delta_vs_authors_db": {
+     "gopro": -0.01009,
+     "reds_val": 3.35154,
+     "bsd2": 1.81082,
+     "dvd": -0.01264
+    },
+    "sets_delta_vs_authors_without_black_frames_db": {
+     "gopro": -0.01009,
+     "reds_val": -0.02731,
+     "bsd2": 0.04838,
+     "dvd": -0.01264
+    },
+    "rule": "passes",
+    "worst_delta_db": -0.0273
+   },
+   "kern_cache_w24": {
+    "what": "TF32 + sdpa + flow cache + 24-frame window",
+    "window_frames": 24,
+    "window_s": 6.615,
+    "first_dbisf_window_s": 16.11,
+    "speedup": 2.435,
+    "peak_gib": 19.41,
+    "output_psnr_vs_first_dbisf_db": 69.44,
+    "sets_delta_vs_authors_db": {
+     "gopro": -0.02375,
+     "reds_val": 3.35707,
+     "bsd2": 1.78586,
+     "dvd": -0.0339
+    },
+    "sets_delta_vs_authors_without_black_frames_db": {
+     "gopro": -0.02375,
+     "reds_val": -0.03058,
+     "bsd2": 0.03658,
+     "dvd": -0.0339
+    },
+    "rule": "passes",
+    "worst_delta_db": -0.0339
+   },
+   "kern_cache_w32": {
+    "what": "TF32 + sdpa + flow cache + 32-frame window",
+    "window_frames": 32,
+    "window_s": 8.803,
+    "first_dbisf_window_s": 16.057,
+    "speedup": 1.824,
+    "peak_gib": 25.27,
+    "output_psnr_vs_first_dbisf_db": 69.47,
+    "sets_delta_vs_authors_db": {
+     "gopro": -0.01348,
+     "reds_val": 3.35741,
+     "bsd2": 1.79868,
+     "dvd": -0.02144
+    },
+    "sets_delta_vs_authors_without_black_frames_db": {
+     "gopro": -0.01348,
+     "reds_val": -0.03552,
+     "bsd2": 0.03921,
+     "dvd": -0.02144
+    },
+    "rule": "passes",
+    "worst_delta_db": -0.0355
+   },
+   "kern_gs": {
+    "what": "TF32 + sdpa + deformable conv as grid_sample",
+    "window_frames": 48,
+    "window_s": 14.845,
+    "first_dbisf_window_s": 16.118,
+    "speedup": 1.086,
+    "peak_gib": 36.41,
+    "output_psnr_vs_first_dbisf_db": 69.9
+   },
+   "kern_ov24": {
+    "what": "TF32 + sdpa + overlap 24 (18 patches)",
+    "window_frames": 48,
+    "window_s": 10.02,
+    "first_dbisf_window_s": 16.029,
+    "speedup": 1.6,
+    "peak_gib": 41.27,
+    "output_psnr_vs_first_dbisf_db": 52.66,
+    "sets_delta_vs_authors_db": {
+     "gopro": -0.06705,
+     "reds_val": 3.32943,
+     "bsd2": 1.83041,
+     "dvd": -0.04957
+    },
+    "sets_delta_vs_authors_without_black_frames_db": {
+     "gopro": -0.06705,
+     "reds_val": -0.05033,
+     "bsd2": 0.057,
+     "dvd": -0.04957
+    },
+    "rule": "fails",
+    "worst_delta_db": -0.067
+   },
+   "kern_ov24_cache": {
+    "what": "TF32 + sdpa + overlap 24 + flow cache",
+    "window_frames": 48,
+    "window_s": 8.445,
+    "first_dbisf_window_s": 16.116,
+    "speedup": 1.908,
+    "peak_gib": 41.76,
+    "output_psnr_vs_first_dbisf_db": 52.74,
+    "sets_delta_vs_authors_db": {
+     "gopro": -0.06705,
+     "reds_val": 3.32943,
+     "bsd2": 1.83041,
+     "dvd": -0.04957
+    },
+    "sets_delta_vs_authors_without_black_frames_db": {
+     "gopro": -0.06705,
+     "reds_val": -0.05033,
+     "bsd2": 0.057,
+     "dvd": -0.04957
+    },
+    "rule": "fails",
+    "worst_delta_db": -0.067
+   },
+   "kern_ov24_cache_w24": {
+    "what": "overlap 24 + flow cache + 24 frames",
+    "window_frames": 24,
+    "window_s": 4.217,
+    "first_dbisf_window_s": 16.014,
+    "speedup": 3.797,
+    "peak_gib": 21.84,
+    "output_psnr_vs_first_dbisf_db": 51.72
+   },
+   "kern_ov24_cache_w32": {
+    "what": "overlap 24 + flow cache + 32 frames",
+    "window_frames": 32,
+    "window_s": 5.645,
+    "first_dbisf_window_s": 16.095,
+    "speedup": 2.851,
+    "peak_gib": 28.51,
+    "output_psnr_vs_first_dbisf_db": 52.36
+   },
+   "kern_ov24_pb9": {
+    "what": "TF32 + sdpa + overlap 24, 9 per call",
+    "window_frames": 48,
+    "window_s": 9.86,
+    "first_dbisf_window_s": 15.973,
+    "speedup": 1.62,
+    "peak_gib": 30.33,
+    "output_psnr_vs_first_dbisf_db": 52.66
+   },
+   "kern_ov48_cache_w24": {
+    "what": "kern_ov48_w24 + flow cache",
+    "window_frames": 24,
+    "window_s": 5.659,
+    "first_dbisf_window_s": 15.985,
+    "speedup": 2.825,
+    "peak_gib": 18.2,
+    "output_psnr_vs_first_dbisf_db": 53.65,
+    "sets_delta_vs_authors_db": {
+     "gopro": -0.03836,
+     "reds_val": 3.32845,
+     "bsd2": 1.79934,
+     "dvd": -0.04551
+    },
+    "sets_delta_vs_authors_without_black_frames_db": {
+     "gopro": -0.03836,
+     "reds_val": -0.05527,
+     "bsd2": 0.04235,
+     "dvd": -0.04551
+    },
+    "rule": "fails",
+    "worst_delta_db": -0.0553
+   },
+   "kern_ov48_cache_w32": {
+    "what": "kern_ov48_w32 + flow cache",
+    "window_frames": 32,
+    "window_s": 7.576,
+    "first_dbisf_window_s": 16.057,
+    "speedup": 2.119,
+    "peak_gib": 23.65,
+    "output_psnr_vs_first_dbisf_db": 54.26,
+    "sets_delta_vs_authors_db": {
+     "gopro": -0.0284,
+     "reds_val": 3.3444,
+     "bsd2": 1.80492,
+     "dvd": -0.03308
+    },
+    "sets_delta_vs_authors_without_black_frames_db": {
+     "gopro": -0.0284,
+     "reds_val": -0.04053,
+     "bsd2": 0.04399,
+     "dvd": -0.03308
+    },
+    "rule": "passes",
+    "worst_delta_db": -0.0405
+   },
+   "kern_ov48_w24": {
+    "what": "TF32 + sdpa + overlap 48 (24 patches) + 24 frames",
+    "window_frames": 24,
+    "window_s": 6.232,
+    "first_dbisf_window_s": 16.084,
+    "speedup": 2.581,
+    "peak_gib": 17.95,
+    "output_psnr_vs_first_dbisf_db": 52.17,
+    "sets_delta_vs_authors_db": {
+     "gopro": -0.03836,
+     "reds_val": 3.32845,
+     "bsd2": 1.79934,
+     "dvd": -0.04551
+    },
+    "sets_delta_vs_authors_without_black_frames_db": {
+     "gopro": -0.03836,
+     "reds_val": -0.05527,
+     "bsd2": 0.04235,
+     "dvd": -0.04551
+    },
+    "rule": "fails",
+    "worst_delta_db": -0.0553
+   },
+   "kern_ov48_w32": {
+    "what": "TF32 + sdpa + overlap 48 (24 patches) + 32 frames",
+    "window_frames": 32,
+    "window_s": 8.365,
+    "first_dbisf_window_s": 16.068,
+    "speedup": 1.921,
+    "peak_gib": 23.32,
+    "output_psnr_vs_first_dbisf_db": 52.79,
+    "sets_delta_vs_authors_db": {
+     "gopro": -0.0284,
+     "reds_val": 3.3444,
+     "bsd2": 1.80492,
+     "dvd": -0.03308
+    },
+    "sets_delta_vs_authors_without_black_frames_db": {
+     "gopro": -0.0284,
+     "reds_val": -0.04053,
+     "bsd2": 0.04399,
+     "dvd": -0.03308
+    },
+    "rule": "passes",
+    "worst_delta_db": -0.0405
+   },
+   "kern_ovr24_cache_w24": {
+    "what": "kern_ovr24_w24 + flow cache",
+    "window_frames": 24,
+    "window_s": 5.065,
+    "first_dbisf_window_s": 16.13,
+    "speedup": 3.185,
+    "peak_gib": 17.59,
+    "output_psnr_vs_first_dbisf_db": 54.74,
+    "sets_delta_vs_authors_db": {
+     "gopro": -0.04984,
+     "reds_val": 3.34315,
+     "bsd2": 1.77419,
+     "dvd": -0.05137
+    },
+    "sets_delta_vs_authors_without_black_frames_db": {
+     "gopro": -0.04984,
+     "reds_val": -0.04246,
+     "bsd2": 0.02545,
+     "dvd": -0.05137
+    },
+    "rule": "fails",
+    "worst_delta_db": -0.0514
+   },
+   "kern_ovr24_cache_w32": {
+    "what": "kern_ovr24_w32 + flow cache",
+    "window_frames": 32,
+    "window_s": 6.743,
+    "first_dbisf_window_s": 16.125,
+    "speedup": 2.391,
+    "peak_gib": 22.84,
+    "output_psnr_vs_first_dbisf_db": 55.33,
+    "sets_delta_vs_authors_db": {
+     "gopro": -0.03972,
+     "reds_val": 3.34391,
+     "bsd2": 1.78728,
+     "dvd": -0.03903
+    },
+    "sets_delta_vs_authors_without_black_frames_db": {
+     "gopro": -0.03972,
+     "reds_val": -0.0457,
+     "bsd2": 0.02616,
+     "dvd": -0.03903
+    },
+    "rule": "passes",
+    "worst_delta_db": -0.0457
+   },
+   "kern_ovr24_w24": {
+    "what": "TF32 + sdpa + 21 patches + 24 frames",
+    "window_frames": 24,
+    "window_s": 5.625,
+    "first_dbisf_window_s": 16.019,
+    "speedup": 2.848,
+    "peak_gib": 17.34,
+    "output_psnr_vs_first_dbisf_db": 52.52,
+    "sets_delta_vs_authors_db": {
+     "gopro": -0.04984,
+     "reds_val": 3.34315,
+     "bsd2": 1.77419,
+     "dvd": -0.05137
+    },
+    "sets_delta_vs_authors_without_black_frames_db": {
+     "gopro": -0.04984,
+     "reds_val": -0.04246,
+     "bsd2": 0.02545,
+     "dvd": -0.05137
+    },
+    "rule": "fails",
+    "worst_delta_db": -0.0514
+   },
+   "kern_ovr24_w32": {
+    "what": "TF32 + sdpa + overlap 24 rows / 64 columns (21 patches) + 32 frames",
+    "window_frames": 32,
+    "window_s": 7.687,
+    "first_dbisf_window_s": 16.004,
+    "speedup": 2.082,
+    "peak_gib": 22.51,
+    "output_psnr_vs_first_dbisf_db": 53.31,
+    "sets_delta_vs_authors_db": {
+     "gopro": -0.03972,
+     "reds_val": 3.34391,
+     "bsd2": 1.78728,
+     "dvd": -0.03903
+    },
+    "sets_delta_vs_authors_without_black_frames_db": {
+     "gopro": -0.03972,
+     "reds_val": -0.0457,
+     "bsd2": 0.02616,
+     "dvd": -0.03903
+    },
+    "rule": "passes",
+    "worst_delta_db": -0.0457
+   },
+   "kern_w24": {
+    "what": "TF32 + sdpa + 24-frame window",
+    "window_frames": 24,
+    "window_s": 7.149,
+    "first_dbisf_window_s": 16.068,
+    "speedup": 2.248,
+    "peak_gib": 19.17,
+    "output_psnr_vs_first_dbisf_db": 56.0,
+    "sets_delta_vs_authors_db": {
+     "gopro": -0.02375,
+     "reds_val": 3.35707,
+     "bsd2": 1.78586,
+     "dvd": -0.0339
+    },
+    "sets_delta_vs_authors_without_black_frames_db": {
+     "gopro": -0.02375,
+     "reds_val": -0.03058,
+     "bsd2": 0.03658,
+     "dvd": -0.0339
+    },
+    "rule": "passes",
+    "worst_delta_db": -0.0339
+   },
+   "kern_w32": {
+    "what": "TF32 + sdpa + 32-frame window",
+    "window_frames": 32,
+    "window_s": 9.535,
+    "first_dbisf_window_s": 16.001,
+    "speedup": 1.678,
+    "peak_gib": 24.94,
+    "output_psnr_vs_first_dbisf_db": 57.35,
+    "sets_delta_vs_authors_db": {
+     "gopro": -0.01348,
+     "reds_val": 3.35741,
+     "bsd2": 1.79868,
+     "dvd": -0.02144
+    },
+    "sets_delta_vs_authors_without_black_frames_db": {
+     "gopro": -0.01348,
+     "reds_val": -0.03552,
+     "bsd2": 0.03921,
+     "dvd": -0.02144
+    },
+    "rule": "passes",
+    "worst_delta_db": -0.0355
+   },
+   "overlap24_pb18": {
+    "what": "patch overlap 24: 18 patches (18 per call)",
+    "window_frames": 48,
+    "window_s": 10.719,
+    "first_dbisf_window_s": 16.128,
+    "speedup": 1.505,
+    "peak_gib": 42.77,
+    "output_psnr_vs_first_dbisf_db": 52.66
+   },
+   "overlap24_pb9": {
+    "what": "patch overlap 24 instead of 64: 18 patches instead of 28 (9 per call)",
+    "window_frames": 48,
+    "window_s": 10.915,
+    "first_dbisf_window_s": 15.953,
+    "speedup": 1.462,
+    "peak_gib": 31.83,
+    "output_psnr_vs_first_dbisf_db": 52.66
+   },
+   "sdpa": {
+    "what": "scaled_dot_product_attention in the sparse and the Swin window attention",
+    "window_frames": 48,
+    "window_s": 15.793,
+    "first_dbisf_window_s": 16.066,
+    "speedup": 1.017,
+    "peak_gib": 36.41,
+    "output_psnr_vs_first_dbisf_db": 70.52
+   },
+   "tf32": {
+    "what": "TF32 for the float32 matrix products (torchvision deform_conv2d GEMMs, RAFT correlation)",
+    "window_frames": 48,
+    "window_s": 14.707,
+    "first_dbisf_window_s": 16.016,
+    "speedup": 1.089,
+    "peak_gib": 37.91,
+    "output_psnr_vs_first_dbisf_db": 69.91
+   },
+   "window24": {
+    "what": "24-frame window instead of 48",
+    "window_frames": 24,
+    "window_s": 7.906,
+    "first_dbisf_window_s": 16.083,
+    "speedup": 2.034,
+    "peak_gib": 19.51,
+    "output_psnr_vs_first_dbisf_db": 56.0
+   },
+   "window32": {
+    "what": "32-frame window instead of 48",
+    "window_frames": 32,
+    "window_s": 10.586,
+    "first_dbisf_window_s": 16.021,
+    "speedup": 1.513,
+    "peak_gib": 25.59,
+    "output_psnr_vs_first_dbisf_db": 57.35
+   }
+  },
+  "compile_blocks": {
+   "default": {
+    "window_eager_s": 7.13,
+    "window_compiled_s": 5.409,
+    "speedup": 1.318,
+    "first_call_s": 210.3,
+    "psnr_vs_eager": 68.2
+   },
+   "max-autotune-no-cudagraphs": {
+    "window_eager_s": 7.123,
+    "window_compiled_s": 5.352,
+    "speedup": 1.331,
+    "first_call_s": 660.7,
+    "psnr_vs_eager": 68.19
+   }
+  },
+  "not_used": "channels_last (fails on the views of the patch code); overlap 24 alone fails the rule (GoPro -0.067 dB); with 24-frame windows both 21 and 24 patches leave less than 0.05 dB on REDS or DVD"
  },
  "load_s": {
   "run": "a fresh Python process, from CUDA ready to BSST and RAFT with their weights on the GPU; median of 5 (authors: run_bsst.make_runner, which builds both networks and reads both checkpoints)",
@@ -232,38 +855,6 @@
    "raft_norm3": "cnet layer2.0/layer3.0 norm3 (same module as downsample.1, checked equal)"
   }
  },
- "patch_batch": {
-  "what": "one GoPro window, 48 frames 1280x720, dbisf-BSSTNet fp16 eager, stage_batch 4",
-  "gpu": "NVIDIA A100-SXM4-80GB",
-  "weights_gib": 0.165,
-  "per_value": {
-   "1": {
-    "window_s": 30.648,
-    "peak_gib_with_weights": 8.14
-   },
-   "2": {
-    "window_s": 20.701,
-    "peak_gib_with_weights": 13.63
-   },
-   "3": {
-    "window_s": 18.641,
-    "peak_gib_with_weights": 18.7
-   },
-   "4": {
-    "window_s": 17.346,
-    "peak_gib_with_weights": 23.76
-   },
-   "7": {
-    "window_s": 16.623,
-    "peak_gib_with_weights": 27.4
-   },
-   "14": {
-    "window_s": 15.987,
-    "peak_gib_with_weights": 35.91
-   }
-  },
-  "use": "dbis.load('dbisf-BSSTNet') then net(x, patch_batch=N) or net.patch_batch = N: a smaller batch for a card with less memory; patch_batch changes only float rounding"
- },
  "site": {
   "title": "BSSTNet, GoPro weights",
   "row_key": "bsstnet",
@@ -279,9 +870,9 @@
    "dbisf": ".wpk"
   },
   "latency_ms": {
-   "authors": 25721.6,
-   "dbis": 30368.1,
-   "dbisf": 15999.6
+   "authors": 25555.3,
+   "dbis": 30582.5,
+   "dbisf": 4579.4
   },
   "weights_bytes": {
    "authors": 209047383,
@@ -296,14 +887,14 @@
   "gopro_psnr": {
    "authors": 35.96622,
    "dbis": 35.96622,
-   "dbisf": 35.95617
+   "dbisf": 35.94247
   },
   "about": {
    "dbis": "one patch per call as the authors; runs eager (torch.compile fails on it)",
-   "dbisf": "14 patches per call, weights rounded per channel, failed patches redone. It takes 36 GiB of GPU memory (9.4 GiB for the authors' code); net(x, patch_batch=3) fits a 24 GB card at 18.6 s per frame."
+   "dbisf": "24-frame windows instead of 48, flows reused between windows, TF32 and fused attention, heavy blocks compiled, weights rounded per channel, failed patches redone. 18 GiB of GPU memory (9.4 GiB for the authors' code)."
   },
-  "time_mode": "a 48-frame window for every output frame as in the leaderboard, each version in its fastest mode that runs (the authors' code fp16 with torch.compile, ours fp16 eager)",
-  "note": "One A100, 1280×720, a 48-frame window per output frame as in the leaderboard; each version in its fastest mode that runs (the authors' code fp16 with torch.compile, ours fp16 eager); PSNR on all 1,111 GoPro test frames.",
-  "extra_note": "On REDS and BSD the authors' code turns some patches black (466 and 376 frames). dbisf redoes them in float32 and keeps the input where that fails too: REDS 27.74 dB instead of 24.39, BSD 24.58 instead of 22.77. On the other frames it is within 0.05 dB of the authors."
+  "time_mode": "one window per output frame as in the leaderboard (48 frames for the authors' code and dbis, 24 for dbisf), each version in its fastest mode that runs (the authors' code fp16 with torch.compile, dbis fp16 eager, dbisf fp16 with its heavy blocks compiled)",
+  "note": "One A100, 1280×720, one window per output frame as in the leaderboard (dbisf: 24 frames, the others 48); each version in its fastest mode that runs; PSNR on all 1,111 GoPro test frames.",
+  "extra_note": "On REDS and BSD the authors' code turns some patches black (466 and 376 frames). dbisf redoes them in float32 and keeps the input where that fails too: REDS 27.75 dB instead of 24.39, BSD 24.55 instead of 22.77. On the other frames it is within 0.05 dB of the authors."
  }
 }
