@@ -15,6 +15,9 @@ Tiers
              relative L2 error of the cast is at most 1e-3. Other tensors are stored exactly. Unpacks to float32.
   q          a float32 tensor with 2+ dimensions and at least 1024 values is rounded to the step std(tensor) / s
              (so |error| <= step / 2 for every weight). Other tensors are stored exactly. Unpacks to float32.
+  qc         as q, but every output channel (first dimension) has its own step, std(channel) / s (sample std; a
+             channel without spread takes the tensor's step). At the same size the error is spread more evenly over
+             the channels: NAFNet-64 at s = 48 is 65 MB at about the PSNR of q at s = 128 (76 MB). Format version 2.
 
 Coding (see the notes in the README next to this file for the measurements behind each choice)
   float32 exact    bits rotated left by one, so that the eight exponent bits fill one byte. That byte plane goes through
@@ -22,7 +25,9 @@ Coding (see the notes in the README next to this file for the measurements behin
   float16          two byte planes, the high one (sign, exponent, two mantissa bits) through the Huffman coder.
   quantized        q = 16 * b + r. The four low bits r are packed raw (uniform inside a bucket no wider than
                    std / 4), the bucket index b (one byte) goes through the Huffman coder, rare values outside one
-                   byte are listed apart.
+                   byte are listed apart. Per channel (qc): q = 2^L * b + r with L = 2, 3 or 4 low bits, whichever
+                   gives the smallest tensor, packed as L bit planes (fast to unpack), and the float32 steps of the
+                   channels stored raw.
 The Huffman coder is zstd with match finding switched off in practice (fast strategy, min_match 7): on these streams it
 stays within about 0.08 bit per weight of the order-0 entropy and decodes above 1 GB/s per core.
 
@@ -43,7 +48,7 @@ import numpy as np
 import zstandard as zstd
 
 MAGIC = b"WPK1"
-VERSION = 1
+VERSION = 2              # 1: lossless, f16, q; 2 adds qc (written only by tier qc, so older files keep version 1)
 PROBE = 1 << 16          # bytes of a plane that decide whether it is worth coding
 MIN_Q = 1024             # smallest tensor that is quantized
 _HUF = zstd.ZstdCompressionParameters.from_level(3, min_match=7, strategy=zstd.STRATEGY_FAST)
@@ -137,6 +142,52 @@ def _dec_q(t, blobs, n):
     return q.astype(np.float32) * np.uint32(t["step_bits"]).view(np.float32)
 
 
+def _steps_c(a: np.ndarray, s: float) -> np.ndarray:
+    """float32 step of every output channel: sample std of its values / s; a channel without spread (or one value)
+    takes the step of the whole tensor."""
+    rows = a.reshape(a.shape[0], -1).astype(np.float64)
+    sd = rows.std(axis=1, ddof=1) if rows.shape[1] > 1 else np.zeros(rows.shape[0])
+    tensor_step = float(a.std(dtype=np.float64)) / s
+    tiny = float(np.finfo(np.float32).tiny) * 2 ** 24
+    st = np.where(sd / s > tiny, sd / s, tensor_step)
+    return st.astype(np.float32)
+
+
+def _enc_qc(a: np.ndarray, s: float):
+    st = _steps_c(a, s)
+    q = np.rint(a.reshape(a.shape[0], -1) / st[:, None]).astype(np.int32).reshape(-1)
+    best = None
+    for low in (2, 3, 4):
+        b = q >> low
+        esc = np.flatnonzero((b < -127) | (b > 127)).astype(np.uint32)
+        b8 = np.clip(b, -128, 127).astype(np.int8)
+        b8[esc] = -128
+        r = (q & ((1 << low) - 1)).astype(np.uint8)
+        planes = b"".join(np.packbits((r >> np.uint8(i)) & np.uint8(1)).tobytes() for i in range(low))   # bit i of all
+        parts = [("h", _huf(b8)), ("r", planes), ("r", esc.tobytes()), ("r", q[esc].tobytes()), ("r", st.tobytes())]
+        size = sum(len(p) for _, p in parts)
+        if best is None or size < best[0]:
+            best = (size, low, int(esc.size), parts)
+    _, low, ne, parts = best
+    return {"codec": "q4c", "s": s, "low_bits": low, "esc": ne, "rows": int(a.shape[0])}, parts
+
+
+def _dec_qc(t, blobs, n):
+    low, rows = t["low_bits"], t["rows"]
+    b8 = np.frombuffer(_unz(blobs[0], n), np.int8, n)
+    pl, per = np.frombuffer(blobs[1], np.uint8), (n + 7) // 8
+    r = np.unpackbits(pl[:per], count=n)                                # the low bits, one bit plane at a time
+    for i in range(1, low):
+        r |= np.unpackbits(pl[i * per:(i + 1) * per], count=n) << np.uint8(i)
+    q = b8.astype(np.int32)
+    q <<= low
+    q |= r
+    if t["esc"]:
+        q[np.frombuffer(blobs[2], np.uint32)] = np.frombuffer(blobs[3], np.int32)
+    st = np.frombuffer(blobs[4], np.float32, rows)
+    return (q.reshape(rows, -1).astype(np.float32) * st[:, None]).reshape(-1)
+
+
 def _q_ok(w: np.ndarray, s: float) -> bool:
     """A tensor is quantized only when it is finite, not constant, and its largest value stays far inside int32."""
     if not bool(np.isfinite(w).all()):
@@ -170,6 +221,8 @@ def _encode_tensor(name: str, a: np.ndarray, tier: str, s: float):
         w = a.reshape(-1)
         if tier == "q" and a.ndim >= 2 and a.size >= MIN_Q and _q_ok(w, s):
             info, parts = _enc_q(a, s)
+        elif tier == "qc" and a.ndim >= 2 and a.size >= MIN_Q and _q_ok(w, s):
+            info, parts = _enc_qc(a, s)
         elif tier == "f16" and _f16_ok(a):
             info, parts = _enc_f16(a.astype(np.float16), cast=True)
         else:
@@ -194,6 +247,8 @@ def _decode_tensor(t: dict, blobs) -> np.ndarray:
         a = _dec_f16(t, blobs, n)
     elif codec == "q4":
         a = _dec_q(t, blobs, n)
+    elif codec == "q4c":
+        a = _dec_qc(t, blobs, n)
     else:
         dt = np.dtype(t["dtype"])
         raw = _unz(blobs[0], n * dt.itemsize) if codec == "zst" else blobs[0]
@@ -206,16 +261,16 @@ def pack(tensors: dict, path, tier: str = "lossless", s: float = 128.0, threads:
          selfcheck: bool = True) -> dict:
     """Write {name: numpy array} to `path`. Returns the header (with sizes). With selfcheck every tensor is decoded
     again before it is written, and an exact tensor that does not come back bit for bit raises."""
-    if tier not in ("lossless", "f16", "q"):
-        raise ValueError("tier must be lossless, f16 or q")
-    if tier == "q" and not 8 <= s <= 1024:
+    if tier not in ("lossless", "f16", "q", "qc"):
+        raise ValueError("tier must be lossless, f16, q or qc")
+    if tier in ("q", "qc") and not 8 <= s <= 1024:
         raise ValueError("s must be between 8 and 1024")
     items = list(tensors.items())
 
     def one(kv):
         a = np.asarray(kv[1], order="C")
         t, blobs = _encode_tensor(kv[0], a, tier, s)
-        lossy = t["codec"] == "q4" or bool(t.get("cast"))
+        lossy = t["codec"] in ("q4", "q4c") or bool(t.get("cast"))
         if lossy or selfcheck:
             back = _decode_tensor(t, blobs).tobytes()
             if not lossy and back != a.tobytes():
@@ -235,7 +290,8 @@ def pack(tensors: dict, path, tier: str = "lossless", s: float = 128.0, threads:
         t["off"] = off
         off += sum(len(b) for b in blobs)
         tens.append(t)
-    head = {"format": "wpack", "version": VERSION, "tier": tier, "s": s if tier == "q" else None, "tensors": tens, "meta": meta or {}}
+    head = {"format": "wpack", "version": 2 if tier == "qc" else 1, "tier": tier, "s": s if tier in ("q", "qc") else None,
+            "tensors": tens, "meta": meta or {}}
     hj = json.dumps(head, separators=(",", ":")).encode("utf-8")
     with open(path, "wb") as fh:
         fh.write(MAGIC + struct.pack("<Q", len(hj)) + hj)
@@ -339,6 +395,14 @@ def verify(path, original: dict, threads: int = 1) -> dict:
                 raise ValueError(f"{t['name']}: error of {e:.4f} steps")
             rep["quantized"] += 1
             rep["max_err_in_steps"] = max(rep["max_err_in_steps"], e)
+        elif t["codec"] == "q4c":
+            st = _steps_c(a, t["s"]).astype(np.float64)
+            err = np.abs(b.astype(np.float64) - a.astype(np.float64)).reshape(t["rows"], -1)
+            e = float((err / st[:, None]).max())
+            if e > 0.5 + 1e-3:
+                raise ValueError(f"{t['name']}: error of {e:.4f} steps")
+            rep["quantized"] += 1
+            rep["max_err_in_steps"] = max(rep["max_err_in_steps"], e)
         elif t["codec"] == "f16x" and t.get("cast"):
             if not np.array_equal(a.astype(np.float16).astype(np.float32).view(np.uint32), b.view(np.uint32)):
                 raise ValueError(f"{t['name']}: differs from the float16 cast")
@@ -373,8 +437,8 @@ def main(argv=None) -> int:
     p = sub.add_parser("pack")
     p.add_argument("src")
     p.add_argument("dst")
-    p.add_argument("--tier", default="lossless", choices=["lossless", "f16", "q"])
-    p.add_argument("--s", type=float, default=128.0, help="tier q: step = std / s (128 is about 9 bits per weight, 64 about 8)")
+    p.add_argument("--tier", default="lossless", choices=["lossless", "f16", "q", "qc"])
+    p.add_argument("--s", type=float, default=128.0, help="tiers q, qc: step = std / s (q: 128 is about 9 bits per weight, 64 about 8)")
     p.add_argument("--group", default=None)
     p.add_argument("--threads", type=int, default=4)
     u = sub.add_parser("unpack")

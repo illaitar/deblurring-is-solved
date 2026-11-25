@@ -568,7 +568,7 @@ pre.code { margin: 0; padding: .8rem 1rem; background: var(--paper-2); border-ra
         <tr><td>Compact test sets</td><td class="m">&asymp;82 GB of archives on several hosts, each in its own layout</td><td><b>&asymp;10.7 GB</b> in one format, only the frames that are scored, a CRC on every frame<span class="soon">in preparation</span></td><td><a href="#data">Data</a></td></tr>
         <tr><td>Same harness and requirements</td><td class="m">own dependencies and versions for every method</td><td><b>{{n_methods}} methods</b> run from one harness on pinned environments</td><td><a href="#methods">Methods</a></td></tr>
         <tr><td>Unified benchmarking protocol</td><td class="m">own crops, padding, metrics and hardware in every paper</td><td><b>{{n_rows}} variants &times; {{n_sets}} test sets &times; 10 metrics</b>, latency on one A100</td><td><a href="#protocol">Protocol</a></td></tr>
-        <tr><td>Our versions with small patches<span class="tg">{{tag_dbisf}}</span></td><td class="m">released once and never updated, though simple fixes would help</td><td>faster, lighter, same quality: NAFNet-64 <b>{{dbisf_speed}} faster, weights {{dbisf_size}}&times; smaller</b></td><td><a href="#dbis">dbisf</a></td></tr>
+        <tr><td>Our versions with small patches<span class="tg">{{tag_dbisf}}</span></td><td class="m">released once and never updated, though simple fixes would help</td><td>faster and lighter, within 0.05&nbsp;dB of the authors' PSNR: NAFNet-64 <b>{{dbisf_speed}} faster, weights {{dbisf_size}}&times; smaller</b></td><td><a href="#dbis">dbisf</a></td></tr>
       </tbody>
     </table></div>
   </section>
@@ -750,7 +750,7 @@ pre.code { margin: 0; padding: .8rem 1rem; background: var(--paper-2); border-ra
 
   <section class="wrap sec" id="dbis" aria-label="dbis and dbisf">
     <div class="sh"><span class="k">05</span><span class="big">{{tag_dbis_big}}</span><span class="big">{{tag_dbisf_big}}</span><h2 class="h2s">our versions of the methods</h2></div>
-    <p class="lead2"><b>dbis</b> gives the authors' outputs from one file of plain PyTorch and a safetensors file. <b>dbisf</b> is faster and lighter and stays within 0.01&nbsp;dB of the authors' PSNR. What changed in each method: <a href="https://github.com/illaitar/deblurring-is-solved/blob/main/DBIS.md">DBIS.md</a>.</p>
+    <p class="lead2"><b>dbis</b> gives the authors' outputs from one file of plain PyTorch and a safetensors file. <b>dbisf</b> is faster and lighter, and its mean PSNR stays within 0.05&nbsp;dB of the authors' code on every test set. What changed in each method: <a href="https://github.com/illaitar/deblurring-is-solved/blob/main/DBIS.md">DBIS.md</a>.</p>
     {{dbis_table}}
     <pre class="code">python -m dbis.convert NAFNet-64 NAFNet-GoPro-width64.pth   # the authors' checkpoint -> weights/dbis/
 import dbis

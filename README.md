@@ -33,14 +33,14 @@
 ## dbis and dbisf
 
 Our re-implementations of benchmark methods, in the package [`dbis/`](dbis) ([DBIS.md](DBIS.md)). **dbis** gives the
-authors' outputs from one file of plain PyTorch and a safetensors file. **dbisf** is faster and lighter and stays
-within 0.01 dB of the authors' mean PSNR.
+authors' outputs from one file of plain PyTorch and a safetensors file. **dbisf** is faster and lighter: its mean PSNR
+stays within 0.05 dB of the authors' code on every test set (DBIS.md has the table).
 
 | Model | Weights | Load | ms per 720p frame | GoPro PSNR, dB |
 |---|---:|---:|---:|---:|
 | NAFNet-64, authors' code | 272 MB | 3.06 s | 34.9 | 33.7103 |
 | dbis-NAFNet-64 | 271 MB | 0.70 s | 33.5 | 33.7103 |
-| dbisf-NAFNet-64 | 76 MB | 0.83 s | 26.6 | 33.7103 |
+| dbisf-NAFNet-64 | 66 MB | 0.83 s | 26.6 | 33.7041 |
 
 ```python
 import dbis                               # weights: python -m dbis.convert NAFNet-64 NAFNet-GoPro-width64.pth

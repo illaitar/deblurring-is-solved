@@ -38,8 +38,8 @@ MODELS = {
                        "file": "dbis-NAFNet-64.safetensors", "store": "float32",
                        "sha256": "731f4a9d79703fd1f38e258582b67e8818f51fe0176acc64ac8acba0fef4fd61"},
     "dbisf-NAFNet-64": {"source": "NAFNet-64", "cls": "NAFNet", "args": {"tlc": "fast"},
-                        "file": "dbisf-NAFNet-64.wpk", "store": "q128",
-                        "sha256": "a64e13e8997331b4a1875ac96a607d79271f3fd4396b2eef209068ba933c095e"},
+                        "file": "dbisf-NAFNet-64.wpk", "store": "qc48",
+                        "sha256": "a62c8f19a5467009f68054db8990608594717bb55b10d6b721ee88b685e36914"},
 }
 
 

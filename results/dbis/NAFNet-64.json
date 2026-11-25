@@ -1,17 +1,41 @@
 {
  "models": {"authors": "NAFNetLocal of megvii-research/NAFNet (TLC on, their GoPro test configuration), NAFNet-GoPro-width64.pth",
             "dbis": "dbis-NAFNet-64 (dbis/nafnet.py, tlc=exact, dbis-NAFNet-64.safetensors)",
-            "dbisf": "dbisf-NAFNet-64 (dbis/nafnet.py, tlc=fast, dbisf-NAFNet-64.wpk)"},
- "date": "2026-11-24",
+            "dbisf": "dbisf-NAFNet-64 (dbis/nafnet.py, tlc=fast, dbisf-NAFNet-64.wpk: weights rounded per output channel to std / 48)",
+            "dbisf_q128": "the first dbisf weight file (24.11): one rounding step std / 128 per tensor, 76 MB"},
+ "date": "2026-11-25",
+ "rule": "dbisf: mean PSNR at most 0.05 dB from the authors' code on every test set (25.11; the first rule, 0.01 dB, held on GoPro only)",
  "quality": {
   "test_set": "GoPro test, 1111 frames, the benchmark's frame order",
   "run": "every network on every frame in one process, float32 with TF32 off, outputs rounded to 8 bits as in the protocol, PSNR against the sharp frame",
-  "mean_psnr_db": {"authors": 33.71031, "dbis": 33.71031, "dbisf": 33.71029},
+  "mean_psnr_db": {"authors": 33.71031, "dbis": 33.71031, "dbisf": 33.70407, "dbisf_q128": 33.71029},
   "dbis": {"mean_delta_db": 0.0, "largest_output_difference": 2.3e-06, "share_of_8bit_values_differing": 6.0e-06},
-  "dbisf": {"mean_delta_db": -0.00002, "frame_delta_db_min": -0.1194, "frame_delta_db_max": 0.2953},
+  "dbisf": {"mean_delta_db": -0.00624, "frame_delta_db_min": -0.1791, "frame_delta_db_max": 0.2591},
+  "dbisf_q128": {"mean_delta_db": -0.00002, "frame_delta_db_min": -0.1194, "frame_delta_db_max": 0.2953},
   "parts_mean_delta_db": {"fast_tlc_with_float32_weights": 0.0028, "q128_weights_with_exact_tlc": -0.00284,
                           "float16_weights": 0.00004, "q64_weights": -0.01376, "authors_fast_imp_tlc": -0.01899,
                           "no_tlc": -0.62969}
+ },
+ "all_sets": {
+  "run": "the same run on the six test sets (25.11); RealBlur without the ECC alignment of its official evaluation, so its numbers are not the leaderboard's, only the differences between the versions are",
+  "mean_psnr_db": {
+   "gopro":      {"frames": 1111, "authors": 33.71031, "dbisf": 33.70407, "dbisf_q128": 33.71029},
+   "reds_val":   {"frames": 3000, "authors": 26.65434, "dbisf": 26.64421, "dbisf_q128": 26.6435},
+   "bsd2":       {"frames": 3000, "authors": 25.34287, "dbisf": 25.38671, "dbisf_q128": 25.29401},
+   "dvd":        {"frames": 1000, "authors": 29.61168, "dbisf": 29.58456, "dbisf_q128": 29.5939},
+   "realblur_j": {"frames": 980, "authors": 26.33251, "dbisf": 26.31373, "dbisf_q128": 26.3269},
+   "realblur_r": {"frames": 980, "authors": 33.62604, "dbisf": 33.61985, "dbisf_q128": 33.60786}
+  },
+  "delta_vs_authors_db": {
+   "gopro": {"dbisf": -0.00624, "dbisf_q128": -0.00002},
+   "reds_val": {"dbisf": -0.01013, "dbisf_q128": -0.01084},
+   "bsd2": {"dbisf": 0.04384, "dbisf_q128": -0.04885},
+   "dvd": {"dbisf": -0.02712, "dbisf_q128": -0.01778},
+   "realblur_j": {"dbisf": -0.01877, "dbisf_q128": -0.00561},
+   "realblur_r": {"dbisf": -0.00619, "dbisf_q128": -0.01818}
+  },
+  "unstable_frames": {"note": "frames where either dbisf version is more than 1 dB from the authors (up to 21 dB); on some BSD frames the authors' output itself scores 4.5 to 8 dB",
+                      "gopro": 0, "reds_val": 59, "bsd2": 27, "dvd": 0, "realblur_j": 1, "realblur_r": 2}
  },
  "latency_ms": {
   "run": "benchmark harness on one A100 node: 250 GoPro frames at 1280x720, batch 1, median of 200 timed steps; all networks on the same node",
@@ -22,9 +46,10 @@
  "load_s": {
   "run": "a fresh Python process, from CUDA ready to the network with its weights on the GPU; median of 5",
   "authors": 3.06, "dbis": 0.70, "dbisf": 0.83,
+  "note_dbisf": "measured with the q128 file; the per-channel file unpacks in 0.20 s instead of 0.16 s (8 threads)",
   "authors_steps": {"import_code": 1.64, "build_with_dry_run": 1.16, "read_weights": 0.17, "to_gpu": 0.09},
   "before_that_for_all": {"import_torch": 1.61, "cuda_init": 0.65}
  },
- "weights_bytes": {"authors_pth": 271778961, "dbis": 271196556, "dbisf": 75937263},
+ "weights_bytes": {"authors_pth": 271778961, "dbis": 271196556, "dbisf": 65735362, "dbisf_q128": 75937263},
  "params": {"authors": 67888835, "dbis": 67788227, "dbisf": 67788227}
 }

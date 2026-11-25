@@ -7,7 +7,8 @@ The checkpoint is read with weights_only=True (no code in it runs) and checked a
 (--force converts anyway). Its model tensors are folded by the fold() of dbis/<arch>.py, loaded strictly into every
 model made from this source, and written:
   .safetensors  float32 (dbis)
-  .wpk          wpack q128: every weight tensor of 2+ dimensions rounded to std / 128, entropy coded (dbisf)
+  .wpk          wpack qc48: every weight tensor of 2+ dimensions rounded per output channel to std(channel) / 48,
+                entropy coded (dbisf); q128 (one step std / 128 per tensor) is the earlier store, still readable
 A JSON card is written next to each file. Its sha256 is compared with the one in dbis/__init__.py; a different BLAS
 can change the last bit of a folded bias, so a mismatch is reported in the card and on the screen, not an error.
 """
@@ -57,8 +58,9 @@ def main(argv=None):
             from safetensors.torch import save_file
             # one metadata key: safetensors keeps metadata in a hash map, so several keys come out in a random order
             save_file(sd, str(path), metadata={"dbis": json.dumps({**meta, "model": name}, sort_keys=True)})
-        elif m["store"] == "q128":
-            wpack.pack({k: v.numpy() for k, v in sd.items()}, str(path), "q", 128, threads=8, meta={**meta, "model": name})
+        elif m["store"] in ("q128", "qc48"):
+            tier, s = ("q", 128) if m["store"] == "q128" else ("qc", 48)
+            wpack.pack({k: v.numpy() for k, v in sd.items()}, str(path), tier, s, threads=8, meta={**meta, "model": name})
         else:
             raise ValueError(m["store"])
         sha = digest(path, "sha256")
