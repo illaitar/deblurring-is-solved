@@ -1,0 +1,309 @@
+{
+ "models": {
+  "authors": "BSST + RAFT of huicongzhang/BSSTNet (ModelBSST.get_bi_flows + test_by_patch as runs/baselines/bsstnet/run_bsst.py runs them: 256 px patches, 64 px overlap, fp16 autocast), BSST_gopro.pth + raft-things.pth",
+  "dbis": "dbis-BSSTNet (dbis/bsst.py, patch_batch=1, dbis-BSSTNet.safetensors): one patch per BSST call as the authors",
+  "dbisf": "dbisf-BSSTNet (dbis/bsst.py, patch_batch=14, stage_batch=4, nan_fallback; dbisf-BSSTNet.wpk: weights rounded per output channel to std / 48, tier qc of dbis/wpack.py)"
+ },
+ "date": "2026-11-25",
+ "rule": "dbisf: mean PSNR at most 0.05 dB below the authors' code on every test set (25.11)",
+ "exactness": {
+  "dbis": "patch_batch=1 is bit-identical to the authors' runner (flows, patch calls, whole windows) on GOPR0384_11_00 and GOPR0862_11_00 frames 0..47, fp16 autocast and fp32",
+  "two_windows_mean_psnr_db": {
+   "A16": 36.17946,
+   "O16_1": 36.17946,
+   "O16_14": 36.17953,
+   "O16_28": 36.17944,
+   "A32": 36.17983,
+   "O32_1": 36.17983,
+   "O32_14": 36.17988
+  },
+  "keys": "A = authors, O = dbis/bsst.py; 16 = fp16 autocast, 32 = fp32; _N = patches per BSST call"
+ },
+ "quality": {
+  "run": "GoPro weights on the four video test sets, the leaderboard's windows (48 frames, 4 overlap, every frame written), 8-bit outputs, PSNR against the sharp frame; non-finite values become 0 as in the protocol",
+  "mean_psnr_db": {
+   "gopro": {
+    "frames": 1111,
+    "authors": 35.96622,
+    "dbis": 35.96622,
+    "dbisf": 35.95617,
+    "dbisf_without_fallback": 35.95614,
+    "leaderboard": 35.9662
+   },
+   "reds_val": {
+    "frames": 3000,
+    "authors": 24.39008,
+    "dbis": 24.39008,
+    "dbisf": 27.74146,
+    "dbisf_without_fallback": 24.46036,
+    "leaderboard": 24.3907
+   },
+   "bsd2": {
+    "frames": 3000,
+    "authors": 22.76997,
+    "dbis": 22.76997,
+    "dbisf": 24.57815,
+    "dbisf_without_fallback": 22.74345,
+    "leaderboard": 23.7607
+   },
+   "dvd": {
+    "frames": 1000,
+    "authors": 32.67983,
+    "dbis": 32.67983,
+    "dbisf": 32.66714,
+    "dbisf_without_fallback": 32.66715,
+    "leaderboard": 32.6798
+   }
+  },
+  "delta_vs_authors_db": {
+   "gopro": {
+    "dbisf": -0.01005,
+    "dbisf_without_fallback": -0.01008
+   },
+   "reds_val": {
+    "dbisf": 3.35138,
+    "dbisf_without_fallback": 0.07029
+   },
+   "bsd2": {
+    "dbisf": 1.80818,
+    "dbisf_without_fallback": -0.02652
+   },
+   "dvd": {
+    "dbisf": -0.01268,
+    "dbisf_without_fallback": -0.01267
+   }
+  },
+  "black_tiles": {
+   "note": "the authors' code writes NaN into some 256 px patches on REDS and BSD (black tiles after the 8-bit conversion): an fp16 overflow, and a blow-up of the recurrent backward propagation whose LayerNorm overflows in float32 too. dbisf redoes a patch that is not finite in float32 without autocast and keeps the blurry input where it is still not finite",
+   "frames_with_nonfinite_values": {
+    "gopro": {
+     "authors_fp16": 0,
+     "dbisf_without_fallback": 0,
+     "dbisf": 0
+    },
+    "reds_val": {
+     "authors_fp16": 466,
+     "dbisf_without_fallback": 456,
+     "dbisf": 0
+    },
+    "bsd2": {
+     "authors_fp16": 376,
+     "dbisf_without_fallback": 404,
+     "dbisf": 0
+    },
+    "dvd": {
+     "authors_fp16": 0,
+     "dbisf_without_fallback": 0,
+     "dbisf": 0
+    }
+   },
+   "dbisf_patches_redone_in_float32": {
+    "gopro": 0,
+    "reds_val": 117,
+    "bsd2": 29,
+    "dvd": 0
+   },
+   "dbisf_patches_kept_as_input": {
+    "gopro": 0,
+    "reds_val": 115,
+    "bsd2": 14,
+    "dvd": 0
+   },
+   "delta_without_those_frames_db": {
+    "gopro": -0.01005,
+    "reds_val": -0.02732,
+    "bsd2": 0.04822,
+    "dvd": -0.01268
+   },
+   "leaderboard_bsd": "the leaderboard's BSD row is the authors' code in fp32 (23.7607), REDS and the others fp16"
+  }
+ },
+ "latency_ms": {
+  "harness": "eval/adapters/bench_unified.py over the runs/pareto_bench Offline stepper, as the leaderboard: one A100, 1280x720, batch 1, a 48-frame window per output frame (window position 2 emitted), the first 250 GoPro test frames; slower than 0.5 s per step: 5 warm-up steps, 5 to 9 timed steps, median. Each version in its fastest valid mode (the leaderboard's rule), the three on the same node and GPU (cn10, 25.11).",
+  "authors": 25721.6,
+  "dbis": 30368.1,
+  "dbisf": 15999.6,
+  "mode_used": {
+   "authors": "b: fp16 autocast + torch.compile(max-autotune-no-cudagraphs), 18.5 min of compilation",
+   "dbis": "c: fp16 eager (b fails: torch.compile AssertionError 'incorrect out shape after application of ViewMeta sequence')",
+   "dbisf": "c: fp16 eager (b: torch.compile did not finish within the harness's 30 min)"
+  },
+  "fp16_eager": {
+   "authors": 34852.3,
+   "dbis": 30368.1,
+   "dbisf": 15999.6
+  },
+  "modes": {
+   "authors": {
+    "b": {
+     "label": "fp16 autocast + compile max-autotune-no-cudagraphs",
+     "median_ms": 25721.6,
+     "n_timed": 5,
+     "peak_mem_gib": 9.45,
+     "check_mean_psnr_db": 36.02701
+    },
+    "c": {
+     "label": "fp16 autocast, eager",
+     "median_ms": 34852.3,
+     "n_timed": 5,
+     "peak_mem_gib": 9.6,
+     "check_mean_psnr_db": 36.02569
+    }
+   },
+   "dbis-BSSTNet": {
+    "b": {
+     "label": "fp16 autocast + compile max-autotune-no-cudagraphs",
+     "error": "AssertionError: incorrect out shape after application of ViewMeta sequence: (1, 960, 64, 64) (actual) vs (1, 192, 64, 64) (expected)"
+    },
+    "c": {
+     "label": "fp16 autocast, eager",
+     "median_ms": 30368.1,
+     "n_timed": 5,
+     "peak_mem_gib": 8.64,
+     "check_mean_psnr_db": 36.02592
+    }
+   },
+   "dbisf-BSSTNet": {
+    "b": {
+     "label": "fp16 autocast + compile max-autotune-no-cudagraphs",
+     "error": "TimeoutError: timeout after 1800 s"
+    },
+    "c": {
+     "label": "fp16 autocast, eager",
+     "median_ms": 15999.6,
+     "n_timed": 9,
+     "peak_mem_gib": 36.41,
+     "check_mean_psnr_db": 36.02771
+    }
+   }
+  },
+  "validity": {
+   "reference": "fp32 eager of the leaderboard run (01.11), mean PSNR of the first 20 outputs of the first GoPro sequence",
+   "fp32_eager_check_psnr_db": 36.02779,
+   "rule": "a mode is valid within 0.05 dB of it; every timed mode above is"
+  },
+  "leaderboard_authors_ms": 25530.8
+ },
+ "load_s": {
+  "run": "a fresh Python process, from CUDA ready to BSST and RAFT with their weights on the GPU; median of 5 (authors: run_bsst.make_runner, which builds both networks and reads both checkpoints)",
+  "authors": 3.501,
+  "dbis": 1.659,
+  "dbisf": 1.706,
+  "all": {
+   "authors": [
+    3.512,
+    3.45,
+    3.501,
+    4.724,
+    3.486
+   ],
+   "dbis": [
+    1.812,
+    1.644,
+    2.034,
+    1.659,
+    1.657
+   ],
+   "dbisf": [
+    1.711,
+    1.685,
+    1.898,
+    1.706,
+    1.693
+   ]
+  }
+ },
+ "weights_bytes": {
+  "authors": 209047383,
+  "authors_files": {
+   "BSST_gopro.pth": 187939383,
+   "raft-things.pth": 21108000
+  },
+  "dbis": 174980008,
+  "dbisf": 42380340
+ },
+ "params": {
+  "values_in_files": 43724185,
+  "bsst": 38463754,
+  "raft": 5260431,
+  "dropped": {
+   "unused_modules": "feat_extract, decoder_level1_2, decoder_level2, decoder_level2_1, decoder_level2_2, conv_before_upsampler, conv_before_input, upsampler, conv_last (never called by BSST.forward; 8,271,043 values)",
+   "index_buffers": "relative_position_index (4), valid_ind_rolled (4), mask_padding (4): checked equal to the rebuilt ones in fold(), rebuilt at run time",
+   "raft_norm3": "cnet layer2.0/layer3.0 norm3 (same module as downsample.1, checked equal)"
+  }
+ },
+ "patch_batch": {
+  "what": "one GoPro window, 48 frames 1280x720, dbisf-BSSTNet fp16 eager, stage_batch 4",
+  "gpu": "NVIDIA A100-SXM4-80GB",
+  "weights_gib": 0.165,
+  "per_value": {
+   "1": {
+    "window_s": 30.648,
+    "peak_gib_with_weights": 8.14
+   },
+   "2": {
+    "window_s": 20.701,
+    "peak_gib_with_weights": 13.63
+   },
+   "3": {
+    "window_s": 18.641,
+    "peak_gib_with_weights": 18.7
+   },
+   "4": {
+    "window_s": 17.346,
+    "peak_gib_with_weights": 23.76
+   },
+   "7": {
+    "window_s": 16.623,
+    "peak_gib_with_weights": 27.4
+   },
+   "14": {
+    "window_s": 15.987,
+    "peak_gib_with_weights": 35.91
+   }
+  },
+  "use": "dbis.load('dbisf-BSSTNet') then net(x, patch_batch=N) or net.patch_batch = N: a smaller batch for a card with less memory; patch_batch changes only float rounding"
+ },
+ "site": {
+  "title": "BSSTNet, GoPro weights",
+  "row_key": "bsstnet",
+  "source": "BSSTNet",
+  "checkpoint": "BSST_gopro.pth raft-things.pth",
+  "pip": "torch torchvision numpy safetensors zstandard",
+  "models": {
+   "dbis": "dbis-BSSTNet",
+   "dbisf": "dbisf-BSSTNet"
+  },
+  "ext": {
+   "dbis": ".safetensors",
+   "dbisf": ".wpk"
+  },
+  "latency_ms": {
+   "authors": 25721.6,
+   "dbis": 30368.1,
+   "dbisf": 15999.6
+  },
+  "weights_bytes": {
+   "authors": 209047383,
+   "dbis": 174980008,
+   "dbisf": 42380340
+  },
+  "load_s": {
+   "authors": 3.501,
+   "dbis": 1.659,
+   "dbisf": 1.706
+  },
+  "gopro_psnr": {
+   "authors": 35.96622,
+   "dbis": 35.96622,
+   "dbisf": 35.95617
+  },
+  "about": {
+   "dbis": "one patch per call as the authors; runs eager (torch.compile fails on it)",
+   "dbisf": "14 patches per call, weights rounded per channel, failed patches redone. It takes 36 GiB of GPU memory (9.4 GiB for the authors' code); net(x, patch_batch=3) fits a 24 GB card at 18.6 s per frame."
+  },
+  "time_mode": "a 48-frame window for every output frame as in the leaderboard, each version in its fastest mode that runs (the authors' code fp16 with torch.compile, ours fp16 eager)",
+  "note": "One A100, 1280×720, a 48-frame window per output frame as in the leaderboard; each version in its fastest mode that runs (the authors' code fp16 with torch.compile, ours fp16 eager); PSNR on all 1,111 GoPro test frames.",
+  "extra_note": "On REDS and BSD the authors' code turns some patches black (466 and 376 frames). dbisf redoes them in float32 and keeps the input where that fails too: REDS 27.74 dB instead of 24.39, BSD 24.58 instead of 22.77. On the other frames it is within 0.05 dB of the authors."
+ }
+}

@@ -468,6 +468,7 @@ svg.dtag { height: 1em; width: auto; display: inline-block; vertical-align: -0.1
 .dbt th:first-child, .dbt td:first-child { text-align: left; }
 .dbt th { font: 500 var(--t-xs)/1.2 var(--sans); color: var(--ink-56); }
 .dbt td:first-child svg.dtag { height: 1.05em; }
+.dbt tr.grp th { text-align: left; font: 600 var(--t-s)/1.3 var(--sans); color: var(--ink); padding-top: .9rem; background: var(--paper-2); }
 pre.code { margin: 0; padding: .8rem 1rem; background: var(--paper-2); border-radius: .7rem; font: var(--t-s)/1.6 var(--mono); overflow-x: auto; }
 .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); gap: .75rem; }
 .step { border: 1px solid var(--ink-8); border-radius: .9rem; padding: .9rem 1rem; display: grid; gap: .55rem; align-content: start; min-width: 0; }
@@ -568,7 +569,7 @@ pre.code { margin: 0; padding: .8rem 1rem; background: var(--paper-2); border-ra
         <tr><td>Compact test sets</td><td class="m">&asymp;82 GB of archives on several hosts, each in its own layout</td><td><b>&asymp;10.7 GB</b> in one format, only the frames that are scored, a CRC on every frame<span class="soon">in preparation</span></td><td><a href="#data">Data</a></td></tr>
         <tr><td>Same harness and requirements</td><td class="m">own dependencies and versions for every method</td><td><b>{{n_methods}} methods</b> run from one harness on pinned environments</td><td><a href="#methods">Methods</a></td></tr>
         <tr><td>Unified benchmarking protocol</td><td class="m">own crops, padding, metrics and hardware in every paper</td><td><b>{{n_rows}} variants &times; {{n_sets}} test sets &times; 10 metrics</b>, latency on one A100</td><td><a href="#protocol">Protocol</a></td></tr>
-        <tr><td>Our versions with small patches<span class="tg">{{tag_dbisf}}</span></td><td class="m">released once and never updated, though simple fixes would help</td><td>faster and lighter, within 0.05&nbsp;dB of the authors' PSNR: NAFNet-64 <b>{{dbisf_speed}} faster, weights {{dbisf_size}}&times; smaller</b></td><td><a href="#dbis">dbisf</a></td></tr>
+        <tr><td>Our versions with small patches<span class="tg">{{tag_dbisf}}</span></td><td class="m">released once and never updated, though simple fixes would help</td><td>faster and lighter, never more than 0.05&nbsp;dB below the authors' PSNR: {{dbisf_gains}}</td><td><a href="#dbis">dbisf</a></td></tr>
       </tbody>
     </table></div>
   </section>
@@ -750,9 +751,10 @@ pre.code { margin: 0; padding: .8rem 1rem; background: var(--paper-2); border-ra
 
   <section class="wrap sec" id="dbis" aria-label="dbis and dbisf">
     <div class="sh"><span class="k">05</span><span class="big">{{tag_dbis_big}}</span><span class="big">{{tag_dbisf_big}}</span><h2 class="h2s">our versions of the methods</h2></div>
-    <p class="lead2"><b>dbis</b> gives the authors' outputs from one file of plain PyTorch and a safetensors file. <b>dbisf</b> is faster and lighter, and its mean PSNR stays within 0.05&nbsp;dB of the authors' code on every test set. What changed in each method: <a href="https://github.com/illaitar/deblurring-is-solved/blob/main/DBIS.md">DBIS.md</a>.</p>
+    <p class="lead2"><b>dbis</b> gives the authors' outputs from one file of plain PyTorch and a safetensors file. <b>dbisf</b> is faster and lighter, and its mean PSNR is never more than 0.05&nbsp;dB below the authors' code on any test set. What changed in each method: <a href="https://github.com/illaitar/deblurring-is-solved/blob/main/DBIS.md">DBIS.md</a>.</p>
     {{dbis_table}}
-    <pre class="code">python -m dbis.convert NAFNet-64 NAFNet-GoPro-width64.pth   # the authors' checkpoint -> weights/dbis/
+    <pre class="code">python -m dbis.convert NAFNet-64 NAFNet-GoPro-width64.pth          # the authors' checkpoint -> weights/dbis/
+python -m dbis.convert BSSTNet BSST_gopro.pth raft-things.pth      # BSST and its RAFT
 import dbis
 net = dbis.load("dbisf-NAFNet-64")</pre>
   </section>
@@ -954,6 +956,7 @@ net = dbis.load("dbisf-NAFNet-64")</pre></div>
     });
     return h("div", { class: "gd-code" }, pre, b);
   }
+  function fmtT(ms) { return ms < 1000 ? fx(ms, 1) + " ms" : fx(ms / 1000, 1) + " s"; }
   function stat(label, val, d) {
     return h("div", { class: "gd-st" }, h("span", { class: "l" }, label), h("span", { class: "val" }, val),
       h("span", { class: "d" + (d && d[1] ? " good" : "") }, d ? d[0] : ""));
@@ -968,24 +971,26 @@ net = dbis.load("dbisf-NAFNet-64")</pre></div>
     left.append(hd);
     if (v) {
       var a = v.authors;
-      left.append(h("p", { class: "gd-base" }, "Compared with the authors' code: " + a.mb + " MB, " + fx(a.ms, 1) + " ms per frame, load " + fx(a.load, 2) + " s, GoPro PSNR " + fx(a.psnr, 4) + " dB."));
+      left.append(h("p", { class: "gd-base" }, "Compared with the authors' code: " + a.mb + " MB, " + fmtT(a.ms) + " per frame, load " + fx(a.load, 2) + " s, GoPro PSNR " + fx(a.psnr, 4) + " dB."));
       v.models.forEach(function (m) {
         var o = h("div", { class: "gd-opt" },
           h("div", { class: "gd-on" }, h("code", null, m.name), h("span", { class: "gd-kind" + (m.kind === "dbisf" ? " f" : "") }, m.kind === "dbisf" ? "fast and light" : "same outputs as the authors")),
-          h("div", { class: "gd-stats" }, stat("Weights", m.mb + " MB", m.d_mb), stat("ms per 720p frame", fx(m.ms, 1), m.d_ms),
+          h("div", { class: "gd-stats" }, stat("Weights", m.mb + " MB", m.d_mb), stat("Per 720p frame", fmtT(m.ms), m.d_ms),
             stat("Load", fx(m.load, 2) + " s", m.d_load), stat("GoPro PSNR", fx(m.psnr, 4), m.d_psnr)));
+        if (m.about) o.append(h("p", { class: "gd-note" }, m.about));
         if (m.url) o.append(h("a", { class: "gd-btn pri", href: m.url, download: m.file }, "Download " + m.ext));
         else o.append(h("span", { class: "gd-btn pri", "aria-disabled": "true", title: "The weight files are not hosted yet" }, "Download · soon"));
         left.append(o);
       });
       left.append(h("p", { class: "gd-note" }, "Until the files are hosted, the converter makes them from the authors' checkpoint (" + v.checkpoint + "):"),
-        copyBox("pip install torch numpy safetensors zstandard\npython -m dbis.convert " + v.source + " " + v.checkpoint + "\npython -c \"import dbis; net = dbis.load('" + v.models[v.models.length - 1].name + "')\""),
-        h("p", { class: "gd-note" }, "One A100, 1280×720, batch 1, fp16 with torch.compile; PSNR on all 1,111 GoPro test frames. ",
+        copyBox("pip install " + v.pip + "\npython -m dbis.convert " + v.source + " " + v.checkpoint + "\npython -c \"import dbis; net = dbis.load('" + v.models[v.models.length - 1].name + "')\""),
+        ...(v.extra_note ? [h("p", { class: "gd-note" }, v.extra_note)] : []),
+        h("p", { class: "gd-note" }, (v.note || "") + " ",
           h("a", { href: "https://github.com/illaitar/deblurring-is-solved/blob/main/DBIS.md", target: "_blank", rel: "noopener" }, "What changed")));
     } else {
       var more = h("a", { href: "#dbis" }, "What dbis is");
       more.addEventListener("click", function () { dlg.close(); });
-      left.append(h("p", null, "We port methods one at a time and check every output against the authors' code. NAFNet-64 is the first; this method is not done yet."),
+      left.append(h("p", null, "We port methods one at a time and check every output against the authors' code. NAFNet-64 and BSSTNet are done; this method is not yet."),
         h("p", { class: "gd-note" }, more));
     }
     var dl = h("dl", { class: "gd-dl" });

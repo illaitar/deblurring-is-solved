@@ -253,25 +253,18 @@ def _tag(name):
 
 FACTS["tag_dbis"], FACTS["tag_dbisf"] = _tag("dbis-plain-css.svg"), _tag("dbisf-plain-css.svg")
 FACTS["tag_dbis_big"], FACTS["tag_dbisf_big"] = _tag("dbis-css.svg"), _tag("dbisf-css.svg")
-DB = json.loads((RES / "dbis" / "NAFNet-64.json").read_text(encoding="utf-8"))
-_lat, _wb, _ld = DB["latency_ms"]["fp16_compile_cudagraphs"], DB["weights_bytes"], DB["load_s"]
-FACTS["dbisf_speed"] = f"{100 * (1 - _lat['dbisf'] / _lat['authors']):.0f}&nbsp;%"
-FACTS["dbisf_size"] = f"{_wb['authors_pth'] / _wb['dbisf']:.1f}"
-_ps = DB["quality"]["mean_psnr_db"]
-FACTS["dbis_table"] = (
-    '<div class="scroll whybox"><table class="dbt"><thead><tr><th scope="col">NAFNet-64, GoPro weights</th><th scope="col">Weights</th>'
-    '<th scope="col">Load</th><th scope="col">ms per 720p frame</th><th scope="col">GoPro PSNR</th></tr></thead><tbody>'
-    f'<tr><td>authors\' code</td><td>{_wb["authors_pth"] / 1e6:.0f} MB</td><td>{_ld["authors"]:.2f} s</td><td>{_lat["authors"]:.1f}</td><td>{_ps["authors"]:.4f}</td></tr>'
-    f'<tr><td>{FACTS["tag_dbis"]}</td><td>{_wb["dbis"] / 1e6:.0f} MB</td><td>{_ld["dbis"]:.2f} s</td><td>{_lat["dbis"]:.1f}</td><td>{_ps["dbis"]:.4f}</td></tr>'
-    f'<tr><td>{FACTS["tag_dbisf"]}</td><td><b>{_wb["dbisf"] / 1e6:.0f} MB</b></td><td>{_ld["dbisf"]:.2f} s</td><td><b>{_lat["dbisf"]:.1f}</b></td><td>{_ps["dbisf"]:.4f}</td></tr>'
-    '</tbody></table></div><p class="fig-note">Load: a fresh process, from CUDA ready to the network with its weights on the GPU. '
-    'Speed: one A100, 1280&times;720, batch 1, fp16 with torch.compile and CUDA graphs, all three on the same node. '
-    'PSNR: all 1,111 GoPro test frames. Every number: <a href="https://github.com/illaitar/deblurring-is-solved/blob/main/results/dbis/NAFNet-64.json">results/dbis/NAFNet-64.json</a>.</p>')
-# the leaderboard rows that have our versions (key of the row in the master table); numbers from results/dbis/
-DBIS_SRC = {"NAFNet": {"json": "NAFNet-64.json", "source": "NAFNet-64", "checkpoint": "NAFNet-GoPro-width64.pth",
-                       "models": [("dbis-NAFNet-64", "dbis", ".safetensors"), ("dbisf-NAFNet-64", "dbisf", ".wpk")]}}
+DBIS_FILES = ["NAFNet-64.json", "BSSTNet.json"]      # results/dbis/<file>, each with a "site" block
 DBIS_URL = None   # base URL of the hosted weight files; None while they are not hosted (the popup shows "soon")
 MINUS = "−"
+DBS = [json.loads((RES / "dbis" / f).read_text(encoding="utf-8")) | {"_file": f} for f in DBIS_FILES]
+FACTS["dbisf_gains"] = ", ".join(       # the "What you get" row: time and weight size of every dbisf against the authors
+    f'{_J["site"]["source"]} <b>{100 * (1 - _J["site"]["latency_ms"]["dbisf"] / _J["site"]["latency_ms"]["authors"]):.0f}&nbsp;% '
+    f'faster, weights {_J["site"]["weights_bytes"]["authors"] / _J["site"]["weights_bytes"]["dbisf"]:.1f}&times; smaller</b>'
+    for _J in DBS)
+
+
+def _t(ms):
+    return f"{ms:.1f} ms" if ms < 1000 else f"{ms / 1000:.1f} s"
 
 
 def _times(a, x, word):
@@ -288,17 +281,36 @@ def _dpsnr(d):
     return ["same", False] if abs(d) < 5e-6 else [f"{MINUS if d < 0 else '+'}{abs(d):.5f} dB", False]
 
 
+_rows = []
+for _J in DBS:
+    _s = _J["site"]
+    _L, _W, _T, _P = _s["latency_ms"], _s["weights_bytes"], _s["load_s"], _s["gopro_psnr"]
+    _rows.append(f'<tr class="grp"><th scope="rowgroup" colspan="5">{_s["title"]}</th></tr>')
+    for _kd, _lab in (("authors", "authors' code"), ("dbis", FACTS["tag_dbis"]), ("dbisf", FACTS["tag_dbisf"])):
+        _b = (lambda v: f"<b>{v}</b>") if _kd == "dbisf" else (lambda v: v)
+        _rows.append(f'<tr><td>{_lab}</td><td>{_b(f"{_W[_kd] / 1e6:.0f} MB")}</td><td>{_T[_kd]:.2f} s</td>'
+                     f'<td>{_b(_t(_L[_kd]))}</td><td>{_P[_kd]:.4f}</td></tr>')
+FACTS["dbis_table"] = (
+    '<div class="scroll whybox"><table class="dbt"><thead><tr><th scope="col">Model</th><th scope="col">Weights</th>'
+    '<th scope="col">Load</th><th scope="col">Time per 720p frame</th><th scope="col">GoPro PSNR</th></tr></thead><tbody>'
+    + "".join(_rows) + '</tbody></table></div><p class="fig-note">Load: a fresh process, from CUDA ready to the network with '
+    'its weights on the GPU. Time: the benchmark\'s latency harness on one A100, 1280&times;720, batch 1, the three versions '
+    'of a method on the same node. ' + " ".join(f'{J["site"]["title"].split(",")[0]}: {J["site"]["time_mode"]}.' for J in DBS) +
+    ' PSNR: all 1,111 GoPro test frames. Every number: ' + ", ".join(f'<a href="https://github.com/illaitar/deblurring-is-solved/blob/main/results/dbis/{J["_file"]}">'
+                                  f'results/dbis/{J["_file"]}</a>' for J in DBS) + '.</p>')
 DBIS_PAY = {}
-for _k, _s in DBIS_SRC.items():
-    _J = json.loads((RES / "dbis" / _s["json"]).read_text(encoding="utf-8"))
-    _L, _W, _T, _P = (_J["latency_ms"]["fp16_compile_cudagraphs"], _J["weights_bytes"], _J["load_s"], _J["quality"]["mean_psnr_db"])
-    DBIS_PAY[_k] = {"source": _s["source"], "checkpoint": _s["checkpoint"],
-                    "authors": {"mb": round(_W["authors_pth"] / 1e6), "ms": _L["authors"], "load": _T["authors"], "psnr": _P["authors"]},
-                    "models": [{"name": n, "kind": kd, "ext": ext, "file": n + ext, "mb": round(_W[kd] / 1e6), "ms": _L[kd],
-                                "load": _T[kd], "psnr": _P[kd], "d_mb": _times(_W["authors_pth"], _W[kd], "smaller"),
-                                "d_ms": _pct(_L[kd], _L["authors"]), "d_load": _times(_T["authors"], _T[kd], "faster"),
-                                "d_psnr": _dpsnr(_P[kd] - _P["authors"]), "url": DBIS_URL + n + ext if DBIS_URL else None}
-                               for n, kd, ext in _s["models"]]}
+for _J in DBS:
+    _s = _J["site"]
+    _L, _W, _T, _P = _s["latency_ms"], _s["weights_bytes"], _s["load_s"], _s["gopro_psnr"]
+    DBIS_PAY[_s["row_key"]] = {
+        "source": _s["source"], "checkpoint": _s["checkpoint"], "note": _s["note"], "extra_note": _s.get("extra_note"),
+        "pip": _s.get("pip", "torch numpy safetensors zstandard"),
+        "authors": {"mb": round(_W["authors"] / 1e6), "ms": _L["authors"], "load": _T["authors"], "psnr": _P["authors"]},
+        "models": [{"name": _s["models"][kd], "kind": kd, "ext": _s["ext"][kd], "file": _s["models"][kd] + _s["ext"][kd],
+                    "about": _s.get("about", {}).get(kd), "mb": round(_W[kd] / 1e6), "ms": _L[kd], "load": _T[kd],
+                    "psnr": _P[kd], "d_mb": _times(_W["authors"], _W[kd], "smaller"), "d_ms": _pct(_L[kd], _L["authors"]),
+                    "d_load": _times(_T["authors"], _T[kd], "faster"), "d_psnr": _dpsnr(_P[kd] - _P["authors"]),
+                    "url": DBIS_URL + _s["models"][kd] + _s["ext"][kd] if DBIS_URL else None} for kd in ("dbis", "dbisf")]}
 REPOS = json.loads((ROOT / "site" / "method_repos.json").read_text(encoding="utf-8"))
 DATA_CARDS = [  # set, name, pairs, size, blur, license, authors' page
     ("gopro", "GoPro", "1,111 pairs", "1280&times;720", "", "CC BY 4.0", "https://seungjunnah.github.io/Datasets/gopro.html"),

@@ -34,17 +34,23 @@
 
 Our re-implementations of benchmark methods, in the package [`dbis/`](dbis) ([DBIS.md](DBIS.md)). **dbis** gives the
 authors' outputs from one file of plain PyTorch and a safetensors file. **dbisf** is faster and lighter: its mean PSNR
-stays within 0.05 dB of the authors' code on every test set (DBIS.md has the table).
+is never more than 0.05 dB below the authors' code on any test set (DBIS.md has the tables).
 
-| Model | Weights | Load | ms per 720p frame | GoPro PSNR, dB |
+| Model | Weights | Load | Per 720p frame | GoPro PSNR, dB |
 |---|---:|---:|---:|---:|
-| NAFNet-64, authors' code | 272 MB | 3.06 s | 34.9 | 33.7103 |
-| dbis-NAFNet-64 | 271 MB | 0.70 s | 33.5 | 33.7103 |
-| dbisf-NAFNet-64 | 66 MB | 0.83 s | 26.6 | 33.7041 |
+| NAFNet-64, authors' code | 272 MB | 3.06 s | 34.9 ms | 33.7103 |
+| dbis-NAFNet-64 | 271 MB | 0.70 s | 33.5 ms | 33.7103 |
+| dbisf-NAFNet-64 | 66 MB | 0.77 s | 26.6 ms | 33.7041 |
+| BSSTNet, authors' code | 209 MB | 3.50 s | 25.7 s | 35.9662 |
+| dbis-BSSTNet | 175 MB | 1.66 s | 30.4 s | 35.9662 |
+| dbisf-BSSTNet | 42 MB | 1.71 s | 16.0 s | 35.9562 |
+
+BSSTNet is timed as in the leaderboard, with a 48-frame window for every output frame, and each version runs in its
+fastest mode: the authors' code with `torch.compile`, ours eager.
 
 ```python
 import dbis                               # weights: python -m dbis.convert NAFNet-64 NAFNet-GoPro-width64.pth
-net = dbis.load("dbisf-NAFNet-64")
+net = dbis.load("dbisf-NAFNet-64")        # or "dbisf-BSSTNet" (python -m dbis.convert BSSTNet BSST_gopro.pth raft-things.pth)
 ```
 
 ## Leaderboard
