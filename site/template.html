@@ -1283,17 +1283,16 @@ out = net.restore(frames)</pre></div>
       sorted.forEach(function (p) { if (up ? p.y > best : p.y < best) { f.push(p); best = p.y; } });
       return f;
     }
-    function stepPath(f) {
-      var d = "";
-      f.forEach(function (p, i) { d += (i ? "H" + X(p.x).toFixed(1) + "V" : "M" + X(p.x).toFixed(1) + " ") + Y(p.y).toFixed(1); });
-      return d + "H" + (W - m.r);
+    // 26.11: straight segments from point to point of the front (it was a staircase reaching the right edge)
+    function linePath(f) {
+      return f.map(function (p, i) { return (i ? "L" : "M") + X(p.x).toFixed(1) + " " + Y(p.y).toFixed(1); }).join("");
     }
     var front = frontOf(pts), ofront = vers.length ? frontOf(pts.concat(vers)) : [];
     var onFront = new Set(front.map(function (p) { return p.r.key; }));
     var onOurs = new Set(ofront.filter(function (p) { return p.md; }).map(function (p) { return p.md.name; }));
-    root.append(s("path", { d: stepPath(front), class: "front" }));
+    root.append(s("path", { d: linePath(front), class: "front" }));
     // the orange front only when one of our versions moves it; else it is the methods' front and would hide it
-    if (onOurs.size) root.append(s("path", { d: stepPath(ofront), class: "front ours" }));
+    if (onOurs.size) root.append(s("path", { d: linePath(ofront), class: "front ours" }));
     document.getElementById("pf-ofkey").hidden = !onOurs.size;
     var g = s("g"), hits = s("g");
     pts.forEach(function (p) {
