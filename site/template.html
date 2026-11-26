@@ -607,11 +607,14 @@ pre.code { margin: 0; padding: .8rem 1rem; background: var(--paper-2); border-ra
           <tr><td>DVD test</td><td class="n">10</td><td class="n">1,000</td><td>1280&times;720</td><td class="n">27.29</td><td><code>input</code></td></tr>
           <tr><td>RealBlur-J test</td><td class="n">50 scenes</td><td class="n">980</td><td>about 670&times;763</td><td class="n" id="in-rbj">–</td><td><code>blur</code></td></tr>
           <tr><td>RealBlur-R test</td><td class="n">50 scenes</td><td class="n">980</td><td>about 670&times;763</td><td class="n" id="in-rbr">–</td><td><code>blur</code></td></tr>
+          <tr><td>GS-Blur mini</td><td class="n">752 scenes</td><td class="n">1,000</td><td>480&times;270 to 1920&times;1080, both orientations</td><td class="n" id="in-gsb">–</td><td><code>input_noise</code></td></tr>
+          <tr><td>MIORe, 300 of train</td><td class="n">300 images</td><td class="n">300</td><td>1920&times;1080</td><td class="n" id="in-mio">–</td><td><code>blur</code></td></tr>
         </tbody>
       </table>
     </div>
     <ul class="notes">
-      <li>Every released checkpoint of a method runs on every test set: video methods on the four video sets, image methods also on RealBlur-J and RealBlur-R, which hold single images. <i>Trained on</i> picks the checkpoints shown: GoPro (the default), the training split of the current test set, any set, or one training set.</li>
+      <li>Every released checkpoint of a method runs on every test set: video methods on the four video sets, image methods also on RealBlur-J, RealBlur-R, GS-Blur and MIORe, which hold single images. <i>Trained on</i> picks the checkpoints shown: GoPro (the default), the training split of the current test set, any set, or one training set.</li>
+      <li>GS-Blur: the 1,000 pairs of the authors' mini release, with the noisy blurred input (<code>input_noise</code>), each image at its own size. MIORe: only its training part has public sharp frames, so the test set is 300 of the 7,860 public training pairs, evenly spaced over the sorted file list. Both are scored like the other sets, without alignment. The GoPro checkpoints of NAFNet diverge on part of these images (outputs far outside the valid range, a PSNR of 3 to 6 dB, the same in fp32 on the CPU). Those images stay in the scores.</li>
       <li>On RealBlur, PSNR and SSIM follow the dataset's official evaluation: each output is aligned to the sharp image by an ECC homography and scored on the valid region (scikit-image 0.17.2, OpenCV 4.2, as the script requires). LPIPS and the other metrics use the unaligned output.</li>
       <li>PSNR and SSIM are computed per frame on 8-bit RGB outputs against the sharp frame and averaged over all frames of the set. LPIPS uses the AlexNet backbone.</li>
       <li>A score is final when at least 95&nbsp;% of the frames of the set are scored. Runs below that are shown under <i>unfinished runs</i>.</li>
@@ -818,7 +821,8 @@ out = net.restore(frames)</pre></div>
   }
   var SIZE = { year: { label: "Year", nd: 0 }, params: { label: "Params, M", nd: 1 }, gmac: { label: "GMAC", nd: 0 }, ms: { label: "ms", nd: 1 } };
   var SETINFO = { gopro: "1,111 frames · 1280×720", reds_val: "3,000 frames · 1280×720", bsd2: "3,000 frames · 640×480", dvd: "1,000 frames · 1280×720",
-    realblur_j: "980 images · image methods", realblur_r: "980 images · image methods" };
+    realblur_j: "980 images · image methods", realblur_r: "980 images · image methods",
+    gsblur: "1,000 images · image methods", miore: "300 images · image methods" };
 
   var ST = { ds: "gopro", sort: "psnr", asc: false, types: { image: true, video: true }, fam: "", tr: "gopro", partial: false, q: "", open: {}, limit: 25, all: false, px: "ms", pm: "psnr", mg: "fid" };
 
@@ -1029,7 +1033,7 @@ out = net.restore(frames)</pre></div>
   var domOpt = trSel.querySelector('option[value="dom"]');
   (D.trainGroups || []).forEach(function (g) { trSel.insertBefore(h("option", { value: "g:" + g }, g), domOpt); });
   trSel.addEventListener("change", function () { ST.tr = trSel.value; ST.open = {}; renderTable(); drawPareto(); });
-  [["realblur_j", "in-rbj"], ["realblur_r", "in-rbr"]].forEach(function (p) { var e = document.getElementById(p[1]); if (e && IN[p[0]] != null) e.textContent = IN[p[0]].toFixed(2); });
+  [["realblur_j", "in-rbj"], ["realblur_r", "in-rbr"], ["gsblur", "in-gsb"], ["miore", "in-mio"]].forEach(function (p) { var e = document.getElementById(p[1]); if (e && IN[p[0]] != null) e.textContent = IN[p[0]].toFixed(2); });
   document.getElementById("partial").addEventListener("change", function (e) { ST.partial = e.target.checked; renderTable(); drawPareto(); });
   document.getElementById("q").addEventListener("input", function (e) { ST.q = e.target.value; renderTable(); drawPareto(); });
 
@@ -1342,7 +1346,7 @@ out = net.restore(frames)</pre></div>
       else { tile.append(h("span", { class: "v" }, minus(v.toFixed(t[2]))), strip(t[0])); }
       meas.append(tile);
     });
-    meas.append(h("p", { class: "dc-src" }, "Measured the same way on every set; the strip places " + LBL[ST.ds] + " (dark dot) among the six test sets."));
+    meas.append(h("p", { class: "dc-src" }, "Measured the same way on every set; the strip places " + LBL[ST.ds] + " (dark dot) among the other test sets."));
     var side = h("div", { class: "dc-side" }), g = c.collage;
     if (g) {
       var img = h("img", { src: g.src, width: g.w, height: g.h, decoding: "async",

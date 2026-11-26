@@ -68,7 +68,13 @@
   "rows": 200,
   "metrics": [
    "based4",
+   "clipiqa",
+   "dists",
    "lpips",
+   "lpips_vgg",
+   "ms_ssim",
+   "musiq",
+   "paq2piq",
    "psnr",
    "ssim"
   ]
@@ -78,7 +84,45 @@
   "rows": 200,
   "metrics": [
    "based4",
+   "clipiqa",
+   "dists",
    "lpips",
+   "lpips_vgg",
+   "ms_ssim",
+   "musiq",
+   "paq2piq",
+   "psnr",
+   "ssim"
+  ]
+ },
+ "gsblur": {
+  "frames": 1000,
+  "rows": 200,
+  "metrics": [
+   "based4",
+   "clipiqa",
+   "dists",
+   "lpips",
+   "lpips_vgg",
+   "ms_ssim",
+   "musiq",
+   "paq2piq",
+   "psnr",
+   "ssim"
+  ]
+ },
+ "miore": {
+  "frames": 300,
+  "rows": 199,
+  "metrics": [
+   "based4",
+   "clipiqa",
+   "dists",
+   "lpips",
+   "lpips_vgg",
+   "ms_ssim",
+   "musiq",
+   "paq2piq",
    "psnr",
    "ssim"
   ]

@@ -8,7 +8,7 @@
 <p align="center">Nikita Alutis &nbsp;&middot;&nbsp; Egor Chistov</p>
 
 <p align="center">
-  <b>Motion deblurring methods with released weights, run with one protocol on six test sets (four video sets, plus RealBlur-J and RealBlur-R for image methods) and scored frame by frame.</b>
+  <b>Motion deblurring methods with released weights, run with one protocol on eight test sets (four video sets, plus RealBlur-J, RealBlur-R, GS-Blur and MIORe for image methods) and scored frame by frame.</b>
 </p>
 
 <p align="center">
@@ -18,7 +18,7 @@
 <!-- progress:start (tools/build_site.py writes this block; edit the script, not the text) -->
 <p align="center"><a href="https://github.com/illaitar/deblurring-is-solved/stargazers"><img src="https://img.shields.io/github/stars/illaitar/deblurring-is-solved?style=flat&amp;label=stars" alt="GitHub stars"></a></p>
 
-<p align="center"><b>13,377 of 18,760 measurements done (71 %)</b> &nbsp;&middot;&nbsp; one measurement = a method variant on a test set with a metric &nbsp;&middot;&nbsp; 96 methods, 268 variants, 8 test sets, 10 metrics, as of 2026-11-26</p>
+<p align="center"><b>15,057 of 18,760 measurements done (80 %)</b> &nbsp;&middot;&nbsp; one measurement = a method variant on a test set with a metric &nbsp;&middot;&nbsp; 96 methods, 268 variants, 8 test sets, 10 metrics, as of 2026-11-26</p>
 <!-- progress:end -->
 
 <p align="center">
@@ -64,7 +64,7 @@ enc = dbis.load_encoder("dbisf-NAFNet-64")  # the encoder alone: enc(x) -> featu
 
 <!-- generated:start (tools/build_site.py writes this block; edit the script, not the text) -->
 > [!NOTE]
-> Numbers as of 2026-11-26: 267 of 268 variants scored on all their sets (six for image methods, four for video methods), 0 on some. GoPro-trained weights (other training sets are on the site), PSNR in dB (RealBlur: official ECC-aligned PSNR), sorted by PSNR. The full table is in [`docs/leaderboard.csv`](docs/leaderboard.csv) and on the [interactive leaderboard](https://illaitar.github.io/deblurring-is-solved/).
+> Numbers as of 2026-11-26: 266 of 268 variants scored on all their sets (eight for image methods, four for video methods), 1 on some. GoPro-trained weights (other training sets are on the site), PSNR in dB (RealBlur: official ECC-aligned PSNR), sorted by PSNR. The full table is in [`docs/leaderboard.csv`](docs/leaderboard.csv) and on the [interactive leaderboard](https://illaitar.github.io/deblurring-is-solved/).
 
 ### GoPro
 
@@ -847,6 +847,232 @@ enc = dbis.load_encoder("dbisf-NAFNet-64")  # the encoder alone: enc(x) -> featu
 | 90 | **MIMO-UNet+ + ID-Blau** <sub>whole, large, CVPR 2024</sub> | image | 16.1 | 31.96 | 0.876 | 0.198 |
 
 </details>
+
+### GS-Blur
+
+| # | Method | Type | Params, M | PSNR | SSIM | LPIPS |
+|---:|---|---|---:|---:|---:|---:|
+| 1 | **DeepDeblur** <sub>whole, CVPR 2017</sub> | image | 11.7 | 25.78 | 0.763 | 0.323 |
+| 2 | **AdaRevD-B** <sub>tiled, CVPR 2024</sub> | image | 152.4 | 25.00 | 0.749 | 0.328 |
+| 3 | **ShuffleFormer** <sub>tiled, ICML 2023</sub> | image | 50.6 | 24.97 | 0.769 | 0.289 |
+| 4 | **RT-Focuser** <sub>whole, arXiv 2025</sub> | image | 5.9 | 24.95 | 0.731 | 0.350 |
+| 5 | **MSFS-Net** <sub>TLC, TCSVT 2023</sub> | image | 21.6 | 24.94 | 0.750 | 0.302 |
+| 6 | **ShuffleFormer** <sub>whole, ICML 2023</sub> | image | 50.6 | 24.94 | 0.767 | 0.289 |
+| 7 | **MSSNet-small** <sub>whole, small, ECCVW 2022</sub> | image | 6.8 | 24.94 | 0.762 | 0.307 |
+| 8 | **ShuffleFormer (1 pass)** <sub>whole, 1pass, ICML 2023</sub> | image | 50.6 | 24.91 | 0.766 | 0.293 |
+| 9 | **MSSNet** <sub>whole, ECCVW 2022</sub> | image | 15.6 | 24.91 | 0.766 | 0.303 |
+| 10 | **AdaRevD-B** <sub>whole, CVPR 2024</sub> | image | 152.4 | 24.81 | 0.743 | 0.334 |
+
+<details>
+<summary>All 90 rows on GS-Blur</summary>
+
+| # | Method | Type | Params, M | PSNR | SSIM | LPIPS |
+|---:|---|---|---:|---:|---:|---:|
+| 1 | **DeepDeblur** <sub>whole, CVPR 2017</sub> | image | 11.7 | 25.78 | 0.763 | 0.323 |
+| 2 | **AdaRevD-B** <sub>tiled, CVPR 2024</sub> | image | 152.4 | 25.00 | 0.749 | 0.328 |
+| 3 | **ShuffleFormer** <sub>tiled, ICML 2023</sub> | image | 50.6 | 24.97 | 0.769 | 0.289 |
+| 4 | **RT-Focuser** <sub>whole, arXiv 2025</sub> | image | 5.9 | 24.95 | 0.731 | 0.350 |
+| 5 | **MSFS-Net** <sub>TLC, TCSVT 2023</sub> | image | 21.6 | 24.94 | 0.750 | 0.302 |
+| 6 | **ShuffleFormer** <sub>whole, ICML 2023</sub> | image | 50.6 | 24.94 | 0.767 | 0.289 |
+| 7 | **MSSNet-small** <sub>whole, small, ECCVW 2022</sub> | image | 6.8 | 24.94 | 0.762 | 0.307 |
+| 8 | **ShuffleFormer (1 pass)** <sub>whole, 1pass, ICML 2023</sub> | image | 50.6 | 24.91 | 0.766 | 0.293 |
+| 9 | **MSSNet** <sub>whole, ECCVW 2022</sub> | image | 15.6 | 24.91 | 0.766 | 0.303 |
+| 10 | **AdaRevD-B** <sub>whole, CVPR 2024</sub> | image | 152.4 | 24.81 | 0.743 | 0.334 |
+| 11 | **MSFS-Net** <sub>whole, TCSVT 2023</sub> | image | 21.6 | 24.79 | 0.745 | 0.306 |
+| 12 | **MaIR** <sub>whole, CVPR 2025</sub> | image | 26.3 | 24.79 | 0.761 | 0.318 |
+| 13 | **RevD-S** <sub>whole, small, CVPR 2024</sub> | image | 108.2 | 24.74 | 0.740 | 0.339 |
+| 14 | **UFPNet** <sub>TLC, CVPR 2023</sub> | image | 80.3 | 24.74 | 0.744 | 0.319 |
+| 15 | **MAXIM-3S** <sub>whole, CVPR 2022</sub> | image | 22.2 | 24.72 | 0.749 | 0.330 |
+| 16 | **LaKDNet-S** <sub>whole, small, arXiv 2023</sub> | image | 17.1 | 24.66 | 0.756 | 0.312 |
+| 17 | **DeblurDiNAT-L** <sub>whole, arXiv 2024</sub> | image | 16.1 | 24.64 | 0.757 | 0.307 |
+| 18 | **M3SNet-64** <sub>TLC, VisComp 2024</sub> | image | 66.4 | 24.62 | 0.751 | 0.322 |
+| 19 | **DGUNet+** <sub>whole, large, CVPR 2022</sub> | image | 69.6 | 24.62 | 0.748 | 0.333 |
+| 20 | **DGUNet** <sub>whole, CVPR 2022</sub> | image | 17.3 | 24.60 | 0.749 | 0.326 |
+| 21 | **SIUN** <sub>whole, Access 2020</sub> | image | 6.3 | 24.59 | 0.752 | 0.304 |
+| 22 | **M3SNet-32** <sub>TLC, small, VisComp 2024</sub> | image | 16.7 | 24.58 | 0.747 | 0.325 |
+| 23 | **F-MIMO+** <sub>tiled, large, AAAI 2023</sub> | image | 19.5 | 24.58 | 0.749 | 0.346 |
+| 24 | **Stoformer** <sub>tiled, NeurIPS 2022</sub> | image | 50.5 | 24.57 | 0.743 | 0.345 |
+| 25 | **Stoformer** <sub>whole, NeurIPS 2022</sub> | image | 50.5 | 24.57 | 0.743 | 0.344 |
+| 26 | **UFPNet** <sub>whole, CVPR 2023</sub> | image | 80.3 | 24.57 | 0.738 | 0.325 |
+| 27 | **F-NAFNet-32** <sub>whole, small, AAAI 2023</sub> | image | 17.8 | 24.55 | 0.752 | 0.307 |
+| 28 | **HI-Diff** <sub>whole, NeurIPS 2023</sub> | image | 28.5 | 24.53 | 0.757 | 0.308 |
+| 29 | **DeepRFT+** <sub>TLC, large, arXiv 2021</sub> | image | 23.0 | 24.53 | 0.747 | 0.319 |
+| 30 | **DeepRFT** <sub>TLC, arXiv 2021</sub> | image | 9.6 | 24.51 | 0.742 | 0.348 |
+| 31 | **Stripformer** <sub>whole, ECCV 2022</sub> | image | 19.7 | 24.50 | 0.742 | 0.318 |
+| 32 | **M3SNet-64** <sub>whole, VisComp 2024</sub> | image | 66.4 | 24.50 | 0.746 | 0.329 |
+| 33 | **M3SNet-32** <sub>whole, small, VisComp 2024</sub> | image | 16.7 | 24.47 | 0.744 | 0.330 |
+| 34 | **DeepRFT** <sub>whole, arXiv 2021</sub> | image | 9.6 | 24.43 | 0.732 | 0.364 |
+| 35 | **F-MIMO+** <sub>whole, large, AAAI 2023</sub> | image | 19.5 | 24.40 | 0.735 | 0.364 |
+| 36 | **Restormer** <sub>whole, CVPR 2022</sub> | image | 26.1 | 24.39 | 0.737 | 0.336 |
+| 37 | **EAMamba** <sub>whole, ICCV 2025</sub> | image | 25.3 | 24.39 | 0.738 | 0.336 |
+| 38 | **DeepRFT+** <sub>whole, large, arXiv 2021</sub> | image | 23.0 | 24.38 | 0.736 | 0.339 |
+| 39 | **PSS-NSC** <sub>whole, CVPR 2019</sub> | image | 3.9 | 24.35 | 0.738 | 0.377 |
+| 40 | **MT-RNN** <sub>whole, ECCV 2020</sub> | image | 2.6 | 24.34 | 0.736 | 0.359 |
+| 41 | **MSDI-Net** <sub>tiled, ECCV 2022</sub> | image | 246.9 | 24.33 | 0.741 | 0.319 |
+| 42 | **Stripformer + ID-Blau** <sub>whole, CVPR 2024</sub> | image | 19.7 | 24.28 | 0.729 | 0.348 |
+| 43 | **MPRNet** <sub>whole, CVPR 2021</sub> | image | 20.1 | 24.28 | 0.739 | 0.336 |
+| 44 | **F-MIMO** <sub>tiled, AAAI 2023</sub> | image | 8.2 | 24.27 | 0.730 | 0.379 |
+| 45 | **X-Restormer** <sub>whole, ECCV 2024</sub> | image | 26.0 | 24.23 | 0.741 | 0.334 |
+| 46 | **F-MIMO-S** <sub>tiled, small, AAAI 2023</sub> | image | 4.4 | 24.19 | 0.725 | 0.400 |
+| 47 | **FSNet** <sub>whole, TPAMI 2023</sub> | image | 13.3 | 24.19 | 0.738 | 0.312 |
+| 48 | **MSDI-Net** <sub>whole, ECCV 2022</sub> | image | 246.9 | 24.17 | 0.732 | 0.323 |
+| 49 | **F-MIMO** <sub>whole, AAAI 2023</sub> | image | 8.2 | 24.15 | 0.721 | 0.387 |
+| 50 | **DeepRFT-S** <sub>TLC, small, arXiv 2021</sub> | image | 5.1 | 24.15 | 0.730 | 0.368 |
+| 51 | **DeepRFT-S** <sub>whole, small, arXiv 2021</sub> | image | 5.1 | 24.12 | 0.724 | 0.381 |
+| 52 | **IRNeXt (16 blocks)** <sub>whole, large, ICML 2023</sub> | image | 14.8 | 24.04 | 0.729 | 0.343 |
+| 53 | **F-MIMO-S** <sub>whole, small, AAAI 2023</sub> | image | 4.4 | 24.03 | 0.716 | 0.407 |
+| 54 | **ConvIR-L** <sub>whole, TPAMI 2024</sub> | image | 14.8 | 24.02 | 0.728 | 0.353 |
+| 55 | **IRNeXt** <sub>whole, ICML 2023</sub> | image | 13.2 | 24.01 | 0.724 | 0.351 |
+| 56 | **Concertormer-lite** <sub>TLC, small, arXiv 2025</sub> | image | 29.0 | 23.95 | 0.726 | 0.348 |
+| 57 | **Ghost-DeblurGAN** <sub>whole, IROS 2022</sub> | image | 1.5 | 23.93 | 0.704 | 0.375 |
+| 58 | **LoFormer-L** <sub>whole, ACMMM 2024</sub> | image | 49.0 | 23.92 | 0.725 | 0.356 |
+| 59 | **Concertormer-lite** <sub>whole, small, arXiv 2025</sub> | image | 29.0 | 23.91 | 0.723 | 0.353 |
+| 60 | **ChaIR** <sub>whole, KBS 2023</sub> | image | 15.0 | 23.89 | 0.720 | 0.350 |
+| 61 | **Concertormer** <sub>TLC, arXiv 2025</sub> | image | 50.5 | 23.88 | 0.728 | 0.367 |
+| 62 | **Concertormer** <sub>whole, arXiv 2025</sub> | image | 50.5 | 23.83 | 0.725 | 0.370 |
+| 63 | **Restormer + ID-Blau** <sub>whole, CVPR 2024</sub> | image | 26.1 | 23.82 | 0.713 | 0.379 |
+| 64 | **SFNet** <sub>whole, ICLR 2023</sub> | image | 13.3 | 23.78 | 0.711 | 0.355 |
+| 65 | **Motion-ETR** <sub>whole, TPAMI 2021</sub> | image | 6.6 | 23.77 | 0.718 | 0.366 |
+| 66 | **DiffIR** <sub>whole, ICCV 2023</sub> | image | 26.9 | 23.77 | 0.720 | 0.350 |
+| 67 | **HINet** <sub>whole, CVPRW 2021</sub> | image | 88.7 | 23.77 | 0.705 | 0.393 |
+| 68 | **GRL-B** <sub>whole, CVPR 2023</sub> | image | 19.8 | 23.75 | 0.712 | 0.386 |
+| 69 | **F-NAFNet-64** <sub>whole, AAAI 2023</sub> | image | 68.0 | 23.74 | 0.716 | 0.364 |
+| 70 | **GRL-B** <sub>tiled, CVPR 2023</sub> | image | 19.8 | 23.72 | 0.711 | 0.387 |
+| 71 | **LaKDNet-L** <sub>whole, arXiv 2023</sub> | image | 37.5 | 23.69 | 0.725 | 0.367 |
+| 72 | **NAFNet-32** <sub>whole, small, ECCV 2022</sub> | image | 17.1 | 23.68 | 0.713 | 0.366 |
+| 73 | **SFNet** <sub>TLC, ICLR 2023</sub> | image | 13.3 | 23.57 | 0.706 | 0.353 |
+| 74 | **NAFNet-32** <sub>TLC, small, ECCV 2022</sub> | image | 17.1 | 23.55 | 0.714 | 0.364 |
+| 75 | **MLWNet-B** <sub>whole, CVPR 2024</sub> | image | 95.1 | 23.53 | 0.713 | 0.360 |
+| 76 | **MIMO-UNet** <sub>whole, ICCV 2021</sub> | image | 6.8 | 23.41 | 0.703 | 0.388 |
+| 77 | **DMPHN-1-2-4** <sub>whole, CVPR 2019</sub> | image | 5.4 | 23.40 | 0.702 | 0.363 |
+| 78 | **NAFNet-64** <sub>whole, ECCV 2022</sub> | image | 67.9 | 23.36 | 0.697 | 0.380 |
+| 79 | **MLWNet-B** <sub>TLC, CVPR 2024</sub> | image | 95.1 | 23.33 | 0.709 | 0.366 |
+| 80 | **XYScanNet** <sub>whole, CVPRW 2025</sub> | image | 63.5 | 23.24 | 0.701 | 0.356 |
+| 81 | **NAFNet-64** <sub>TLC, ECCV 2022</sub> | image | 67.9 | 23.22 | 0.697 | 0.382 |
+| 82 | **MIMO-UNet+** <sub>whole, large, ICCV 2021</sub> | image | 16.1 | 22.94 | 0.694 | 0.400 |
+| 83 | **FFTformer** <sub>whole, CVPR 2023</sub> | image | 16.6 | 22.71 | 0.690 | 0.409 |
+| 84 | **EVSSM** <sub>whole, CVPR 2025</sub> | image | 17.1 | 22.68 | 0.708 | 0.373 |
+| 85 | **DBGAN** <sub>whole, CVPR 2020</sub> | image | 11.6 | 21.39 | 0.654 | 0.464 |
+| 86 | **FFTformer + ID-Blau** <sub>whole, CVPR 2024</sub> | image | 16.6 | 21.13 | 0.652 | 0.452 |
+| 87 | **StarIR** <sub>whole, 2025</sub> | image | 18.7 | 21.00 | 0.663 | 0.444 |
+| 88 | **IR-SDE** <sub>whole, ICML 2023</sub> | image | 137.1 | 20.29 | 0.564 | 0.467 |
+| 89 | **StarIR** <sub>TLC, 2025</sub> | image | 18.7 | 19.40 | 0.641 | 0.457 |
+| 90 | **MIMO-UNet+ + ID-Blau** <sub>whole, large, CVPR 2024</sub> | image | 16.1 | 18.08 | 0.565 | 0.550 |
+
+</details>
+
+### MIORe
+
+| # | Method | Type | Params, M | PSNR | SSIM | LPIPS |
+|---:|---|---|---:|---:|---:|---:|
+| 1 | **DeepRFT+** <sub>TLC, large, arXiv 2021</sub> | image | 23.0 | 33.39 | 0.886 | 0.172 |
+| 2 | **F-MIMO+** <sub>tiled, large, AAAI 2023</sub> | image | 19.5 | 33.32 | 0.886 | 0.183 |
+| 3 | **DeepRFT** <sub>TLC, arXiv 2021</sub> | image | 9.6 | 33.19 | 0.883 | 0.182 |
+| 4 | **ShuffleFormer** <sub>tiled, ICML 2023</sub> | image | 50.6 | 33.14 | 0.879 | 0.189 |
+| 5 | **ShuffleFormer** <sub>whole, ICML 2023</sub> | image | 50.6 | 33.07 | 0.877 | 0.191 |
+| 6 | **ShuffleFormer (1 pass)** <sub>whole, 1pass, ICML 2023</sub> | image | 50.6 | 33.06 | 0.877 | 0.191 |
+| 7 | **DeepRFT+** <sub>whole, large, arXiv 2021</sub> | image | 23.0 | 33.00 | 0.877 | 0.188 |
+| 8 | **MAXIM-3S** <sub>whole, CVPR 2022</sub> | image | 22.2 | 32.99 | 0.879 | 0.185 |
+| 9 | **MaIR** <sub>whole, CVPR 2025</sub> | image | 26.3 | 32.94 | 0.875 | 0.198 |
+| 10 | **Stripformer + ID-Blau** <sub>whole, CVPR 2024</sub> | image | 19.7 | 32.90 | 0.875 | 0.170 |
+
+<details>
+<summary>All 90 rows on MIORe</summary>
+
+| # | Method | Type | Params, M | PSNR | SSIM | LPIPS |
+|---:|---|---|---:|---:|---:|---:|
+| 1 | **DeepRFT+** <sub>TLC, large, arXiv 2021</sub> | image | 23.0 | 33.39 | 0.886 | 0.172 |
+| 2 | **F-MIMO+** <sub>tiled, large, AAAI 2023</sub> | image | 19.5 | 33.32 | 0.886 | 0.183 |
+| 3 | **DeepRFT** <sub>TLC, arXiv 2021</sub> | image | 9.6 | 33.19 | 0.883 | 0.182 |
+| 4 | **ShuffleFormer** <sub>tiled, ICML 2023</sub> | image | 50.6 | 33.14 | 0.879 | 0.189 |
+| 5 | **ShuffleFormer** <sub>whole, ICML 2023</sub> | image | 50.6 | 33.07 | 0.877 | 0.191 |
+| 6 | **ShuffleFormer (1 pass)** <sub>whole, 1pass, ICML 2023</sub> | image | 50.6 | 33.06 | 0.877 | 0.191 |
+| 7 | **DeepRFT+** <sub>whole, large, arXiv 2021</sub> | image | 23.0 | 33.00 | 0.877 | 0.188 |
+| 8 | **MAXIM-3S** <sub>whole, CVPR 2022</sub> | image | 22.2 | 32.99 | 0.879 | 0.185 |
+| 9 | **MaIR** <sub>whole, CVPR 2025</sub> | image | 26.3 | 32.94 | 0.875 | 0.198 |
+| 10 | **Stripformer + ID-Blau** <sub>whole, CVPR 2024</sub> | image | 19.7 | 32.90 | 0.875 | 0.170 |
+| 11 | **F-MIMO+** <sub>whole, large, AAAI 2023</sub> | image | 19.5 | 32.88 | 0.877 | 0.197 |
+| 12 | **F-MIMO** <sub>tiled, AAAI 2023</sub> | image | 8.2 | 32.88 | 0.875 | 0.207 |
+| 13 | **Restormer** <sub>whole, CVPR 2022</sub> | image | 26.1 | 32.87 | 0.871 | 0.200 |
+| 14 | **HI-Diff** <sub>whole, NeurIPS 2023</sub> | image | 28.5 | 32.86 | 0.875 | 0.203 |
+| 15 | **DeepRFT** <sub>whole, arXiv 2021</sub> | image | 9.6 | 32.81 | 0.874 | 0.197 |
+| 16 | **X-Restormer** <sub>whole, ECCV 2024</sub> | image | 26.0 | 32.80 | 0.872 | 0.203 |
+| 17 | **Stripformer** <sub>whole, ECCV 2022</sub> | image | 19.7 | 32.73 | 0.875 | 0.166 |
+| 18 | **Concertormer** <sub>whole, arXiv 2025</sub> | image | 50.5 | 32.73 | 0.872 | 0.195 |
+| 19 | **Stoformer** <sub>whole, NeurIPS 2022</sub> | image | 50.5 | 32.72 | 0.873 | 0.194 |
+| 20 | **DGUNet+** <sub>whole, large, CVPR 2022</sub> | image | 69.6 | 32.71 | 0.872 | 0.197 |
+| 21 | **DeblurDiNAT-L** <sub>whole, arXiv 2024</sub> | image | 16.1 | 32.70 | 0.872 | 0.173 |
+| 22 | **Stoformer** <sub>tiled, NeurIPS 2022</sub> | image | 50.5 | 32.68 | 0.872 | 0.195 |
+| 23 | **F-MIMO** <sub>whole, AAAI 2023</sub> | image | 8.2 | 32.66 | 0.870 | 0.211 |
+| 24 | **DGUNet** <sub>whole, CVPR 2022</sub> | image | 17.3 | 32.63 | 0.869 | 0.201 |
+| 25 | **EAMamba** <sub>whole, ICCV 2025</sub> | image | 25.3 | 32.57 | 0.868 | 0.199 |
+| 26 | **AdaRevD-B** <sub>tiled, CVPR 2024</sub> | image | 152.4 | 32.57 | 0.875 | 0.184 |
+| 27 | **Restormer + ID-Blau** <sub>whole, CVPR 2024</sub> | image | 26.1 | 32.54 | 0.868 | 0.206 |
+| 28 | **MSSNet-small** <sub>whole, small, ECCVW 2022</sub> | image | 6.8 | 32.48 | 0.868 | 0.210 |
+| 29 | **AdaRevD-B** <sub>whole, CVPR 2024</sub> | image | 152.4 | 32.46 | 0.869 | 0.201 |
+| 30 | **RevD-S** <sub>whole, small, CVPR 2024</sub> | image | 108.2 | 32.45 | 0.868 | 0.200 |
+| 31 | **MSSNet** <sub>whole, ECCVW 2022</sub> | image | 15.6 | 32.44 | 0.867 | 0.206 |
+| 32 | **Concertormer** <sub>TLC, arXiv 2025</sub> | image | 50.5 | 32.41 | 0.868 | 0.201 |
+| 33 | **LaKDNet-S** <sub>whole, small, arXiv 2023</sub> | image | 17.1 | 32.36 | 0.867 | 0.199 |
+| 34 | **MSDI-Net** <sub>tiled, ECCV 2022</sub> | image | 246.9 | 32.32 | 0.868 | 0.197 |
+| 35 | **UFPNet** <sub>whole, CVPR 2023</sub> | image | 80.3 | 32.31 | 0.867 | 0.207 |
+| 36 | **MSDI-Net** <sub>whole, ECCV 2022</sub> | image | 246.9 | 32.30 | 0.865 | 0.201 |
+| 37 | **GRL-B** <sub>whole, CVPR 2023</sub> | image | 19.8 | 32.30 | 0.860 | 0.210 |
+| 38 | **LoFormer-L** <sub>whole, ACMMM 2024</sub> | image | 49.0 | 32.28 | 0.862 | 0.203 |
+| 39 | **HINet** <sub>whole, CVPRW 2021</sub> | image | 88.7 | 32.25 | 0.860 | 0.199 |
+| 40 | **DiffIR** <sub>whole, ICCV 2023</sub> | image | 26.9 | 32.22 | 0.860 | 0.222 |
+| 41 | **GRL-B** <sub>tiled, CVPR 2023</sub> | image | 19.8 | 32.16 | 0.857 | 0.215 |
+| 42 | **LaKDNet-L** <sub>whole, arXiv 2023</sub> | image | 37.5 | 32.11 | 0.861 | 0.209 |
+| 43 | **UFPNet** <sub>TLC, CVPR 2023</sub> | image | 80.3 | 32.05 | 0.865 | 0.207 |
+| 44 | **M3SNet-32** <sub>whole, small, VisComp 2024</sub> | image | 16.7 | 32.03 | 0.855 | 0.217 |
+| 45 | **F-MIMO-S** <sub>tiled, small, AAAI 2023</sub> | image | 4.4 | 31.96 | 0.867 | 0.216 |
+| 46 | **MPRNet** <sub>whole, CVPR 2021</sub> | image | 20.1 | 31.86 | 0.856 | 0.222 |
+| 47 | **M3SNet-64** <sub>whole, VisComp 2024</sub> | image | 66.4 | 31.83 | 0.858 | 0.212 |
+| 48 | **F-MIMO-S** <sub>whole, small, AAAI 2023</sub> | image | 4.4 | 31.73 | 0.859 | 0.224 |
+| 49 | **DeepRFT-S** <sub>whole, small, arXiv 2021</sub> | image | 5.1 | 31.71 | 0.859 | 0.236 |
+| 50 | **DeepRFT-S** <sub>TLC, small, arXiv 2021</sub> | image | 5.1 | 31.65 | 0.863 | 0.228 |
+| 51 | **M3SNet-64** <sub>TLC, VisComp 2024</sub> | image | 66.4 | 31.60 | 0.856 | 0.216 |
+| 52 | **StarIR** <sub>whole, 2025</sub> | image | 18.7 | 31.56 | 0.852 | 0.222 |
+| 53 | **M3SNet-32** <sub>TLC, small, VisComp 2024</sub> | image | 16.7 | 31.56 | 0.850 | 0.225 |
+| 54 | **SFNet** <sub>whole, ICLR 2023</sub> | image | 13.3 | 31.44 | 0.848 | 0.231 |
+| 55 | **MT-RNN** <sub>whole, ECCV 2020</sub> | image | 2.6 | 31.36 | 0.845 | 0.236 |
+| 56 | **SIUN** <sub>whole, Access 2020</sub> | image | 6.3 | 31.30 | 0.845 | 0.245 |
+| 57 | **IRNeXt (16 blocks)** <sub>whole, large, ICML 2023</sub> | image | 14.8 | 31.25 | 0.844 | 0.225 |
+| 58 | **MSFS-Net** <sub>whole, TCSVT 2023</sub> | image | 21.6 | 31.13 | 0.851 | 0.240 |
+| 59 | **NAFNet-64** <sub>whole, ECCV 2022</sub> | image | 67.9 | 31.12 | 0.841 | 0.226 |
+| 60 | **IRNeXt** <sub>whole, ICML 2023</sub> | image | 13.2 | 31.09 | 0.842 | 0.236 |
+| 61 | **MSFS-Net** <sub>TLC, TCSVT 2023</sub> | image | 21.6 | 31.05 | 0.851 | 0.240 |
+| 62 | **PSS-NSC** <sub>whole, CVPR 2019</sub> | image | 3.9 | 31.00 | 0.843 | 0.247 |
+| 63 | **FSNet** <sub>whole, TPAMI 2023</sub> | image | 13.3 | 30.93 | 0.836 | 0.239 |
+| 64 | **ChaIR** <sub>whole, KBS 2023</sub> | image | 15.0 | 30.84 | 0.838 | 0.225 |
+| 65 | **StarIR** <sub>TLC, 2025</sub> | image | 18.7 | 30.49 | 0.843 | 0.230 |
+| 66 | **SFNet** <sub>TLC, ICLR 2023</sub> | image | 13.3 | 30.35 | 0.826 | 0.249 |
+| 67 | **Concertormer-lite** <sub>whole, small, arXiv 2025</sub> | image | 29.0 | 30.33 | 0.828 | 0.238 |
+| 68 | **Ghost-DeblurGAN** <sub>whole, IROS 2022</sub> | image | 1.5 | 30.24 | 0.826 | 0.255 |
+| 69 | **EVSSM** <sub>whole, CVPR 2025</sub> | image | 17.1 | 30.09 | 0.835 | 0.237 |
+| 70 | **F-NAFNet-32** <sub>whole, small, AAAI 2023</sub> | image | 17.8 | 30.02 | 0.846 | 0.216 |
+| 71 | **ConvIR-L** <sub>whole, TPAMI 2024</sub> | image | 14.8 | 29.99 | 0.834 | 0.254 |
+| 72 | **Motion-ETR** <sub>whole, TPAMI 2021</sub> | image | 6.6 | 29.66 | 0.818 | 0.255 |
+| 73 | **MIMO-UNet** <sub>whole, ICCV 2021</sub> | image | 6.8 | 29.62 | 0.816 | 0.258 |
+| 74 | **F-NAFNet-64** <sub>whole, AAAI 2023</sub> | image | 68.0 | 29.59 | 0.854 | 0.207 |
+| 75 | **XYScanNet** <sub>whole, CVPRW 2025</sub> | image | 63.5 | 29.59 | 0.821 | 0.235 |
+| 76 | **Concertormer-lite** <sub>TLC, small, arXiv 2025</sub> | image | 29.0 | 29.31 | 0.816 | 0.255 |
+| 77 | **NAFNet-64** <sub>TLC, ECCV 2022</sub> | image | 67.9 | 29.03 | 0.811 | 0.260 |
+| 78 | **MIMO-UNet+** <sub>whole, large, ICCV 2021</sub> | image | 16.1 | 29.02 | 0.811 | 0.259 |
+| 79 | **FFTformer** <sub>whole, CVPR 2023</sub> | image | 16.6 | 28.80 | 0.821 | 0.255 |
+| 80 | **NAFNet-32** <sub>whole, small, ECCV 2022</sub> | image | 17.1 | 28.73 | 0.765 | 0.328 |
+| 81 | **RT-Focuser** <sub>whole, arXiv 2025</sub> | image | 5.9 | 28.43 | 0.794 | 0.310 |
+| 82 | **MLWNet-B** <sub>whole, CVPR 2024</sub> | image | 95.1 | 28.19 | 0.766 | 0.311 |
+| 83 | **DMPHN-1-2-4** <sub>whole, CVPR 2019</sub> | image | 5.4 | 27.84 | 0.754 | 0.341 |
+| 84 | **DeepDeblur** <sub>whole, CVPR 2017</sub> | image | 11.7 | 26.61 | 0.771 | 0.330 |
+| 85 | **FFTformer + ID-Blau** <sub>whole, CVPR 2024</sub> | image | 16.6 | 25.09 | 0.747 | 0.366 |
+| 86 | **NAFNet-32** <sub>TLC, small, ECCV 2022</sub> | image | 17.1 | 24.79 | 0.751 | 0.338 |
+| 87 | **DBGAN** <sub>whole, CVPR 2020</sub> | image | 11.6 | 23.81 | 0.713 | 0.382 |
+| 88 | **IR-SDE** <sub>whole, ICML 2023</sub> | image | 137.1 | 23.42 | 0.648 | 0.313 |
+| 89 | **MIMO-UNet+ + ID-Blau** <sub>whole, large, CVPR 2024</sub> | image | 16.1 | 22.13 | 0.677 | 0.442 |
+| 90 | **MLWNet-B** <sub>TLC, CVPR 2024</sub> | image | 95.1 | 20.34 | 0.594 | 0.529 |
+
+</details>
 <!-- generated:end -->
 
 ## What is in here
@@ -868,7 +1094,7 @@ enc = dbis.load_encoder("dbisf-NAFNet-64")  # the encoder alone: enc(x) -> featu
 flowchart LR
   R["registry/methods.yaml<br>paper, code commit, weights, license"] --> A["methods/&lt;name&gt;<br>thin adapter"]
   W["weights/&lt;name&gt;<br>safetensors + card"] --> A
-  A --> X["run on GoPro, REDS, BSD, DVD<br>and RealBlur-J/R"]
+  A --> X["run on GoPro, REDS, BSD, DVD,<br>RealBlur-J/R, GS-Blur, MIORe"]
   X --> O["outputs/<br>every frame, FFV1"]
   O --> M["metrics per frame"]
   M --> T["results/<br>master.json, per_sequence.tsv"]
@@ -886,6 +1112,8 @@ flowchart LR
 | DVD test | 10 | 1000 | 1280x720 | 27.29 | one portrait video |
 | RealBlur-J test | 50 | 980 | about 670x760 | 27.68 | real blur, camera JPEG, 50 scenes, every image scored on its own; image methods only; PSNR and SSIM after the official ECC alignment |
 | RealBlur-R test | 50 | 980 | about 680x773 | 35.35 | the same scenes developed from raw images, same evaluation |
+| GS-Blur mini | – | 1000 | 480x270 to 1920x1080 | 23.48 | synthetic blur rendered from 3D Gaussian Splatting scenes, the noisy input `input_noise`; image methods only |
+| MIORe, 300 training pairs | – | 300 | 1920x1080 | 30.88 | averaged 1000 fps frames; 300 of the 7,860 public training pairs, the only ones with sharp frames, evenly spaced; image methods only |
 
 The CC BY 4.0 sets (GoPro test, REDS val, RealBlur-J and RealBlur-R test) are on Hugging Face in one lossless format,
 only the scored pairs, with a CRC on every frame:

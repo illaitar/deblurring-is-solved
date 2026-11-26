@@ -21,7 +21,8 @@ dry = "--dry" in args
 skip = set(args[args.index("--skip-img") + 1].split(",")) if "--skip-img" in args else set()
 fr = ROOT / "results" / "frames"
 ops = [(ROOT / "hf" / "README.md", "README.md"), (ROOT / "hf" / "LICENSE.md", "LICENSE.md")]
-ops += [(fr / f, f"data/{f}") for f in ("frames.parquet", "methods.parquet", "scores.parquet", "bench.sqlite") if (fr / f).exists()]
+ops += [(fr / f, f"data/{f}") for f in ("frames.parquet", "methods.parquet", "bench.sqlite") if (fr / f).exists()]
+ops += [(p, f"data/{p.name}") for p in sorted(fr.glob("scores_*.parquet"))]     # 26.11: one scores file per test set
 img = fr / "img"
 for p in sorted(img.rglob("*")):
     if p.is_file() and not (p.parent.name in skip and p.suffix == ".bin"):

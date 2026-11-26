@@ -4,7 +4,11 @@
     "paper": "Deep Multi-Scale Convolutional Neural Network for Dynamic Scene Deblurring",
     "venue": "CVPR 2017",
     "year": 2017,
-    "authors": ["Seungjun Nah", "Tae Hyun Kim", "Kyoung Mu Lee"],
+    "authors": [
+      "Seungjun Nah",
+      "Tae Hyun Kim",
+      "Kyoung Mu Lee"
+    ],
     "bibtex": "@InProceedings{Nah_2017_CVPR,\n  author = {Nah, Seungjun and Kim, Tae Hyun and Lee, Kyoung Mu},\n  title = {Deep Multi-Scale Convolutional Neural Network for Dynamic Scene Deblurring},\n  booktitle = {CVPR},\n  month = {July},\n  year = {2017}\n}",
     "url": "https://seungjunnah.github.io/Datasets/gopro.html",
     "blur_source": "Synthetic. Each blurry image is the average of 7 to 13 consecutive frames of a 240 fps video. The sharp target is the middle frame of the averaged window.",
@@ -36,7 +40,15 @@
     "paper": "NTIRE 2019 Challenge on Video Deblurring and Super-Resolution: Dataset and Study",
     "venue": "CVPR Workshops (NTIRE) 2019",
     "year": 2019,
-    "authors": ["Seungjun Nah", "Sungyong Baik", "Seokil Hong", "Gyeongsik Moon", "Sanghyun Son", "Radu Timofte", "Kyoung Mu Lee"],
+    "authors": [
+      "Seungjun Nah",
+      "Sungyong Baik",
+      "Seokil Hong",
+      "Gyeongsik Moon",
+      "Sanghyun Son",
+      "Radu Timofte",
+      "Kyoung Mu Lee"
+    ],
     "bibtex": "@InProceedings{Nah_2019_CVPR_Workshops_REDS,\n  author = {Nah, Seungjun and Baik, Sungyong and Hong, Seokil and Moon, Gyeongsik and Son, Sanghyun and Timofte, Radu and Lee, Kyoung Mu},\n  title = {NTIRE 2019 Challenge on Video Deblurring and Super-Resolution: Dataset and Study},\n  booktitle = {CVPR Workshops},\n  month = {June},\n  year = {2019}\n}",
     "url": "https://seungjunnah.github.io/Datasets/reds.html",
     "blur_source": "Synthetic. 120 fps frames were recursively interpolated to a virtual 1920 fps with a frame-interpolation CNN (Niklaus et al., ICCV 2017, adaptive separable convolution), then averaged into a virtual 24 fps blurry video with duty cycle 0.8. Averaging is done in signal space through a calibrated inverse camera response.",
@@ -67,7 +79,13 @@
     "paper": "Real-World Video Deblurring: A Benchmark Dataset and an Efficient Recurrent Neural Network",
     "venue": "International Journal of Computer Vision, vol. 131, no. 1, pp. 284-301 (published online 27 Oct 2022). Earlier version: ECCV 2020, 'Efficient Spatio-Temporal Recurrent Neural Network for Video Deblurring'.",
     "year": 2023,
-    "authors": ["Zhihang Zhong", "Ye Gao", "Yinqiang Zheng", "Bo Zheng", "Imari Sato"],
+    "authors": [
+      "Zhihang Zhong",
+      "Ye Gao",
+      "Yinqiang Zheng",
+      "Bo Zheng",
+      "Imari Sato"
+    ],
     "bibtex": "@inproceedings{zhong2020efficient,\n  title={Efficient spatio-temporal recurrent neural network for video deblurring},\n  author={Zhong, Zhihang and Gao, Ye and Zheng, Yinqiang and Zheng, Bo},\n  booktitle={Computer Vision--ECCV 2020: 16th European Conference, Glasgow, UK, August 23--28, 2020, Proceedings, Part VI 16},\n  pages={191--207},\n  year={2020},\n  organization={Springer}\n}\n\n@article{zhong2023real,\n  title={Real-world video deblurring: A benchmark dataset and an efficient recurrent neural network},\n  author={Zhong, Zhihang and Gao, Ye and Zheng, Yinqiang and Zheng, Bo and Sato, Imari},\n  journal={International Journal of Computer Vision},\n  volume={131},\n  number={1},\n  pages={284--301},\n  year={2023},\n  publisher={Springer}\n}",
     "citation_request": "The ESTRNN README says: 'If you use any part of our code, or ESTRNN and BSD are useful for your research, please consider citing:' followed by both entries above (ECCV 2020 and IJCV 2023). It does not single out one paper. The three-exposure BSD described here is introduced in the IJCV paper.",
     "url": "https://github.com/zzh-tech/ESTRNN",
@@ -103,7 +121,14 @@
     "paper": "Deep Video Deblurring for Hand-held Cameras",
     "venue": "CVPR 2017",
     "year": 2017,
-    "authors": ["Shuochen Su", "Mauricio Delbracio", "Jue Wang", "Guillermo Sapiro", "Wolfgang Heidrich", "Oliver Wang"],
+    "authors": [
+      "Shuochen Su",
+      "Mauricio Delbracio",
+      "Jue Wang",
+      "Guillermo Sapiro",
+      "Wolfgang Heidrich",
+      "Oliver Wang"
+    ],
     "bibtex": "@inproceedings{su2017deep,\n  title={Deep Video Deblurring for Hand-held Cameras},\n  author={Su, Shuochen and Delbracio, Mauricio and Wang, Jue and Sapiro, Guillermo and Heidrich, Wolfgang and Wang, Oliver},\n  booktitle={Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition},\n  pages={1279--1288},\n  year={2017}\n}",
     "bibtex_source": "GitHub README (https://github.com/shuochsu/DeepVideoDeblurring). The project page gives no BibTeX.",
     "url": "https://www.cs.ubc.ca/labs/imager/tr/2017/DeepVideoDeblurring/",
@@ -136,7 +161,12 @@
     "paper": "Real-World Blur Dataset for Learning and Benchmarking Deblurring Algorithms",
     "venue": "ECCV 2020",
     "year": 2020,
-    "authors": ["Jaesung Rim", "Haeyun Lee", "Jucheol Won", "Sunghyun Cho"],
+    "authors": [
+      "Jaesung Rim",
+      "Haeyun Lee",
+      "Jucheol Won",
+      "Sunghyun Cho"
+    ],
     "bibtex": "@inproceedings{rim_2020_ECCV,\n title={Real-World Blur Dataset for Learning and Benchmarking Deblurring Algorithms},\n author={Rim, Jaesung and Lee, Haeyun and Won, Jucheol and Cho, Sunghyun},\n booktitle={Proceedings of the European Conference on Computer Vision (ECCV)},\n year={2020}\n}",
     "bibtex_source": "GitHub README (https://github.com/rimchang/RealBlur). The project page gives the same entry with the author field written as one comma-separated string.",
     "url": "http://cg.postech.ac.kr/research/RealBlur/",
@@ -169,7 +199,12 @@
     "paper": "Real-World Blur Dataset for Learning and Benchmarking Deblurring Algorithms",
     "venue": "ECCV 2020",
     "year": 2020,
-    "authors": ["Jaesung Rim", "Haeyun Lee", "Jucheol Won", "Sunghyun Cho"],
+    "authors": [
+      "Jaesung Rim",
+      "Haeyun Lee",
+      "Jucheol Won",
+      "Sunghyun Cho"
+    ],
     "bibtex": "@inproceedings{rim_2020_ECCV,\n title={Real-World Blur Dataset for Learning and Benchmarking Deblurring Algorithms},\n author={Rim, Jaesung and Lee, Haeyun and Won, Jucheol and Cho, Sunghyun},\n booktitle={Proceedings of the European Conference on Computer Vision (ECCV)},\n year={2020}\n}",
     "bibtex_source": "GitHub README (https://github.com/rimchang/RealBlur). The project page gives the same entry with the author field written as one comma-separated string.",
     "url": "http://cg.postech.ac.kr/research/RealBlur/",
@@ -194,6 +229,58 @@
       "That RealBlur-R values are linear is inferred from the processing description (no tone curve) and the Fig. 7 caption ('For visualization, the examples of RealBlur-R are gamma-corrected'). The paper does not state it outright.",
       "The project page BibTeX writes the authors as one comma-separated string. The README version is used here.",
       "The README (news dated 2026.09) says the original RAW files are now on Hugging Face (rimchang/RealBlur_RAW). They were not inspected."
+    ]
+  },
+  "gsblur": {
+    "name": "GS-Blur",
+    "paper": "GS-Blur: A 3D Scene-Based Dataset for Realistic Image Deblurring",
+    "venue": "NeurIPS 2024 Datasets and Benchmarks Track",
+    "year": 2024,
+    "authors": [
+      "Dongwoo Lee",
+      "Joonkyu Park",
+      "Kyoung Mu Lee"
+    ],
+    "bibtex_source": "NeurIPS proceedings page. The README entry (key lee2023exblurf) has a typo and no booktitle.",
+    "sources": [
+      "https://github.com/dongwoohhh/GS-Blur",
+      "https://arxiv.org/abs/2410.23658",
+      "https://proceedings.neurips.cc/paper_files/paper/2024/hash/e2df455342ea37b0365ab7b6ce2c48fe-Abstract-Datasets_and_Benchmarks_Track.html",
+      "https://github.com/dongwoohhh/GS-Blur/issues/1",
+      "https://github.com/dongwoohhh/GS-Blur/issues/3",
+      "https://drive.google.com/drive/folders/1sdQMQWg7Wz_cmJXzL-sqb6F1qoaHSbXN"
+    ],
+    "open_points": [
+      "What mini.zip (855 MB) and mini_dy.zip (668 MB) hold is not documented; we use mini.zip: 1,000 pairs, folders input_noise and target.",
+      "The file naming scheme is not documented (issue #3 unanswered), so scenes cannot be told apart from the names.",
+      "Image sizes of the release are not stated; measured on the mini set: 480x270 to 1920x1080, both orientations.",
+      "The paper says 26 MVImgNet classes, its appendix lists 24 class IDs."
+    ]
+  },
+  "miore": {
+    "name": "MIORe",
+    "paper": "MIORe & VAR-MIORe: Benchmarks to Push the Boundaries of Restoration",
+    "venue": "ICCV 2025",
+    "year": 2025,
+    "authors": [
+      "George Ciubotariu",
+      "Zhuyun Zhou",
+      "Zongwei Wu",
+      "Radu Timofte"
+    ],
+    "bibtex_source": "CVF open access page. The project page gives another key (ciubotariu2025miore) without pages.",
+    "sources": [
+      "https://github.com/george200150/MIORe",
+      "https://george200150.github.io/MIORe/",
+      "https://openaccess.thecvf.com/content/ICCV2025/html/Ciubotariu_MIORe__VAR-MIORe_Benchmarks_to_Push_the_Boundaries_of_Restoration_ICCV_2025_paper.html",
+      "https://arxiv.org/abs/2509.06803",
+      "https://openaccess.thecvf.com/content/ICCV2025W/AIM/html/Ciubotariu_AIM_2025_Challenge_on_High_FPS_Motion_Deblurring_Methods_and_ICCVW_2025_paper.html"
+    ],
+    "open_points": [
+      "Validation and test images of the challenge have no public sharp frames, so the benchmark uses training pairs.",
+      "Window sizes: Sec. 4.3 says 3 to 30 frames, Fig. 1, Fig. 8 and Supp. Table 14 say 3 to 35.",
+      "Whether frames are averaged in linear or gamma space is not stated (only 'following GoPro').",
+      "Track 2 (VAR-MIORe, 'extreme blur', 1,299 training pairs) is not used here."
     ]
   }
 }

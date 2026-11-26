@@ -5,9 +5,13 @@ gt	bsd2	3000	5.801941
 gt	dvd	1000	6.836459
 gt	realblur_j	980	7.485953
 gt	realblur_r	980	4.474396
+gt	gsblur	1000	9.974065
+gt	miore	300	5.914067
 input	gopro	1111	-0.283650
 input	reds_val	3000	-0.283650
 input	bsd2	3000	-0.283650
 input	dvd	1000	-0.283650
 input	realblur_j	980	-0.283650
 input	realblur_r	980	-0.283650
+input	gsblur	1000	-0.283650
+input	miore	300	-0.283650

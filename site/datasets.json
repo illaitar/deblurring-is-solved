@@ -94,5 +94,37 @@
     "licence": "CC BY 4.0",
     "url": "http://cg.postech.ac.kr/research/RealBlur/",
     "bibtex": "@inproceedings{rim_2020_ECCV,\n title={Real-World Blur Dataset for Learning and Benchmarking Deblurring Algorithms},\n author={Rim, Jaesung and Lee, Haeyun and Won, Jucheol and Cho, Sunghyun},\n booktitle={Proceedings of the European Conference on Computer Vision (ECCV)},\n year={2020}\n}"
+  },
+  "gsblur": {
+    "name": "GS-Blur",
+    "authors_short": "Lee, Park, Lee",
+    "venue": "NeurIPS",
+    "year": "2024",
+    "description": "Pairs rendered from 3D Gaussian Splatting reconstructions of MVImgNet scenes. The blurry image averages 121 renderings along a random camera trajectory and the sharp target is the middle one. Some blurry images also move the masked object, and synthetic sensor noise is added to the blurry images.",
+    "blur_source": "Synthetic: the mean of 121 rendered sub-frames along a random 6-DoF trajectory, accumulated in linear space, with Poisson and Gaussian noise added in camera RAW space",
+    "capture": "3DGS renders of 3,408 MVImgNet scenes (multi-view phone videos of everyday objects)",
+    "timing": "No physical exposure or frame rate; the pose at the midpoint of the trajectory is the sharp target",
+    "resolution": "Various: renders up to 1920×1080 plus copies downscaled by 2, 3 and 4. The mini set holds 480×270 to 1920×1080 in both orientations",
+    "used_here": "The authors' mini release: 1,000 pairs, the noisy blurred input (input_noise) against the target, each image at its own size",
+    "splits": "No train or test split defined. 752,335 blurry images of 156,209 sharp renderings in all, every released pair with its sharp target",
+    "licence": "No data license stated (the repository's Gaussian-Splatting license covers the code: non-commercial research use)",
+    "url": "https://github.com/dongwoohhh/GS-Blur",
+    "bibtex": "@inproceedings{NEURIPS2024_e2df4553,\n author = {Lee, Dongwoo and Park, Joonkyu and Lee, Kyoung Mu},\n booktitle = {Advances in Neural Information Processing Systems},\n doi = {10.52202/079017-3983},\n editor = {A. Globerson and L. Mackey and D. Belgrave and A. Fan and U. Paquet and J. Tomczak and C. Zhang},\n pages = {125394--125415},\n publisher = {Curran Associates, Inc.},\n title = {GS-Blur: A 3D Scene-Based Dataset for Realistic Image Deblurring},\n url = {https://proceedings.neurips.cc/paper_files/paper/2024/file/e2df455342ea37b0365ab7b6ce2c48fe-Paper-Datasets_and_Benchmarks_Track.pdf},\n volume = {37},\n year = {2024}\n}"
+  },
+  "miore": {
+    "name": "MIORe",
+    "authors_short": "Ciubotariu, Zhou, Wu, Timofte",
+    "venue": "ICCV",
+    "year": "2025",
+    "description": "Blurry images made by averaging consecutive frames of real 1000 fps full-HD video, with the middle frame as the sharp target. The number of averaged frames follows each sequence's optical flow, so the blur stays comparable to the older benchmarks.",
+    "blur_source": "Synthetic from real capture: the mean of 3 to 35 consecutive 1000 fps frames, chosen per sequence from its optical flow (about 30 px of motion)",
+    "capture": "Kron Chronos 2.1-HD high-speed camera, 1000 fps, four lenses; 333 sequences, mostly outdoors across the four seasons",
+    "timing": "1 ms per source frame, blur windows of 3 to 35 ms",
+    "resolution": "1920×1080, 8-bit RGB",
+    "used_here": "300 of the 7,860 public training pairs of AIM 2025 Track 1 (the only public part with sharp frames), evenly spaced over the sorted file list; image methods only",
+    "splits": "Public (AIM 2025 Track 1): 7,860 training pairs, 80 validation and 75 test images without sharp frames. The paper's full set of 52,218 samples is not public",
+    "licence": "No data license stated (only the project website is CC BY-SA 4.0)",
+    "url": "https://github.com/george200150/MIORe",
+    "bibtex": "@InProceedings{Ciubotariu_2025_ICCV,\n    author    = {Ciubotariu, George and Zhou, Zhuyun and Wu, Zongwei and Timofte, Radu},\n    title     = {MIORe \\& VAR-MIORe: Benchmarks to Push the Boundaries of Restoration},\n    booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},\n    month     = {October},\n    year      = {2025},\n    pages     = {19784-19793}\n}"
   }
 }

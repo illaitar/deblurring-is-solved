@@ -20,11 +20,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "results"
-SETS = ["gopro", "reds_val", "bsd2", "dvd", "realblur_j", "realblur_r"]
+SETS = ["gopro", "reds_val", "bsd2", "dvd", "realblur_j", "realblur_r", "gsblur", "miore"]
 SET_LABEL = {"gopro": "GoPro", "reds_val": "REDS", "bsd2": "BSD", "dvd": "DVD", "realblur_j": "RealBlur-J",
-             "realblur_r": "RealBlur-R"}
-FULL = {"gopro": 1111, "reds_val": 3000, "bsd2": 3000, "dvd": 1000, "realblur_j": 980, "realblur_r": 980}
-VIDEO_SETS = SETS[:4]          # RealBlur holds single images: image methods only
+             "realblur_r": "RealBlur-R", "gsblur": "GS-Blur", "miore": "MIORe"}
+FULL = {"gopro": 1111, "reds_val": 3000, "bsd2": 3000, "dvd": 1000, "realblur_j": 980, "realblur_r": 980, "gsblur": 1000,
+        "miore": 300}
+VIDEO_SETS = SETS[:4]          # RealBlur, GS-Blur and MIORe hold single images: image methods only
 # Mean PSNR of the blurry input over all protocol frames (frame-weighted, as the method scores are). RealBlur: the
 # official evaluation (ECC alignment to the sharp image, as for the methods), filled from rb_cells.tsv when present.
 INPUT_PSNR = {"gopro": 25.6401, "reds_val": 26.2657, "bsd2": 26.6321, "dvd": 27.2856}
@@ -104,6 +105,15 @@ if (RES / "rb_cells.tsv").exists():
         if r["dir"] == "_ref" and int(r["images"]) == FULL[r["set"]]:
             INPUT_PSNR[r["set"]] = round(float(r["psnr"]), 4)
             iqa_ref.setdefault(r["set"], {}).setdefault("input", {})["ssim"] = round(float(r["ssim"]), 4)
+# GS-Blur and MIORe (26.11): the mean over the test images of the blurry input's PSNR, from the frame table
+# (results/frames/data/frames_<set>.json, column psnr_in, computed as eval/score.py does for the methods)
+for ds in ("gsblur", "miore"):
+    _ff = RES / "frames" / "data" / f"frames_{ds}.json"
+    if _ff.exists():
+        _fj = json.loads(_ff.read_text(encoding="utf-8"))
+        _v = [x[_fj["cols"].index("psnr_in")] for x in _fj["frames"] if x[_fj["cols"].index("psnr_in")] is not None]
+        if len(_v) == FULL[ds]:
+            INPUT_PSNR[ds] = round(sum(_v) / len(_v), 4)
 
 seq_names = {}
 for ds in SETS:
@@ -241,7 +251,8 @@ if (COLLAGE / "index.json").exists():
         if ds in cards and (COLLAGE / c["file"]).exists():
             cards[ds]["collage"] = {"src": "collage/" + c["file"], "w": c["w"], "h": c["h"],
                                     "lo": c["frames"][0]["psnr_in"], "hi": c["frames"][-1]["psnr_in"],
-                                    "unit": "scene" if ds.startswith("realblur") else "sequence"}
+                                    "unit": ("scene" if ds.startswith("realblur") or ds == "gsblur"
+                                             else "image" if ds == "miore" else "sequence")}
 
 # ---------------------------------------------------------------- 25.11 layout: tags, data cards, dbis numbers
 TAGS = ROOT / "site" / "tags"
@@ -324,8 +335,8 @@ DATA_CARDS = [  # set, name, pairs, size, blur, license, authors' page
     ("dvd", "DVD", "1,000 pairs", "1280&times;720", "", "no license stated", "https://www.cs.ubc.ca/labs/imager/tr/2017/DeepVideoDeblurring/"),
     ("realblur_j", "RealBlur-J", "980 images", "&asymp;670&times;760", "real blur", "CC BY 4.0", "https://github.com/rimchang/RealBlur"),
     ("realblur_r", "RealBlur-R", "980 images", "&asymp;680&times;773", "real blur", "CC BY 4.0", "https://github.com/rimchang/RealBlur"),
-    ("gsblur", "GS-Blur", "1,000 images", "mixed sizes", "", "no license stated", "https://github.com/dongwoohhh/GS-Blur"),
-    ("miore", "MIORe", "300 pairs", "1920&times;1080", "", "no license stated", "https://github.com/george200150/MIORe"),
+    ("gsblur", "GS-Blur", "1,000 images", "480&times;270 to 1920&times;1080", "", "no license stated", "https://github.com/dongwoohhh/GS-Blur"),
+    ("miore", "MIORe", "300 images", "1920&times;1080", "", "no license stated", "https://github.com/george200150/MIORe"),
 ]
 _cards = []
 for ds, nm, n, size, blur, lic, url in DATA_CARDS:
@@ -423,7 +434,7 @@ for ds in SETS:
     full, _ = md_table(ds)
     blocks.append(f"### {SET_LABEL[ds]}\n\n{top}\n\n<details>\n<summary>All {n} rows on {SET_LABEL[ds]}</summary>\n\n{full}\n\n</details>")
 gen = ("<!-- generated:start (tools/build_site.py writes this block; edit the script, not the text) -->\n"
-       f"> [!NOTE]\n> Numbers as of {FACTS['built']}: {FACTS['n_complete']} of {FACTS['n_rows']} variants scored on all their sets (six for image methods, four for video methods), "
+       f"> [!NOTE]\n> Numbers as of {FACTS['built']}: {FACTS['n_complete']} of {FACTS['n_rows']} variants scored on all their sets (eight for image methods, four for video methods), "
        f"{FACTS['n_some']} on some. GoPro-trained weights (other training sets are on the site), PSNR in dB (RealBlur: official ECC-aligned PSNR), sorted by PSNR. The full table is in "
        f"[`docs/leaderboard.csv`](docs/leaderboard.csv) and on the {site_link}.\n\n"
        + "\n\n".join(blocks) + "\n<!-- generated:end -->")

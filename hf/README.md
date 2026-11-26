@@ -18,21 +18,21 @@ configs:
 - config_name: methods
   data_files: data/methods.parquet
 - config_name: scores
-  data_files: data/scores.parquet
+  data_files: data/scores_*.parquet
 ---
 
 # deblurring is solved?: frames and per-frame scores
 
 Companion data of the **deblurring is solved?** benchmark (Nikita Alutis, Egor Chistov): motion deblurring methods with
-released weights, run with one protocol on six test sets and scored frame by frame.
+released weights, run with one protocol on eight test sets and scored frame by frame.
 
 ## Contents
 
 | Path | What it is |
 |---|---|
-| `data/frames.parquet` | every test frame of the six sets (GoPro test, REDS val, BSD 2ms/16ms test, DVD test, RealBlur-J test, RealBlur-R test) with its characteristics |
+| `data/frames.parquet` | every test frame of the eight sets (GoPro test, REDS val, BSD 2ms/16ms test, DVD test, RealBlur-J test, RealBlur-R test, GS-Blur mini, 300 MIORe pairs) with its characteristics |
 | `data/methods.parquet` | every benchmark row: method, variant, type, training set |
-| `data/scores.parquet` | the score of every row on every frame: PSNR, SSIM, LPIPS, MS-SSIM, LPIPS-VGG, DISTS, PaQ-2-PiQ, MUSIQ, CLIP-IQA+, BASED-4 |
+| `data/scores_<set>.parquet` | one file per test set, the score of every row on every frame: PSNR, SSIM, LPIPS, MS-SSIM, LPIPS-VGG, DISTS, PaQ-2-PiQ, MUSIQ, CLIP-IQA+, BASED-4 |
 | `data/bench.sqlite` | the same three tables in one SQLite file, with a `scored` view joining scores to frames |
 | `img/<set>/<n>.bin` | frames for the site's viewer: the sharp frame, the blurry input and several methods' outputs with their error maps |
 | `img/index.json` | the list of viewer frames, why each was picked, and each output's PSNR on it |
