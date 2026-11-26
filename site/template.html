@@ -294,7 +294,7 @@ tr.detail td { padding: .25rem .9rem 1.2rem; }
 .mk { stroke: var(--paper); stroke-width: 1.5; }
 .off { opacity: .28; }
 .front { stroke: var(--ink); stroke-width: 2; fill: none; stroke-linejoin: round; }
-/* 26.11: our versions on the latency axis: orange diamonds and the front they make with the methods */
+/* 26.11: dbisf on the latency axis: orange diamonds and the front they make with the methods */
 .m-ours { fill: var(--ours); }
 .front.ours { stroke: var(--ours); }
 .sw.ours { background: var(--ours); width: .6rem; height: .6rem; transform: rotate(45deg); }
@@ -671,8 +671,8 @@ pre.code { margin: 0; padding: .8rem 1rem; background: var(--paper-2); border-ra
         <span class="key"><i class="sw image"></i>Image method</span>
         <span class="key"><i class="sw video"></i>Video method</span>
         <span class="key"><i class="sw front"></i>Pareto front</span>
-        <span class="key" id="pf-okey"><i class="sw ours"></i>Our versions</span>
-        <span class="key" id="pf-ofkey"><i class="sw ofront"></i>Front with our versions</span>
+        <span class="key" id="pf-okey"><i class="sw ours"></i>dbisf</span>
+        <span class="key" id="pf-ofkey"><i class="sw ofront"></i>Front with dbisf</span>
         <span class="key" id="pf-inkey"><i class="sw input"></i>Blurry input</span>
         <span class="key" id="pf-gtkey" hidden><i class="sw gt"></i>Sharp frames</span>
       </div>
@@ -1227,19 +1227,13 @@ out = net.restore(frames)</pre></div>
     document.getElementById("pf-title").textContent = "Pareto front on " + LBL[ST.ds];
     var rs = visible().filter(function (r) { return r[ST.px] && cell(r)[mt] != null; });
     var pts = rs.map(function (r) { return { r: r, x: r[ST.px], y: cell(r)[mt] }; });
-    // 26.11: our versions of a visible row, on the latency axis only (they keep the parameter count; dbisf's compute is
-    // not measured). A version's own PSNR on a set wins; dbis gives the authors' outputs, so elsewhere it takes the row's
-    // scores, unless its own PSNR on this set differs from the row's (BSSTNet on BSD: the row is the authors' code in
-    // float32, dbis runs fp16) - then only its PSNR is drawn. dbisf: its own PSNR only.
+    // 26.11: dbisf, our fast version of a visible row: latency axis only (it keeps the parameter count; its compute is
+    // not measured), PSNR only (scored on GoPro, REDS, BSD and DVD). dbis is not drawn: it is the authors' outputs.
     var vers = [];
-    if (ST.px === "ms") rs.forEach(function (r) {
+    if (ST.px === "ms" && mt === "psnr") rs.forEach(function (r) {
       var v = dbisOf(r); if (!v) return;
-      var c = cell(r);
       v.models.forEach(function (md) {
-        var own = md.sets ? md.sets[ST.ds] : null, y = null;
-        var same = md.exact && own != null && Math.abs(own - c.psnr) < .005;   // the row's rounded value, so no tie breaks wrongly
-        if (own != null) y = same ? c[mt] : (mt === "psnr" ? own : null);
-        else if (md.exact) y = c[mt];
+        var y = md.kind === "dbisf" && md.sets ? md.sets[ST.ds] : null;
         if (md.ms != null && y != null) vers.push({ r: r, md: md, x: md.ms, y: y });
       });
     });
@@ -1311,7 +1305,7 @@ out = net.restore(frames)</pre></div>
         class: "mk m-ours" + (onOurs.has(p.md.name) ? "" : " off") }));
       var hit = s("circle", { cx: px, cy: py, r: 9, class: "hit" });
       bindTip(hit, function () {
-        return "<b>" + esc(p.md.name) + "</b><br><span class='k'>our version of " + esc(p.r.name) + (p.md.kind === "dbis" ? ", the authors' outputs" : ", faster and lighter") +
+        return "<b>" + esc(p.md.name) + "</b><br><span class='k'>our faster and lighter version of " + esc(p.r.name) +
           "</span><table><tr><td class='k'>" + METRIC[mt].label + "</td><td>" + fx(p.y, METRIC[mt].nd) + "</td><td class='k'>authors</td><td>" + fx(cell(p.r)[mt], METRIC[mt].nd) +
           "</td></tr></table><span class='k'>" + fmtT(p.x) + " per 720p frame · authors' code " + fmtT(p.r.ms) + "</span>";
       });
@@ -1345,9 +1339,9 @@ out = net.restore(frames)</pre></div>
     var nOurs = ofront.filter(function (p) { return p.md; }).length;
     document.getElementById("pf-note").textContent = front.length + " methods on the front, " + pts.length + " drawn. Hover a point for its scores, click it to open its row." +
       (missing ? " " + missing + " rows have no " + (ST.px === "params" ? "parameter count" : ST.px === "gmac" ? "compute measurement" : "latency measurement") + " yet and are not drawn." : "") +
-      (vers.length ? " Orange: our versions (dbis gives the authors' outputs, so the authors' scores; dbisf is scored on its own, PSNR only)" +
-        (nOurs ? " and the front with them, " + nOurs + " of our versions on it" : "; none of them moves the front here") + "; a click on one opens its download." :
-        (ST.px !== "ms" && Object.keys(D.dbis || {}).length ? " Our versions are drawn on the latency axis: they keep the parameter count, and dbisf's compute is not measured." : ""));
+      (vers.length ? " Orange: dbisf, our faster and lighter versions" +
+        (nOurs ? ", and the front with them, " + nOurs + " of them on it" : "; none of them moves the front here") + "; a click on one opens its download." :
+        (Object.keys(D.dbis || {}).length ? " dbisf, our faster versions, are drawn on the latency axis with PSNR: they keep the parameter count, and their compute and other metrics are not measured." : ""));
   }
 
   /* ---------- dataset card ---------- */

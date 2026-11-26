@@ -318,8 +318,8 @@ PF_SETS = ("gopro", "reds_val", "bsd2", "dvd")   # sets scored like the leaderbo
 
 
 def _set_psnr(J, kd):
-    """Mean PSNR of version kd on every set it was run on as the leaderboard runs the method (the Pareto front's orange
-    points): the four video sets in quality.mean_psnr_db, or all_sets.mean_psnr_db for an image method."""
+    """Mean PSNR of version kd on every set it was run on as the leaderboard runs the method (dbisf: the Pareto chart's
+    orange points): the four video sets in quality.mean_psnr_db, or all_sets.mean_psnr_db for an image method."""
     q = J.get("all_sets", J["quality"])["mean_psnr_db"]
     return {ds: round(q[ds][kd], 5) for ds in PF_SETS if isinstance(q.get(ds), dict) and q[ds].get(kd) is not None}
 
@@ -336,10 +336,7 @@ for _J in DBS:
                     "about": _s.get("about", {}).get(kd), "mb": round(_W[kd] / 1e6), "ms": _L[kd], "load": _T[kd],
                     "psnr": _P[kd], "d_mb": _times(_W["authors"], _W[kd], "smaller"), "d_ms": _times(_L["authors"], _L[kd], "faster") if _L["authors"] / _L[kd] >= 1.5 else _pct(_L[kd], _L["authors"]),
                     "d_load": _times(_T["authors"], _T[kd], "faster"), "d_psnr": _dpsnr(_P[kd] - _P["authors"]),
-                    # dbis: the authors' outputs (GoPro mean equal to 5 decimals), so the row's scores hold for it on
-                    # every set and metric; dbisf: its own PSNR per set
-                    "exact": kd == "dbis" and abs(_P[kd] - _P["authors"]) < 5e-6,
-                    "sets": _set_psnr(_J, kd),
+                    "sets": _set_psnr(_J, kd),   # PSNR per set: the Pareto chart draws dbisf with it
                     "url": DBIS_URL + _s["models"][kd] + _s["ext"][kd] if DBIS_URL else None} for kd in ("dbis", "dbisf")]}
 REPOS = json.loads((ROOT / "site" / "method_repos.json").read_text(encoding="utf-8"))
 DATA_CARDS = [  # set, name, pairs, size, blur, license, authors' page
