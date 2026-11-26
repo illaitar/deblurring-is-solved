@@ -294,7 +294,7 @@ tr.detail td { padding: .25rem .9rem 1.2rem; }
 .mk { stroke: var(--paper); stroke-width: 1.5; }
 .off { opacity: .28; }
 .front { stroke: var(--ink); stroke-width: 2; fill: none; stroke-linejoin: round; }
-/* 26.11: dbisf on the latency axis: orange diamonds and the front they make with the methods */
+/* 26.11: dbisf on the latency axis: orange diamonds and their own Pareto front, apart from the methods' */
 .m-ours { fill: var(--ours); }
 .front.ours { stroke: var(--ours); }
 .sw.ours { background: var(--ours); width: .6rem; height: .6rem; transform: rotate(45deg); }
@@ -672,7 +672,7 @@ pre.code { margin: 0; padding: .8rem 1rem; background: var(--paper-2); border-ra
         <span class="key"><i class="sw video"></i>Video method</span>
         <span class="key"><i class="sw front"></i>Pareto front</span>
         <span class="key" id="pf-okey"><i class="sw ours"></i>dbisf</span>
-        <span class="key" id="pf-ofkey"><i class="sw ofront"></i>Front with dbisf</span>
+        <span class="key" id="pf-ofkey"><i class="sw ofront"></i>dbisf front</span>
         <span class="key" id="pf-inkey"><i class="sw input"></i>Blurry input</span>
         <span class="key" id="pf-gtkey" hidden><i class="sw gt"></i>Sharp frames</span>
       </div>
@@ -1281,13 +1281,13 @@ out = net.restore(frames)</pre></div>
     function linePath(f) {
       return f.map(function (p, i) { return (i ? "L" : "M") + X(p.x).toFixed(1) + " " + Y(p.y).toFixed(1); }).join("");
     }
-    var front = frontOf(pts), ofront = vers.length ? frontOf(pts.concat(vers)) : [];
+    // two separate fronts: the methods' (ink) and dbisf's own (orange), which joins only dbisf points
+    var front = frontOf(pts), ofront = frontOf(vers);
     var onFront = new Set(front.map(function (p) { return p.r.key; }));
-    var onOurs = new Set(ofront.filter(function (p) { return p.md; }).map(function (p) { return p.md.name; }));
+    var onOurs = new Set(ofront.map(function (p) { return p.md.name; }));
     root.append(s("path", { d: linePath(front), class: "front" }));
-    // the orange front only when one of our versions moves it; else it is the methods' front and would hide it
-    if (onOurs.size) root.append(s("path", { d: linePath(ofront), class: "front ours" }));
-    document.getElementById("pf-ofkey").hidden = !onOurs.size;
+    if (ofront.length > 1) root.append(s("path", { d: linePath(ofront), class: "front ours" }));
+    document.getElementById("pf-ofkey").hidden = ofront.length < 2;
     var g = s("g"), hits = s("g");
     pts.forEach(function (p) {
       g.append(shape(p.r.task, X(p.x), Y(p.y), onFront.has(p.r.key) ? 5 : 4, "mk m-" + p.r.task + (onFront.has(p.r.key) ? "" : " off")));
@@ -1315,9 +1315,9 @@ out = net.restore(frames)</pre></div>
     root.append(g);
     if (W >= 420) {
       // label each front point at the first free spot next to it; skip the label when none is free (hover still works).
-      // Our versions on the orange front are labelled too, with their model names.
+      // dbisf points on the orange front are labelled too, with their model names.
       var lab = front.map(function (p) { return { p: p, t: p.r.name }; })
-        .concat(ofront.filter(function (p) { return p.md; }).map(function (p) { return { p: p, t: p.md.name }; }));
+        .concat(ofront.map(function (p) { return { p: p, t: p.md.name }; }));
       var boxes = lab.map(function (q) { return { x0: X(q.p.x) - 6, x1: X(q.p.x) + 6, y0: Y(q.p.y) - 6, y1: Y(q.p.y) + 6 }; });
       var hitsBox = function (b) { return boxes.some(function (q) { return b.x0 < q.x1 && b.x1 > q.x0 && b.y0 < q.y1 && b.y1 > q.y0; }); };
       lab.forEach(function (q) {
@@ -1336,11 +1336,10 @@ out = net.restore(frames)</pre></div>
     root.append(hits);
     box.replaceChildren(root);
     var missing = visible().filter(function (r) { return !r[ST.px]; }).length;
-    var nOurs = ofront.filter(function (p) { return p.md; }).length;
     document.getElementById("pf-note").textContent = front.length + " methods on the front, " + pts.length + " drawn. Hover a point for its scores, click it to open its row." +
       (missing ? " " + missing + " rows have no " + (ST.px === "params" ? "parameter count" : ST.px === "gmac" ? "compute measurement" : "latency measurement") + " yet and are not drawn." : "") +
-      (vers.length ? " Orange: dbisf, our faster and lighter versions" +
-        (nOurs ? ", and the front with them, " + nOurs + " of them on it" : "; none of them moves the front here") + "; a click on one opens its download." :
+      (vers.length ? " Orange: dbisf, our faster and lighter versions, " + vers.length + " drawn" +
+        (ofront.length > 1 ? ", and their own Pareto front (" + ofront.length + " on it)" : "") + "; a click on one opens its download." :
         (Object.keys(D.dbis || {}).length ? " dbisf, our faster versions, are drawn on the latency axis with PSNR: they keep the parameter count, and their compute and other metrics are not measured." : ""));
   }
 
