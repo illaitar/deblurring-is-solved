@@ -113,7 +113,7 @@
  },
  "miore": {
   "frames": 300,
-  "rows": 199,
+  "rows": 200,
   "metrics": [
    "based4",
    "clipiqa",
