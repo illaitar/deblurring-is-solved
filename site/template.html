@@ -21,8 +21,10 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: one 74rem column on white paper. Compact lockup (title, authors, links), then one tabbed panel per test
-   set holding the leaderboard and the Pareto front. Ink for type and rules, blue for image methods, orange for
-   video methods. Light and dark themes: the system setting by default, the button in the top bar overrides it. */
+   set holding the leaderboard and the Pareto front. Ink for type and rules, blue for image methods, aqua for
+   video methods, orange only for our versions (dbis, dbisf). Light and dark themes: the system setting by default,
+   the button in the top bar overrides it. (26.11: video was orange; the trio blue / aqua / orange passes the
+   all-pairs colour-blindness check of the dataviz validator in both themes.) */
 :root {
   color-scheme: light;
   --paper: #ffffff;
@@ -35,7 +37,8 @@
   --ink-16: #d8dade;
   --ink-8: #ebecef;
   --img: #2a78d6;
-  --vid: #eb6834;
+  --vid: #16a271;
+  --ours: #eb6834;
   --focus: #2a78d6;
   --bar-bg: rgba(255, 255, 255, .9);
   --logo-ghost: #55585f; --fast: #c4501f; --on-img: #ffffff;
@@ -56,13 +59,13 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark; --paper: #0e1013; --paper-2: #171a1f; --ink: #eef0f3; --ink-rgb: 238, 240, 243; --ink-72: #b9bdc5;
-    --ink-56: #9198a2; --ink-40: #6c727c; --ink-16: #353a42; --ink-8: #23272e; --img: #5c9bea; --vid: #f07d4f; --focus: #5c9bea;
+    --ink-56: #9198a2; --ink-40: #6c727c; --ink-16: #353a42; --ink-8: #23272e; --img: #5c9bea; --vid: #3acb9c; --ours: #f07d4f; --focus: #5c9bea;
     --bar-bg: rgba(14, 16, 19, .88); --logo-ghost: #c3c6cc; --fast: #f28a5e; --on-img: #0e1013;
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark; --paper: #0e1013; --paper-2: #171a1f; --ink: #eef0f3; --ink-rgb: 238, 240, 243; --ink-72: #b9bdc5;
-  --ink-56: #9198a2; --ink-40: #6c727c; --ink-16: #353a42; --ink-8: #23272e; --img: #5c9bea; --vid: #f07d4f; --focus: #5c9bea;
+  --ink-56: #9198a2; --ink-40: #6c727c; --ink-16: #353a42; --ink-8: #23272e; --img: #5c9bea; --vid: #3acb9c; --ours: #f07d4f; --focus: #5c9bea;
   --bar-bg: rgba(14, 16, 19, .88); --logo-ghost: #c3c6cc; --fast: #f28a5e; --on-img: #0e1013;
 }
 
@@ -291,6 +294,11 @@ tr.detail td { padding: .25rem .9rem 1.2rem; }
 .mk { stroke: var(--paper); stroke-width: 1.5; }
 .off { opacity: .28; }
 .front { stroke: var(--ink); stroke-width: 2; fill: none; stroke-linejoin: round; }
+/* 26.11: our versions on the latency axis: orange diamonds and the front they make with the methods */
+.m-ours { fill: var(--ours); }
+.front.ours { stroke: var(--ours); }
+.sw.ours { background: var(--ours); width: .6rem; height: .6rem; transform: rotate(45deg); }
+.sw.ofront { height: 0; border-top: 2px solid var(--ours); width: 1rem; }
 .dlab { fill: var(--ink); font: 500 11px var(--sans); paint-order: stroke; stroke: var(--paper); stroke-width: 3px; stroke-linejoin: round; }
 .hit { fill: transparent; stroke: none; cursor: pointer; }
 .tip {
@@ -319,8 +327,9 @@ footer { margin-top: 4rem; border-top: 1px solid var(--ink-8); }
 footer .wrap { padding-block: 1.75rem 2.5rem; display: flex; flex-wrap: wrap; gap: .5rem 2rem; justify-content: space-between; font-size: var(--t-xs); color: var(--ink-56); }
 noscript p { padding: 1rem; border: 1px solid var(--ink-16); border-radius: .5rem; font-size: var(--t-s); }
 
-/* two methods, frame by frame; frame viewer. A and B wear violet and aqua, never blue or orange (image / video). */
-:root { --pa: #6250d6; --pb: #1baf7a; }
+/* two methods, frame by frame; frame viewer. A and B wear violet and magenta, never blue, aqua or orange
+   (image / video / our versions). 26.11: B was aqua until video took it. */
+:root { --pa: #6250d6; --pb: #c2387f; }
 .lede-s { max-width: var(--read); color: var(--ink-72); font-size: var(--t-s); }
 .btn.small { height: 2rem; padding: 0 .85rem; font-size: var(--t-xs); }
 .sw.pa { background: var(--pa); border-radius: 2px; }
@@ -461,7 +470,7 @@ svg.dtag { height: 1em; width: auto; display: inline-block; vertical-align: -0.1
 .dtags { display: inline-flex; align-items: center; gap: .3rem; margin-left: .45rem; vertical-align: middle; }
 .dpill { display: inline-flex; align-items: center; border: 1.5px solid var(--ink); border-radius: 999px; padding: .1rem .45rem; font-size: .78rem; }
 .dpill.f { border-color: #eb6834; background: color-mix(in srgb, #eb6834 10%, var(--paper)); }
-.dnote { font-size: var(--t-xs); color: var(--vid); }
+.dnote { font-size: var(--t-xs); color: var(--fast); }
 .dbt { border-collapse: collapse; width: 100%; min-width: 36rem; font-size: var(--t-s); font-variant-numeric: tabular-nums; }
 .dbt th, .dbt td { padding: .6rem .9rem; border-bottom: 1px solid var(--ink-8); text-align: right; white-space: nowrap; }
 .dbt tbody tr:last-child td { border-bottom: 0; }
@@ -662,6 +671,8 @@ pre.code { margin: 0; padding: .8rem 1rem; background: var(--paper-2); border-ra
         <span class="key"><i class="sw image"></i>Image method</span>
         <span class="key"><i class="sw video"></i>Video method</span>
         <span class="key"><i class="sw front"></i>Pareto front</span>
+        <span class="key" id="pf-okey"><i class="sw ours"></i>Our versions</span>
+        <span class="key" id="pf-ofkey"><i class="sw ofront"></i>Front with our versions</span>
         <span class="key" id="pf-inkey"><i class="sw input"></i>Blurry input</span>
         <span class="key" id="pf-gtkey" hidden><i class="sw gt"></i>Sharp frames</span>
       </div>
@@ -1216,9 +1227,28 @@ out = net.restore(frames)</pre></div>
     document.getElementById("pf-title").textContent = "Pareto front on " + LBL[ST.ds];
     var rs = visible().filter(function (r) { return r[ST.px] && cell(r)[mt] != null; });
     var pts = rs.map(function (r) { return { r: r, x: r[ST.px], y: cell(r)[mt] }; });
+    // 26.11: our versions of a visible row, on the latency axis only (they keep the parameter count; dbisf's compute is
+    // not measured). A version's own PSNR on a set wins; dbis gives the authors' outputs, so elsewhere it takes the row's
+    // scores, unless its own PSNR on this set differs from the row's (BSSTNet on BSD: the row is the authors' code in
+    // float32, dbis runs fp16) - then only its PSNR is drawn. dbisf: its own PSNR only.
+    var vers = [];
+    if (ST.px === "ms") rs.forEach(function (r) {
+      var v = dbisOf(r); if (!v) return;
+      var c = cell(r);
+      v.models.forEach(function (md) {
+        var own = md.sets ? md.sets[ST.ds] : null, y = null;
+        var same = md.exact && own != null && Math.abs(own - c.psnr) < .005;   // the row's rounded value, so no tie breaks wrongly
+        if (own != null) y = same ? c[mt] : (mt === "psnr" ? own : null);
+        else if (md.exact) y = c[mt];
+        if (md.ms != null && y != null) vers.push({ r: r, md: md, x: md.ms, y: y });
+      });
+    });
+    document.getElementById("pf-okey").hidden = !vers.length;
+    document.getElementById("pf-ofkey").hidden = !vers.length;
+    var xv0 = vers.map(function (p) { return p.x; }), yv0 = vers.map(function (p) { return p.y; });
     var root = s("svg", { viewBox: "0 0 " + W + " " + H, width: W, height: H });
     if (pts.length < 2) { root.append(s("text", { x: 0, y: 20, class: "inputlab" }, "Not enough rows with this measurement for the current filters.")); box.replaceChildren(root); document.getElementById("pf-note").textContent = ""; return; }
-    var xv = pts.map(function (p) { return p.x; }), yv = pts.map(function (p) { return p.y; });
+    var xv = pts.map(function (p) { return p.x; }).concat(xv0), yv = pts.map(function (p) { return p.y; }).concat(yv0);
     var inV = refVal("input", mt), gtV = refVal("gt", mt), showIn = inV != null;
     if (showIn) yv.push(inV);
     if (gtV != null) yv.push(gtV);
@@ -1248,13 +1278,23 @@ out = net.restore(frames)</pre></div>
     document.getElementById("pf-gtkey").hidden = gtV == null;
     if (gtV != null) root.append(s("line", { x1: m.l, x2: W - m.r, y1: Y(gtV), y2: Y(gtV), class: "gtline" }));
     // front: best score reached at or below each size
-    var sorted = pts.slice().sort(function (a, b) { return a.x - b.x || (up ? b.y - a.y : a.y - b.y); }), front = [], best = up ? -Infinity : Infinity;
-    sorted.forEach(function (p) { if (up ? p.y > best : p.y < best) { front.push(p); best = p.y; } });
+    function frontOf(list) {
+      var sorted = list.slice().sort(function (a, b) { return a.x - b.x || (up ? b.y - a.y : a.y - b.y); }), f = [], best = up ? -Infinity : Infinity;
+      sorted.forEach(function (p) { if (up ? p.y > best : p.y < best) { f.push(p); best = p.y; } });
+      return f;
+    }
+    function stepPath(f) {
+      var d = "";
+      f.forEach(function (p, i) { d += (i ? "H" + X(p.x).toFixed(1) + "V" : "M" + X(p.x).toFixed(1) + " ") + Y(p.y).toFixed(1); });
+      return d + "H" + (W - m.r);
+    }
+    var front = frontOf(pts), ofront = vers.length ? frontOf(pts.concat(vers)) : [];
     var onFront = new Set(front.map(function (p) { return p.r.key; }));
-    var d = "";
-    front.forEach(function (p, i) { d += (i ? "H" + X(p.x).toFixed(1) + "V" : "M" + X(p.x).toFixed(1) + " ") + Y(p.y).toFixed(1); });
-    d += "H" + (W - m.r);
-    root.append(s("path", { d: d, class: "front" }));
+    var onOurs = new Set(ofront.filter(function (p) { return p.md; }).map(function (p) { return p.md.name; }));
+    root.append(s("path", { d: stepPath(front), class: "front" }));
+    // the orange front only when one of our versions moves it; else it is the methods' front and would hide it
+    if (onOurs.size) root.append(s("path", { d: stepPath(ofront), class: "front ours" }));
+    document.getElementById("pf-ofkey").hidden = !onOurs.size;
     var g = s("g"), hits = s("g");
     pts.forEach(function (p) {
       g.append(shape(p.r.task, X(p.x), Y(p.y), onFront.has(p.r.key) ? 5 : 4, "mk m-" + p.r.task + (onFront.has(p.r.key) ? "" : " off")));
@@ -1266,20 +1306,36 @@ out = net.restore(frames)</pre></div>
       });
       hits.append(hit);
     });
+    vers.forEach(function (p) {
+      var px = X(p.x), py = Y(p.y), rad = onOurs.has(p.md.name) ? 6.2 : 5;
+      g.append(s("path", { d: "M" + px + " " + (py - rad) + "L" + (px + rad) + " " + py + "L" + px + " " + (py + rad) + "L" + (px - rad) + " " + py + "Z",
+        class: "mk m-ours" + (onOurs.has(p.md.name) ? "" : " off") }));
+      var hit = s("circle", { cx: px, cy: py, r: 9, class: "hit" });
+      bindTip(hit, function () {
+        return "<b>" + esc(p.md.name) + "</b><br><span class='k'>our version of " + esc(p.r.name) + (p.md.kind === "dbis" ? ", the authors' outputs" : ", faster and lighter") +
+          "</span><table><tr><td class='k'>" + METRIC[mt].label + "</td><td>" + fx(p.y, METRIC[mt].nd) + "</td><td class='k'>authors</td><td>" + fx(cell(p.r)[mt], METRIC[mt].nd) +
+          "</td></tr></table><span class='k'>" + fmtT(p.x) + " per 720p frame · authors' code " + fmtT(p.r.ms) + "</span>";
+      });
+      hit.addEventListener("click", function () { openGet(p.r); });
+      hits.append(hit);
+    });
     root.append(g);
     if (W >= 420) {
-      // label each front point at the first free spot next to it; skip the label when none is free (hover still works)
-      var boxes = front.map(function (p) { return { x0: X(p.x) - 6, x1: X(p.x) + 6, y0: Y(p.y) - 6, y1: Y(p.y) + 6 }; });
+      // label each front point at the first free spot next to it; skip the label when none is free (hover still works).
+      // Our versions on the orange front are labelled too, with their model names.
+      var lab = front.map(function (p) { return { p: p, t: p.r.name }; })
+        .concat(ofront.filter(function (p) { return p.md; }).map(function (p) { return { p: p, t: p.md.name }; }));
+      var boxes = lab.map(function (q) { return { x0: X(q.p.x) - 6, x1: X(q.p.x) + 6, y0: Y(q.p.y) - 6, y1: Y(q.p.y) + 6 }; });
       var hitsBox = function (b) { return boxes.some(function (q) { return b.x0 < q.x1 && b.x1 > q.x0 && b.y0 < q.y1 && b.y1 > q.y0; }); };
-      front.forEach(function (p) {
-        var px = X(p.x), py = Y(p.y), w = p.r.name.length * 6.3 + 4;
+      lab.forEach(function (q) {
+        var p = q.p, px = X(p.x), py = Y(p.y), w = q.t.length * 6.3 + 4;
         var spots = [[8, -7, "start"], [8, 15, "start"], [-8, -7, "end"], [-8, 15, "end"]];
         for (var k = 0; k < spots.length; k++) {
           var sp = spots[k], lx = px + sp[0], ly = py + sp[1];
           var b = sp[2] === "start" ? { x0: lx, x1: lx + w, y0: ly - 10, y1: ly + 2 } : { x0: lx - w, x1: lx, y0: ly - 10, y1: ly + 2 };
           if (b.x0 < m.l || b.x1 > W - m.r || b.y0 < m.t || b.y1 > H - m.b || hitsBox(b)) continue;
           boxes.push(b);
-          root.append(s("text", { x: lx, y: ly, class: "dlab", "text-anchor": sp[2] }, p.r.name));
+          root.append(s("text", { x: lx, y: ly, class: "dlab", "text-anchor": sp[2] }, q.t));
           break;
         }
       });
@@ -1287,8 +1343,12 @@ out = net.restore(frames)</pre></div>
     root.append(hits);
     box.replaceChildren(root);
     var missing = visible().filter(function (r) { return !r[ST.px]; }).length;
+    var nOurs = ofront.filter(function (p) { return p.md; }).length;
     document.getElementById("pf-note").textContent = front.length + " methods on the front, " + pts.length + " drawn. Hover a point for its scores, click it to open its row." +
-      (missing ? " " + missing + " rows have no " + (ST.px === "params" ? "parameter count" : ST.px === "gmac" ? "compute measurement" : "latency measurement") + " yet and are not drawn." : "");
+      (missing ? " " + missing + " rows have no " + (ST.px === "params" ? "parameter count" : ST.px === "gmac" ? "compute measurement" : "latency measurement") + " yet and are not drawn." : "") +
+      (vers.length ? " Orange: our versions (dbis gives the authors' outputs, so the authors' scores; dbisf is scored on its own, PSNR only)" +
+        (nOurs ? " and the front with them, " + nOurs + " of our versions on it" : "; none of them moves the front here") + "; a click on one opens its download." :
+        (ST.px !== "ms" && Object.keys(D.dbis || {}).length ? " Our versions are drawn on the latency axis: they keep the parameter count, and dbisf's compute is not measured." : ""));
   }
 
   /* ---------- dataset card ---------- */

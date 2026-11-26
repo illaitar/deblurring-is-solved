@@ -314,6 +314,16 @@ FACTS["dbis_table"] = (
     'of a method on the same node. ' + " ".join(f'{J["site"]["title"].split(",")[0]}: {J["site"]["time_mode"]}.' for J in DBS) +
     ' PSNR: all 1,111 GoPro test frames. Every number: ' + ", ".join(f'<a href="https://github.com/illaitar/deblurring-is-solved/blob/main/results/dbis/{J["_file"]}">'
                                   f'results/dbis/{J["_file"]}</a>' for J in DBS) + '.</p>')
+PF_SETS = ("gopro", "reds_val", "bsd2", "dvd")   # sets scored like the leaderboard (RealBlur here lacks its ECC alignment)
+
+
+def _set_psnr(J, kd):
+    """Mean PSNR of version kd on every set it was run on as the leaderboard runs the method (the Pareto front's orange
+    points): the four video sets in quality.mean_psnr_db, or all_sets.mean_psnr_db for an image method."""
+    q = J.get("all_sets", J["quality"])["mean_psnr_db"]
+    return {ds: round(q[ds][kd], 5) for ds in PF_SETS if isinstance(q.get(ds), dict) and q[ds].get(kd) is not None}
+
+
 DBIS_PAY = {}
 for _J in DBS:
     _s = _J["site"]
@@ -326,6 +336,10 @@ for _J in DBS:
                     "about": _s.get("about", {}).get(kd), "mb": round(_W[kd] / 1e6), "ms": _L[kd], "load": _T[kd],
                     "psnr": _P[kd], "d_mb": _times(_W["authors"], _W[kd], "smaller"), "d_ms": _times(_L["authors"], _L[kd], "faster") if _L["authors"] / _L[kd] >= 1.5 else _pct(_L[kd], _L["authors"]),
                     "d_load": _times(_T["authors"], _T[kd], "faster"), "d_psnr": _dpsnr(_P[kd] - _P["authors"]),
+                    # dbis: the authors' outputs (GoPro mean equal to 5 decimals), so the row's scores hold for it on
+                    # every set and metric; dbisf: its own PSNR per set
+                    "exact": kd == "dbis" and abs(_P[kd] - _P["authors"]) < 5e-6,
+                    "sets": _set_psnr(_J, kd),
                     "url": DBIS_URL + _s["models"][kd] + _s["ext"][kd] if DBIS_URL else None} for kd in ("dbis", "dbisf")]}
 REPOS = json.loads((ROOT / "site" / "method_repos.json").read_text(encoding="utf-8"))
 DATA_CARDS = [  # set, name, pairs, size, blur, license, authors' page
