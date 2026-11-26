@@ -18,7 +18,7 @@
 <!-- progress:start (tools/build_site.py writes this block; edit the script, not the text) -->
 <p align="center"><a href="https://github.com/illaitar/deblurring-is-solved/stargazers"><img src="https://img.shields.io/github/stars/illaitar/deblurring-is-solved?style=flat&amp;label=stars" alt="GitHub stars"></a></p>
 
-<p align="center"><b>13,377 of 18,760 measurements done (71 %)</b> &nbsp;&middot;&nbsp; one measurement = a method variant on a test set with a metric &nbsp;&middot;&nbsp; 96 methods, 268 variants, 8 test sets, 10 metrics, as of 2026-11-25</p>
+<p align="center"><b>13,377 of 18,760 measurements done (71 %)</b> &nbsp;&middot;&nbsp; one measurement = a method variant on a test set with a metric &nbsp;&middot;&nbsp; 96 methods, 268 variants, 8 test sets, 10 metrics, as of 2026-11-26</p>
 <!-- progress:end -->
 
 <p align="center">
@@ -53,8 +53,8 @@ the others 48; DSTNet+ L: 27), each version in its fastest mode (DSTNet+ L: the 
 authors' CuPy kernel has no float16).
 
 ```python
-import dbis                               # weights: python -m dbis.convert NAFNet-64 NAFNet-GoPro-width64.pth
-net = dbis.load("dbisf-NAFNet-64")        # or "dbisf-BSSTNet" (python -m dbis.convert BSSTNet BSST_gopro.pth raft-things.pth)
+import dbis                               # weights: huggingface.co/Illaitar/dbis, fetched on first use (sha256 checked)
+net = dbis.load("dbisf-NAFNet-64")        # or "dbisf-BSSTNet", "dbisf-DSTNetPlus-L", or a dbis-* model
 out = net.restore(frames)                 # the same call for every model; options: tile, tile_overlap, window, batch,
                                           # precision, compile, out (DBIS.md)
 enc = dbis.load_encoder("dbisf-NAFNet-64")  # the encoder alone: enc(x) -> feature maps, enc.feature_info
@@ -886,6 +886,13 @@ flowchart LR
 | DVD test | 10 | 1000 | 1280x720 | 27.29 | one portrait video |
 | RealBlur-J test | 50 | 980 | about 670x760 | 27.68 | real blur, camera JPEG, 50 scenes, every image scored on its own; image methods only; PSNR and SSIM after the official ECC alignment |
 | RealBlur-R test | 50 | 980 | about 680x773 | 35.35 | the same scenes developed from raw images, same evaluation |
+
+The CC BY 4.0 sets (GoPro test, REDS val, RealBlur-J and RealBlur-R test) are on Hugging Face in one lossless format,
+only the scored pairs, with a CRC on every frame:
+[Illaitar/deblurring-test-sets](https://huggingface.co/datasets/Illaitar/deblurring-test-sets), 6.9 GB instead of
+28 GiB of the authors' archives. `python tools/testsets.py download` fetches them and `tools/testsets.py` reads them
+(it needs ffmpeg, or `pip install imageio-ffmpeg`). BSD and DVD state no license for copies: get them from their
+authors.
 
 Candidates to add: BSD 1ms8ms and 3ms24ms, HIDE.
 

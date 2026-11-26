@@ -5,7 +5,8 @@
     dbisf-<method>   our fast and light version: shorter run time and a smaller weight file, at most 0.05 dB below the
                      authors' mean PSNR on every test set of the benchmark
 
-The weight files are made locally from the authors' checkpoint:
+The weight files are hosted at https://huggingface.co/Illaitar/dbis: dbis.load fetches a missing file into weights/dbis/
+on first use and checks its sha256 (dbis.download). They can also be made locally from the authors' checkpoint:
 
     python -m dbis.convert NAFNet-64 NAFNet-GoPro-width64.pth     # -> weights/dbis/dbis-NAFNet-64.safetensors, dbisf-NAFNet-64.wpk
     python -m dbis.convert BSSTNet BSST_gopro.pth raft-things.pth # -> dbis-BSSTNet.safetensors, dbisf-BSSTNet.wpk (BSST + RAFT)
@@ -28,6 +29,7 @@ import importlib
 from pathlib import Path
 
 WEIGHTS = Path(__file__).resolve().parent.parent / "weights" / "dbis"
+URL = "https://huggingface.co/Illaitar/dbis/resolve/main/"     # the hosted weight files (tools/hf_upload_dbis.py)
 
 # the authors' checkpoints the models are made from
 SOURCES = {
@@ -113,16 +115,42 @@ def build(name, device="meta"):
         return getattr(_module(name), m["cls"])(**m["args"])
 
 
-def _weights(name, weights_dir, device):
-    """The state dict of a model's weight file on `device`."""
+def download(name, weights_dir=None):
+    """Fetch a model's weight file from URL into `weights_dir` (weights/dbis/ by default) and check its sha256 against
+    the recorded one; returns its path. The file is written under a .part name and renamed only once it checks out."""
+    import hashlib
+    import urllib.request
+    m = MODELS[name]
+    d = Path(weights_dir or WEIGHTS)
+    d.mkdir(parents=True, exist_ok=True)
+    path = d / m["file"]
+    part = path.with_name(path.name + ".part")
+    h = hashlib.sha256()
+    print(f"dbis: fetching {URL}{m['file']} -> {path}", flush=True)
+    with urllib.request.urlopen(URL + m["file"], timeout=60) as r, open(part, "wb") as f:
+        for chunk in iter(lambda: r.read(1 << 22), b""):
+            h.update(chunk)
+            f.write(chunk)
+    if h.hexdigest() != m["sha256"]:
+        part.unlink()
+        raise OSError(f"{URL}{m['file']}: sha256 {h.hexdigest()} differs from the recorded {m['sha256']}")
+    part.replace(path)
+    return path
+
+
+def _weights(name, weights_dir, device, fetch=True):
+    """The state dict of a model's weight file on `device` (fetched with download() if missing and fetch is True)."""
     import numpy as np
     import torch
     m = MODELS[name]
     path = Path(weights_dir or WEIGHTS) / m["file"]
+    if not path.exists() and fetch:
+        path = download(name, weights_dir)
     if not path.exists():
         src = SOURCES[m["source"]]
         files = [src] + src.get("extra", [])
-        raise FileNotFoundError(f"{path} is missing: download " + ", ".join(f"{s['file']} ({s['url']})" for s in files)
+        raise FileNotFoundError(f"{path} is missing: dbis.download('{name}') fetches it, or download "
+                                + ", ".join(f"{s['file']} ({s['url']})" for s in files)
                                 + f" and run python -m dbis.convert {m['source']} " + " ".join(s["file"] for s in files))
     if path.suffix == ".safetensors":
         from safetensors.torch import load_file
@@ -134,14 +162,15 @@ def _weights(name, weights_dir, device):
     return sd
 
 
-def load(name, weights_dir=None, device="cuda"):
-    """The network of a model with its weights, in eval mode, on `device`."""
+def load(name, weights_dir=None, device="cuda", fetch=True):
+    """The network of a model with its weights, in eval mode, on `device` (a missing weight file is fetched from URL
+    unless fetch is False)."""
     net = build(name)
-    net.load_state_dict(_weights(name, weights_dir, device), strict=True, assign=True)
+    net.load_state_dict(_weights(name, weights_dir, device, fetch), strict=True, assign=True)
     return net.eval()
 
 
-def load_encoder(name, weights_dir=None, device="cuda"):
+def load_encoder(name, weights_dir=None, device="cuda", fetch=True):
     """The encoder of a model alone (dbis/<method>/encoder.py) with its weights from the model's weight file, in eval
     mode, on `device`: enc(x) -> a list of feature maps, enc.feature_info their channels and reduction."""
     import torch
@@ -149,7 +178,7 @@ def load_encoder(name, weights_dir=None, device="cuda"):
     with torch.device("meta"):
         enc = getattr(mod, mod.ENCODER)(**m["args"])
     pre, keys = mod.ENCODER_PREFIX, set(enc.state_dict())
-    sd = {k[len(pre):]: v for k, v in _weights(name, weights_dir, device).items()
+    sd = {k[len(pre):]: v for k, v in _weights(name, weights_dir, device, fetch).items()
           if k.startswith(pre) and k[len(pre):] in keys}
     enc.load_state_dict(sd, strict=True, assign=True)
     return enc.eval()

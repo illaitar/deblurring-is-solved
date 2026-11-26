@@ -89,6 +89,10 @@ dbisf's rounded weights give −0.010, +0.070, −0.027 and −0.013 dB, with th
 
 ## Use
 
+The weight files are at [huggingface.co/Illaitar/dbis](https://huggingface.co/Illaitar/dbis), with their terms.
+`dbis.load(name)` fetches a missing file into `weights/dbis/` on first use and checks its sha256 (`dbis.download(name)`
+does only that; `fetch=False` turns it off). To make the files yourself from the authors' checkpoints:
+
 ```bash
 pip install torch numpy safetensors zstandard   # BSSTNet: torchvision too
 # NAFNet-GoPro-width64.pth from https://github.com/megvii-research/NAFNet (MIT License)

@@ -254,7 +254,7 @@ def _tag(name):
 FACTS["tag_dbis"], FACTS["tag_dbisf"] = _tag("dbis-plain-css.svg"), _tag("dbisf-plain-css.svg")
 FACTS["tag_dbis_big"], FACTS["tag_dbisf_big"] = _tag("dbis-css.svg"), _tag("dbisf-css.svg")
 DBIS_FILES = ["NAFNet-64.json", "BSSTNet.json", "DSTNetPlus-L.json"]      # results/dbis/<file>, each with a "site" block
-DBIS_URL = None   # base URL of the hosted weight files; None while they are not hosted (the popup shows "soon")
+DBIS_URL = "https://huggingface.co/Illaitar/dbis/resolve/main/"   # the hosted weight files (dbis.URL); None: "soon"
 MINUS = "−"
 DBS = [json.loads((RES / "dbis" / f).read_text(encoding="utf-8")) | {"_file": f} for f in DBIS_FILES]
 def _faster(a, x):
