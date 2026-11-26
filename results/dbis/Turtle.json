@@ -1,0 +1,754 @@
+{
+ "models": {
+  "authors": "Turtle_t1 of Ascend-Research/Turtle (commit 7094f42, GoPro configuration Turtle_Deblur_Gopro.yml) through the benchmark's adapter eval/adapters/turtle.py: the authors' run_inference_patched (the frame reflect-padded to a multiple of 8, tiles of 320 px with 192 px overlap, each tile with its own history, outputs averaged), the caches kept on the GPU, float32",
+  "dbis": "dbis-Turtle (dbis/turtle/, float32, one tile per call as the authors; dbis-Turtle.safetensors)",
+  "dbisf": "dbisf-Turtle (dbis/turtle/: float16 autocast, all tiles of a frame in one call, 15 tiles with 80 px overlap at 1280x720 instead of 45 with 192, SAB's two attention masks applied together, the network compiled in mode default, weights rounded per channel to std / 128; dbisf-Turtle.wpk)"
+ },
+ "date": "2026-11-26",
+ "rule": "dbisf: mean PSNR at most 0.05 dB below the authors' code on every test set",
+ "exactness": {
+  "dbis": "bit-identical to the authors' code: the network alone over 4 steps with history (output and all 8 caches), 12 GoPro frames tiled and 4 whole through restore_frame, and every frame of the four video test sets (each frame's PSNR equal to the leaderboard's row of that frame)",
+  "network_4_steps": {
+   "net_dbis": {
+    "out_equal": true,
+    "k_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "v_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "cache_shapes": [
+     null,
+     null,
+     null,
+     [
+      1,
+      8,
+      192,
+      1600
+     ],
+     [
+      1,
+      8,
+      192,
+      1600
+     ],
+     [
+      1,
+      3,
+      1,
+      400,
+      512
+     ],
+     [
+      1,
+      3,
+      1,
+      400,
+      256
+     ],
+     [
+      1,
+      2,
+      1,
+      400,
+      128
+     ]
+    ]
+   },
+   "net_fast": {
+    "out_equal": true,
+    "k_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "v_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "cache_shapes": [
+     null,
+     null,
+     null,
+     [
+      1,
+      8,
+      192,
+      1600
+     ],
+     [
+      1,
+      8,
+      192,
+      1600
+     ],
+     [
+      1,
+      3,
+      1,
+      400,
+      512
+     ],
+     [
+      1,
+      3,
+      1,
+      400,
+      256
+     ],
+     [
+      1,
+      2,
+      1,
+      400,
+      128
+     ]
+    ]
+   }
+  },
+  "gopro_12_frames_tiled": {
+   "dbis": {
+    "bit_identical": true,
+    "max_abs": 0.0
+   },
+   "fast": {
+    "bit_identical": true,
+    "max_abs": 0.0
+   }
+  },
+  "gopro_4_frames_whole": {
+   "bit_identical": true,
+   "max_abs": 0.0
+  },
+  "test_sets_frames_equal": {
+   "gopro": "1111 of 1111",
+   "reds_val": "3000 of 3000",
+   "bsd2": "3000 of 3000",
+   "dvd": "1000 of 1000"
+  },
+  "fast_masks": "SAB's top-5 and local masks added in one product: the same values (the network alone is bit-identical with fast=True)",
+  "api": {
+   "gpu": {
+    "dbis-Turtle": {
+     "encoder_equal": true,
+     "restore_equals_step": true,
+     "window1_frame2_equals_fresh_step": true
+    },
+    "dbisf-Turtle": {
+     "encoder_equal": true,
+     "restore_equals_step": true,
+     "window1_frame2_equals_fresh_step": true
+    }
+   },
+   "cpu": {
+    "dbis-Turtle": {
+     "encoder_equal": true,
+     "restore_equals_step": true
+    }
+   }
+  },
+  "env": {
+   "torch": "2.10.0+cu128",
+   "cudnn_tf32": true,
+   "matmul_tf32": false,
+   "cudnn_benchmark": false
+  }
+ },
+ "quality": {
+  "run": "GoPro weights on the four video test sets as the benchmark ran the authors' code: one pass per sequence from its first frame, 8-bit outputs, PSNR against the sharp frame; every frame compared with the leaderboard's row of that frame (results/Turtle/<set>/inmem_f1911.jsonl, the authors' code)",
+  "mean_psnr_db": {
+   "gopro": {
+    "frames": 1111,
+    "authors": 34.55976,
+    "dbis": 34.55976,
+    "dbisf": 34.53156,
+    "leaderboard": 34.5598
+   },
+   "reds_val": {
+    "frames": 3000,
+    "authors": 27.34609,
+    "dbis": 27.34609,
+    "dbisf": 27.31849,
+    "leaderboard": 27.3461
+   },
+   "bsd2": {
+    "frames": 3000,
+    "authors": 27.84144,
+    "dbis": 27.84144,
+    "dbisf": 27.82026,
+    "leaderboard": 27.8414
+   },
+   "dvd": {
+    "frames": 1000,
+    "authors": 31.18376,
+    "dbis": 31.18376,
+    "dbisf": 31.17813,
+    "leaderboard": 31.1838
+   }
+  },
+  "delta_vs_authors_db": {
+   "gopro": -0.02819,
+   "reds_val": -0.0276,
+   "bsd2": -0.02118,
+   "dvd": -0.00563
+  },
+  "max_frame_abs_db": {
+   "gopro": 0.96757,
+   "reds_val": 0.44333,
+   "bsd2": 1.72265,
+   "dvd": 0.37456
+  },
+  "variants": {
+   "f16_b45": {
+    "what": "float16, all 45 tiles in one call, compiled",
+    "tiles_1280x720": 45,
+    "tiles_640x480": 12,
+    "overlap_px": 192,
+    "store": "float32",
+    "complete": true,
+    "delta_vs_authors_db": {
+     "gopro": -0.00032,
+     "reds_val": -0.00109,
+     "bsd2": -0.00035,
+     "dvd": -0.00016
+    },
+    "max_frame_abs_db": {
+     "gopro": 0.01561,
+     "reds_val": 0.02612,
+     "bsd2": 0.092,
+     "dvd": 0.03757
+    },
+    "rule": "passes"
+   },
+   "f16_b45_qc128": {
+    "what": "+ weights std / 128",
+    "tiles_1280x720": 45,
+    "tiles_640x480": 12,
+    "overlap_px": 192,
+    "store": "qc128",
+    "complete": true,
+    "delta_vs_authors_db": {
+     "gopro": -8e-05,
+     "reds_val": 0.00576,
+     "bsd2": 0.0056,
+     "dvd": 0.005
+    },
+    "max_frame_abs_db": {
+     "gopro": 0.05391,
+     "reds_val": 0.04663,
+     "bsd2": 0.19546,
+     "dvd": 0.07093
+    },
+    "rule": "passes"
+   },
+   "f16_ov0": {
+    "what": "float16, 12 tiles (overlap 0 where it fits)",
+    "tiles_1280x720": 12,
+    "tiles_640x480": 4,
+    "overlap_px": 0,
+    "store": "float32",
+    "complete": true,
+    "delta_vs_authors_db": {
+     "gopro": -0.22018,
+     "reds_val": -0.0948,
+     "bsd2": -0.08201,
+     "dvd": -0.10652
+    },
+    "max_frame_abs_db": {
+     "gopro": 1.71646,
+     "reds_val": 0.61312,
+     "bsd2": 2.61179,
+     "dvd": 1.41758
+    },
+    "rule": "fails"
+   },
+   "f16_ov128": {
+    "what": "float16, 18 tiles (overlap 128)",
+    "tiles_1280x720": 18,
+    "tiles_640x480": 6,
+    "overlap_px": 128,
+    "store": "float32",
+    "complete": true,
+    "delta_vs_authors_db": {
+     "gopro": -0.02355,
+     "reds_val": -0.02054,
+     "bsd2": -0.02166,
+     "dvd": -0.01383
+    },
+    "max_frame_abs_db": {
+     "gopro": 0.568,
+     "reds_val": 0.23284,
+     "bsd2": 1.17535,
+     "dvd": 0.33153
+    },
+    "rule": "passes"
+   },
+   "f16_ov128_qc128": {
+    "what": "+ weights std / 128",
+    "tiles_1280x720": 18,
+    "tiles_640x480": 6,
+    "overlap_px": 128,
+    "store": "qc128",
+    "complete": true,
+    "delta_vs_authors_db": {
+     "gopro": -0.02346,
+     "reds_val": -0.01381,
+     "bsd2": -0.01554,
+     "dvd": -0.00872
+    },
+    "max_frame_abs_db": {
+     "gopro": 0.58095,
+     "reds_val": 0.23583,
+     "bsd2": 1.183,
+     "dvd": 0.30717
+    },
+    "rule": "passes"
+   },
+   "f16_ov64": {
+    "what": "float16, 15 tiles (overlap 64)",
+    "tiles_1280x720": 15,
+    "tiles_640x480": 6,
+    "overlap_px": 64,
+    "store": "float32",
+    "complete": true,
+    "delta_vs_authors_db": {
+     "gopro": -0.03776,
+     "reds_val": -0.03822,
+     "bsd2": -0.03276,
+     "dvd": -0.0179
+    },
+    "max_frame_abs_db": {
+     "gopro": 1.24165,
+     "reds_val": 0.35408,
+     "bsd2": 2.02393,
+     "dvd": 0.61187
+    },
+    "rule": "passes"
+   },
+   "f16_ov64_qc128": {
+    "what": "+ weights std / 128",
+    "tiles_1280x720": 15,
+    "tiles_640x480": 6,
+    "overlap_px": 64,
+    "store": "qc128",
+    "complete": true,
+    "delta_vs_authors_db": {
+     "gopro": -0.03768,
+     "reds_val": -0.03162,
+     "bsd2": -0.02681,
+     "dvd": -0.01264
+    },
+    "max_frame_abs_db": {
+     "gopro": 1.25259,
+     "reds_val": 0.3443,
+     "bsd2": 1.93262,
+     "dvd": 0.62421
+    },
+    "rule": "passes"
+   },
+   "f16_ov64_qc48": {
+    "what": "+ weights std / 48",
+    "tiles_1280x720": 15,
+    "tiles_640x480": 6,
+    "overlap_px": 64,
+    "store": "qc48",
+    "complete": true,
+    "delta_vs_authors_db": {
+     "gopro": -0.05223,
+     "reds_val": -0.04275,
+     "bsd2": -0.0671,
+     "dvd": -0.03028
+    },
+    "max_frame_abs_db": {
+     "gopro": 1.31047,
+     "reds_val": 0.37294,
+     "bsd2": 2.75534,
+     "dvd": 0.65303
+    },
+    "rule": "fails"
+   },
+   "f16_ov80_qc128": {
+    "what": "float16, 15 tiles (overlap 80), weights std / 128: dbisf",
+    "tiles_1280x720": 15,
+    "tiles_640x480": 6,
+    "overlap_px": 80,
+    "store": "qc128",
+    "complete": true,
+    "delta_vs_authors_db": {
+     "gopro": -0.02819,
+     "reds_val": -0.0276,
+     "bsd2": -0.02118,
+     "dvd": -0.00563
+    },
+    "max_frame_abs_db": {
+     "gopro": 0.96757,
+     "reds_val": 0.44333,
+     "bsd2": 1.72265,
+     "dvd": 0.37456
+    },
+    "rule": "passes"
+   }
+  },
+  "note": "all of dbisf's difference comes from the fewer tiles: float16 and the weight rounding on the authors' 45 tiles stay within 0.006 dB on every set (f16_b45 within 0.0011, f16_b45_qc128). The authors' tiling averages 5 predictions per pixel on average (45 tiles of 320x320 on 1280x720), dbisf's 1.7 at a third of the compute"
+ },
+ "latency_ms": {
+  "harness": "eval/adapters/bench_unified.py over a runs/pareto_bench Turtle stepper (online, one frame per step, the history carried), one A100, 1280x720, batch 1, all versions on cn48 (job 302233)",
+  "authors": 760.9,
+  "dbis": 723.9,
+  "dbisf": 198.7,
+  "mode_used": {
+   "authors": "a",
+   "dbis": "a",
+   "dbisf": "b"
+  },
+  "peak_mem_gib": {
+   "authors": 7.87,
+   "dbis": 7.85,
+   "dbisf": 6.38
+  },
+  "modes": {
+   "authors": {
+    "c": {
+     "label": "fp16 autocast, eager",
+     "median_ms": 2237.4,
+     "n_timed": 44,
+     "peak_mem_gib": 11.43,
+     "check_mean_psnr_db": 35.61193,
+     "valid": true
+    },
+    "d": {
+     "label": "fp32 eager (TF32 convs allowed)",
+     "median_ms": 4801.6,
+     "n_timed": 30,
+     "peak_mem_gib": 19.27,
+     "check_mean_psnr_db": 35.88596,
+     "valid": true
+    },
+    "a": {
+     "label": "fp16 autocast + compile max-autotune + CUDA graphs",
+     "median_ms": 760.9,
+     "n_timed": 6,
+     "peak_mem_gib": 7.87,
+     "check_mean_psnr_db": 35.02813,
+     "valid": true
+    }
+   },
+   "dbis": {
+    "c": {
+     "label": "fp16 autocast, eager",
+     "median_ms": 1984.7,
+     "n_timed": 50,
+     "peak_mem_gib": 11.25,
+     "check_mean_psnr_db": 35.30118,
+     "valid": true
+    },
+    "d": {
+     "label": "fp32 eager (TF32 convs allowed)",
+     "median_ms": 4784.0,
+     "n_timed": 30,
+     "peak_mem_gib": 18.99,
+     "check_mean_psnr_db": 35.88596,
+     "valid": true
+    },
+    "a": {
+     "label": "fp16 autocast + compile max-autotune + CUDA graphs",
+     "median_ms": 723.9,
+     "n_timed": 6,
+     "peak_mem_gib": 7.85,
+     "check_mean_psnr_db": 35.02812,
+     "valid": true
+    }
+   },
+   "dbisf": {
+    "b": {
+     "label": "fp16 autocast + compile (mode default) of the forward",
+     "median_ms": 198.7,
+     "n_timed": 10,
+     "peak_mem_gib": 6.38,
+     "check_mean_psnr_db": 33.63606,
+     "valid": true
+    },
+    "c": {
+     "label": "fp16 autocast, eager",
+     "median_ms": 405.0,
+     "n_timed": 58,
+     "peak_mem_gib": 11.07,
+     "check_mean_psnr_db": 35.26826,
+     "valid": true
+    },
+    "d": {
+     "label": "fp32 eager (TF32 convs allowed)",
+     "median_ms": 734.2,
+     "n_timed": 63,
+     "peak_mem_gib": 16.12,
+     "check_mean_psnr_db": 35.26834,
+     "valid": true
+    }
+   }
+  },
+  "leaderboard_ms": 760.9,
+  "leaderboard_gmac": 14050.6,
+  "leaderboard_note": "since 26.11 the leaderboard row Turtle (34.56 dB on GoPro, tiled) has the latency of the same tiled inference: 760.9 ms (this run, mode a), 14051 GMAC (12.11; the 12.11 run of mode a gave 759.5 ms). Before, the row held the whole-frame timing (217.2 ms, 3943 GMAC, retime_existing.py: PB.Turtle(\"whole\")), whose outputs score 33.47 dB",
+  "mode_b_note": "our versions' mode b compiles the forward in mode default: max-autotune of the whole forward did not compile within the harness's 30 min (max-autotune on 45 tiles: 534 ms after 59 min, default 571 ms)"
+ },
+ "speed_options": {
+  "run": "tt_speed_2611.py: 30 consecutive GoPro frames, median step time of frames 10-29, one A100 (cn48)",
+  "per_frame": {
+   "f16_b15_comp": {
+    "ms": 583.3,
+    "peak_gib": 15.5,
+    "compile": "default",
+    "channels_last": false,
+    "cudnn_benchmark": true,
+    "options": {
+     "batch": 15
+    }
+   },
+   "f16_b45": {
+    "ms": 1191.4,
+    "peak_gib": 33.02,
+    "compile": null,
+    "channels_last": false,
+    "cudnn_benchmark": false,
+    "options": {
+     "batch": 45
+    }
+   },
+   "f16_b45_bm": {
+    "ms": 1173.8,
+    "peak_gib": 33.02,
+    "compile": null,
+    "channels_last": false,
+    "cudnn_benchmark": true,
+    "options": {
+     "batch": 45
+    }
+   },
+   "f16_b45_cl_comp": {
+    "ms": 569.9,
+    "peak_gib": 26.96,
+    "compile": "default",
+    "channels_last": true,
+    "cudnn_benchmark": true,
+    "options": {
+     "batch": 45
+    }
+   },
+   "f16_b45_comp": {
+    "ms": 573.2,
+    "peak_gib": 26.96,
+    "compile": "default",
+    "channels_last": false,
+    "cudnn_benchmark": true,
+    "options": {
+     "batch": 45
+    }
+   },
+   "f16_b45_mat": {
+    "ms": 533.7,
+    "peak_gib": 20.64,
+    "compile": "max-autotune-no-cudagraphs",
+    "channels_last": false,
+    "cudnn_benchmark": true,
+    "options": {
+     "batch": 45
+    }
+   },
+   "f16_ov128_b6_comp": {
+    "ms": 337.4,
+    "peak_gib": 7.68,
+    "compile": "default",
+    "channels_last": false,
+    "cudnn_benchmark": true,
+    "options": {
+     "batch": 6,
+     "tile_overlap": 128
+    }
+   },
+   "f16_ov128_b9_comp": {
+    "ms": 326.4,
+    "peak_gib": 10.05,
+    "compile": "default",
+    "channels_last": false,
+    "cudnn_benchmark": true,
+    "options": {
+     "batch": 9,
+     "tile_overlap": 128
+    }
+   },
+   "f16_ov128_comp": {
+    "ms": 317.3,
+    "peak_gib": 15.59,
+    "compile": "default",
+    "channels_last": false,
+    "cudnn_benchmark": true,
+    "options": {
+     "batch": 18,
+     "tile_overlap": 128
+    }
+   },
+   "f16_ov128_nobm_comp": {
+    "ms": 317.0,
+    "peak_gib": 9.48,
+    "compile": "default",
+    "channels_last": false,
+    "cudnn_benchmark": false,
+    "options": {
+     "batch": 18,
+     "tile_overlap": 128
+    }
+   },
+   "f16_ov64_comp": {
+    "ms": 195.5,
+    "peak_gib": 13.77,
+    "compile": "default",
+    "channels_last": false,
+    "cudnn_benchmark": true,
+    "options": {
+     "batch": 15,
+     "tile_overlap": 64
+    }
+   },
+   "f16_ov64_nobm_comp": {
+    "ms": 195.2,
+    "peak_gib": 7.47,
+    "compile": "default",
+    "channels_last": false,
+    "cudnn_benchmark": false,
+    "options": {
+     "batch": 15,
+     "tile_overlap": 64
+    }
+   },
+   "ref": {
+    "ms": 4780.8,
+    "peak_gib": 19.67,
+    "compile": null,
+    "channels_last": false,
+    "cudnn_benchmark": false,
+    "options": {}
+   }
+  },
+  "notes": [
+   "18 tiles cost 1.6x of 15 (317 vs 195 ms) at every batch size (6, 9, 18) and in eager mode too",
+   "channels_last and cudnn.benchmark change nothing once compiled",
+   "whole frames do not compile in env turtle (an inductor path needs setuptools) and lose 1.09 dB"
+  ]
+ },
+ "profile": {
+  "run": "torch.profiler, 3 steady frames, 45 tiles in one call, float16",
+  "eager_ms_per_frame": 1202,
+  "compiled_ms_per_frame": 574,
+  "compiled_shares": {
+   "depthwise 3x3 convs (cuDNN)": 0.2,
+   "1x1 convs as GEMMs": 0.22,
+   "the rest (other convs, Triton pointwise and reductions)": 0.58
+  }
+ },
+ "load_s": {
+  "run": "a fresh Python process, from CUDA ready to the network with its weights on the GPU; median of 5",
+  "authors": 0.694,
+  "dbis": 0.745,
+  "dbisf": 0.83,
+  "all": {
+   "authors": [
+    0.951,
+    0.676,
+    0.676,
+    0.694,
+    0.731
+   ],
+   "dbis": [
+    1.669,
+    0.711,
+    0.745,
+    0.91,
+    0.744
+   ],
+   "dbisf": [
+    1.311,
+    0.83,
+    0.817,
+    0.825,
+    0.877
+   ]
+  }
+ },
+ "weights_bytes": {
+  "authors": 236580214,
+  "dbis": 236397016,
+  "dbisf": 68422570
+ },
+ "params": {
+  "values": 59079548,
+  "tensors": 633,
+  "dropped": null
+ },
+ "site": {
+  "title": "Turtle, GoPro weights",
+  "row_key": "Turtle",
+  "source": "Turtle",
+  "checkpoint": "GoPro_Deblur.pth",
+  "pip": "torch numpy safetensors zstandard",
+  "models": {
+   "dbis": "dbis-Turtle",
+   "dbisf": "dbisf-Turtle"
+  },
+  "ext": {
+   "dbis": ".safetensors",
+   "dbisf": ".wpk"
+  },
+  "latency_ms": {
+   "authors": 760.9,
+   "dbis": 723.9,
+   "dbisf": 198.7
+  },
+  "weights_bytes": {
+   "authors": 236580214,
+   "dbis": 236397016,
+   "dbisf": 68422570
+  },
+  "load_s": {
+   "authors": 0.694,
+   "dbis": 0.745,
+   "dbisf": 0.83
+  },
+  "gopro_psnr": {
+   "authors": 34.55976,
+   "dbis": 34.55976,
+   "dbisf": 34.53156
+  },
+  "about": {
+   "dbis": "the authors' outputs bit for bit, without einops and basicsr; the attention masks kept on the GPU",
+   "dbisf": "float16, all tiles of a frame in one compiled call, 15 tiles instead of 45, weights rounded per channel. 6.4 GiB of GPU memory (7.9 GiB for the authors' code)."
+  },
+  "time_mode": "one frame per step with the history carried, as the authors' tiled inference; each version in its fastest valid mode",
+  "note": "One A100, 1280×720, one frame per step; PSNR on all 1,111 GoPro test frames, one pass per sequence."
+ }
+}

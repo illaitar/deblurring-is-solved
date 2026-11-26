@@ -19,7 +19,8 @@ Options (None keeps the model's own setting; net.defaults lists them):
   window        video models: frames per window, laid out as the benchmark runs the authors' code (net._plan):
                 BSSTNet: windows overlap by 4 frames and every frame is taken from a window where it is at least 2
                 frames from the ends (so at least 6 frames); DSTNet+: clips that do not overlap, the last one moved back
-                to end at the last frame. Image models: no
+                to end at the last frame; Turtle (causal, frame by frame): None = one pass over the whole clip, n = the
+                history starts again every n frames. Image models: no
   batch         tiles per network call (image models without tiles: frames per call): memory against speed
   precision     "fp32" or "fp16" (autocast)
   compile       False, True or a torch.compile mode: compile on the first call (BSSTNet: its heavy blocks one by one,
@@ -68,7 +69,7 @@ class Restorer:
             raise ValueError(f"out: 'float' or 'uint8', not {out!r}")
         if self.kind == "image" and window is not None:
             raise ValueError(f"{type(self).__name__} is an image model: window does not apply")
-        if self.kind == "video" and (not isinstance(o["window"], int) or o["window"] < 1):
+        if self.kind == "video" and o["window"] is not None and (not isinstance(o["window"], int) or o["window"] < 1):
             raise ValueError(f"window: a positive int, not {o['window']!r}")
         if o["tile"] is not None:
             th, tw = _pair(o["tile"])

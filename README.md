@@ -47,14 +47,18 @@ is never more than 0.05 dB below the authors' code on any test set (DBIS.md has 
 | DSTNet+ L, authors' code | 56 MB | 2.78 s | 3.01 s | 35.7078 |
 | dbis-DSTNetPlus-L | 56 MB | 0.54 s | 3.45 s | 35.7078 |
 | dbisf-DSTNetPlus-L | 16 MB | 0.60 s | 0.58 s | 35.6999 |
+| Turtle, authors' code | 237 MB | 0.69 s | 761 ms | 34.5598 |
+| dbis-Turtle | 236 MB | 0.75 s | 724 ms | 34.5598 |
+| dbisf-Turtle | 68 MB | 0.83 s | 199 ms | 34.5316 |
 
 BSSTNet and DSTNet+ L are timed as in the leaderboard, with a window for every output frame (BSSTNet: dbisf 24 frames,
 the others 48; DSTNet+ L: 27), each version in its fastest mode (DSTNet+ L: the authors' code and dbis in float32, as the
-authors' CuPy kernel has no float16).
+authors' CuPy kernel has no float16). Turtle runs one frame per step with its history, in tiles as the authors (dbisf:
+15 tiles per 720p frame instead of 45).
 
 ```python
 import dbis                               # weights: huggingface.co/Illaitar/dbis, fetched on first use (sha256 checked)
-net = dbis.load("dbisf-NAFNet-64")        # or "dbisf-BSSTNet", "dbisf-DSTNetPlus-L", or a dbis-* model
+net = dbis.load("dbisf-NAFNet-64")        # or "dbisf-BSSTNet", "dbisf-DSTNetPlus-L", "dbisf-Turtle", or a dbis-* model
 out = net.restore(frames)                 # the same call for every model; options: tile, tile_overlap, window, batch,
                                           # precision, compile, out (DBIS.md)
 enc = dbis.load_encoder("dbisf-NAFNet-64")  # the encoder alone: enc(x) -> feature maps, enc.feature_info

@@ -21,6 +21,9 @@ Methods of the benchmark re-implemented in this repository, in the package `dbis
 | DSTNet+ L, authors' code | 56 MB `.pth` | 2.78 s | 3.01 s | 35.7078 |
 | **dbis-DSTNetPlus-L** | 56 MB `.safetensors` | 0.54 s | 3.45 s | 35.7078 |
 | **dbisf-DSTNetPlus-L** | 16 MB `.wpk` | 0.60 s | 0.58 s | 35.6999 (−0.008) |
+| Turtle, authors' code (tiles 320, overlap 192) | 237 MB `.pth` | 0.69 s | 761 ms | 34.5598 |
+| **dbis-Turtle** | 236 MB `.safetensors` | 0.75 s | 724 ms | 34.5598 |
+| **dbisf-Turtle** | 68 MB `.wpk` | 0.83 s | 199 ms | 34.5316 (−0.028) |
 
 Load: a fresh Python process, from CUDA ready to the network with its weights on the GPU (importing torch and starting
 CUDA take another 2.3 s for every model). Time: the benchmark's latency harness on one A100, 1280x720, batch 1, the
@@ -30,9 +33,13 @@ fastest mode that runs: the authors' code with fp16 autocast and `torch.compile`
 eager (`torch.compile` fails on it), dbisf fp16 with its heavy blocks compiled one by one (`net.compile_blocks()`; the
 whole forward does not compile). Without compilation the three take 34.9, 30.6 and 6.6 s. DSTNet+ L: as in the
 leaderboard, a 27-frame window for every output frame; the authors' code and dbis in float32 (the authors' CuPy kernel
-has no float16), dbisf in float16 with its propagation blocks compiled (0.87 s without). PSNR: all 1111 GoPro test
-frames, 8-bit outputs. Every number is in [`results/dbis/NAFNet-64.json`](results/dbis/NAFNet-64.json),
-[`results/dbis/BSSTNet.json`](results/dbis/BSSTNet.json) and [`results/dbis/DSTNetPlus-L.json`](results/dbis/DSTNetPlus-L.json).
+has no float16), dbisf in float16 with its propagation blocks compiled (0.87 s without). Turtle: one frame per step
+with the history carried, as the authors' tiled inference; the authors' code and dbis with fp16 autocast,
+`torch.compile` max-autotune and CUDA graphs (13 minutes of compilation; in float32 without it 4.80 and 4.78 s), dbisf
+with fp16 autocast and `torch.compile` in its default mode (max-autotune of the whole forward does not compile within
+30 minutes; 0.41 s without compilation). PSNR: all 1111 GoPro test frames, 8-bit outputs. Every number is in
+[`results/dbis/NAFNet-64.json`](results/dbis/NAFNet-64.json), [`results/dbis/BSSTNet.json`](results/dbis/BSSTNet.json),
+[`results/dbis/DSTNetPlus-L.json`](results/dbis/DSTNetPlus-L.json) and [`results/dbis/Turtle.json`](results/dbis/Turtle.json).
 
 ## dbisf on every test set
 
@@ -78,6 +85,22 @@ do not overlap, the last one moved back; dbisf the same way, with its propagatio
 
 On 23 BSD frames the authors' output itself scores 4.8 to 13.9 dB; the rule is checked without them as well.
 
+**Turtle** (the four video test sets; the authors' tiled inference as the leaderboard runs it: tiles of 320 px with
+192 px overlap, each with its own history, one pass per sequence; every frame compared with the leaderboard's own row
+of that frame; dbisf compiled, as timed)
+
+| Test set | Frames | Authors, dB | dbisf-Turtle (15 tiles) | 18 tiles | 45 tiles, float16 and dbisf's weights |
+|---|---:|---:|---:|---:|---:|
+| GoPro | 1111 | 34.5598 | −0.028 | −0.023 | −0.000 |
+| REDS val | 3000 | 27.3461 | −0.028 | −0.014 | +0.006 |
+| BSD 2ms/16ms | 3000 | 27.8414 | −0.021 | −0.016 | +0.006 |
+| DVD | 1000 | 31.1838 | −0.006 | −0.009 | +0.005 |
+
+dbis-Turtle gives the authors' PSNR on every one of the 8,111 frames. All of dbisf's difference comes from the fewer
+tiles (15 at 1280x720 instead of 45, 6 at 640x480 instead of 12): with the authors' 45 tiles, float16 and the rounded
+weights stay within 0.006 dB. 12 tiles cost 0.22 dB on GoPro; 15 tiles with 64 px overlap instead of 80 cost up to
+0.038 dB at the same speed.
+
 On REDS and BSD the authors' code writes NaN into some 256 px patches, which become black tiles in the 8-bit output.
 Two causes: float16 overflow, and the recurrent backward propagation, whose features grow out of the GoPro range until
 a LayerNorm overflows in float32 as well (the leaderboard's BSD row is the authors' code in float32, 23.7607 dB, and
@@ -101,6 +124,8 @@ python -m dbis.convert NAFNet-64 NAFNet-GoPro-width64.pth      # writes weights/
 python -m dbis.convert BSSTNet BSST_gopro.pth raft-things.pth
 # DSTNetPlus_L_gopro.pth from https://github.com/sunny2109/DSTNet-plus/releases/tag/v0.1.0 (Apache License 2.0)
 python -m dbis.convert DSTNetPlus-L DSTNetPlus_L_gopro.pth
+# GoPro_Deblur.pth from https://github.com/Ascend-Research/Turtle (MIT License)
+python -m dbis.convert Turtle GoPro_Deblur.pth
 ```
 
 Every model has the same inference call, `net.restore(frames, **options)` ([`dbis/restore.py`](dbis/restore.py)):
@@ -114,15 +139,18 @@ out = net.restore(frames, tile=512, tile_overlap=32, batch=4, precision="fp16", 
 print(net.defaults)                       # the model's own setting of every option
 ```
 
-| Option | Meaning | NAFNet-64 | BSSTNet | DSTNet+ L |
-|---|---|---|---|---|
-| `tile` | tile size, int or (h, w) | whole frame | 256 only (its patches) | whole frame only |
-| `tile_overlap` | pixels shared by neighbouring tiles, int or (rows, columns); outputs averaged | 32 | 64 | not used |
-| `window` | frames per window, laid out as the benchmark runs the authors' code | not used | dbis 48, dbisf 24, overlap 4 | 50, clips that do not overlap |
-| `batch` | tiles per network call (no tiles: frames per call) | 1 | 1 dbis, 14 dbisf | 10 frames through the full-size layers |
-| `precision` | `"fp32"` or `"fp16"` (autocast) | fp32 | fp16 | dbis fp32, dbisf fp16 |
-| `compile` | `False`, `True` or a `torch.compile` mode, on the first call | the network | its heavy blocks | its propagation blocks (dbisf: the dynamic conv with max-autotune) |
-| `out` | `"float"` (float32, not clamped) or `"uint8"` (rounded as the benchmark) | float | float | float |
+| Option | Meaning | NAFNet-64 | BSSTNet | DSTNet+ L | Turtle |
+|---|---|---|---|---|---|
+| `tile` | tile size, int or (h, w) | whole frame | 256 only (its patches) | whole frame only | 320, square, a multiple of 8; `None`: whole frame |
+| `tile_overlap` | pixels shared by neighbouring tiles, int or (rows, columns); outputs averaged | 32 | 64 | not used | dbis 192, dbisf 80 |
+| `window` | frames per window, laid out as the benchmark runs the authors' code | not used | dbis 48, dbisf 24, overlap 4 | 50, clips that do not overlap | `None`: one pass over the clip; n: the history starts again every n frames |
+| `batch` | tiles per network call (no tiles: frames per call) | 1 | 1 dbis, 14 dbisf | 10 frames through the full-size layers | 1 dbis, 15 dbisf (each tile keeps its own history) |
+| `precision` | `"fp32"` or `"fp16"` (autocast) | fp32 | fp16 | dbis fp32, dbisf fp16 | dbis fp32, dbisf fp16 (on the CPU use fp32) |
+| `compile` | `False`, `True` or a `torch.compile` mode, on the first call | the network | its heavy blocks | its propagation blocks (dbisf: the dynamic conv with max-autotune) | the network |
+| `out` | `"float"` (float32, not clamped) or `"uint8"` (rounded as the benchmark) | float | float | float | float |
+
+Turtle is causal: frame t is restored from blurry frame t and the history of the frames before it, so it also runs as
+a stream, `out, state = net.step(frame, state)` (`state=None` at the first frame), with the same options.
 
 A long clip can stay on the CPU: `restore` moves one window (or frame) at a time to the GPU and writes the output on
 the device of `frames`. Frames are padded where a network needs it (BSSTNet: multiples of 16, at least 256) and the
@@ -162,6 +190,7 @@ enc.feature_info                            # channels, reduction and source mod
 | NAFNet-64 | intro conv, the four encoder stages, the middle blocks | 64 at 1, 128 at 2, 256 at 4, 512 at 8, 1024 at 16 | 62.5 M of 67.8 M |
 | BSSTNet | the per-frame encoder of BSST, before the temporal propagation | 64 at 1, 64 at 2, 192 at 4 | 1.9 M of 43.7 M |
 | DSTNet+ L | the first conv, the Haar split and the high-frequency branch, before the propagation | 96 at 1, 96 (low band) and 288 (high bands) at 2 | 0.06 M of 14.1 M |
+| Turtle | the input conv and the three encoder levels, which carry no history, and the last downsampling | 64 at 1, 128 at 2, 256 at 4, 512 at 8 | 9.0 M of 59.1 M |
 
 NAFNet's encoder pads the input to a multiple of 16 as the network does; BSSTNet's needs H and W multiples of 4. Both
 are the same modules with the same weights as in the full network (checked: equal features).
@@ -301,6 +330,49 @@ test sets with clips of 50 frames unless stated.
 | float16, weights std / 48 (14 MB) | | −0.031 | passes, less margin |
 | clips of 27 / 20 / 15 / 10 frames (float16 weights) | | −0.073 / −0.087 / −0.135 / −0.235 | fails |
 
+**dbis-Turtle**
+- The network is [`dbis/turtle/`](dbis/turtle) (network, encoder, blocks), plain PyTorch without einops and basicsr:
+  the authors' `Turtle_t1` in its GoPro configuration. Only the current frame enters this configuration, so the
+  previous blurry frame, which the authors' forward also takes, is not passed.
+- The local attention mask of SAB (token pairs at L1 distance 4 or less on its 20x20 grid) is made once and kept on
+  the GPU. The authors build it on the CPU with `torch.cdist` and copy it to the GPU in every call, 135 times per 720p
+  frame. The caches of every tile stay on the GPU; the authors move them to the CPU and back after each frame.
+- The authors' outputs bit for bit: the network alone over four steps (its output and all eight caches), and every
+  frame of the four video test sets.
+- 724 ms per frame instead of 761 ms in the same mode, 1.98 s instead of 2.24 s in fp16 without compilation.
+
+**dbisf-Turtle**
+- All tiles of a frame in one network call. Every tile keeps its own history, so this is the same computation with a
+  larger batch: in float32 2.0 s per frame instead of 4.8 s, the output values within 2e-3 of the authors' (76 to 81
+  dB between the two).
+- Float16 autocast and `torch.compile`: 0.57 s per frame with the authors' 45 tiles, within 0.006 dB of the authors
+  on every set (with dbisf's rounded weights). SAB's top-5 and local masks are applied in one product, the same values.
+- 15 tiles of 320 px with 80 px overlap at 1280x720 (6 at 640x480) instead of 45 with 192 px (12). The authors'
+  tiling averages 5 predictions per pixel and costs three times the compute; dbisf averages 1.7. This is all of
+  dbisf's difference: −0.028 dB on GoPro and REDS, −0.021 on BSD, −0.006 on DVD.
+- Weights rounded per output channel to std(channel) / 128: 68 MB instead of 237 MB. The step std / 48 (58 MB) fails:
+  −0.067 dB on BSD.
+- Together: 199 ms per frame in the harness instead of 761 ms (3.8 times faster; 24 times the authors' code in
+  float32), 6.4 GiB of GPU memory instead of 7.9 GiB.
+
+What we tried for dbisf-Turtle. Time: 30 consecutive GoPro frames on an A100, one frame per step (dbis: 4.78 s per
+frame); rule: the four test sets.
+
+| Change | Per 720p frame | Worst difference, dB | |
+|---|---:|---:|---|
+| all 45 tiles in one call (float32) | 2.02 s | | |
+| float16 autocast | 1.19 s | −0.001 | |
+| float16, compiled (mode default) | 571 ms | −0.001 | |
+| float16, compiled with max-autotune | 534 ms | | 59 minutes of compilation |
+| float16, compiled, channels_last or cudnn.benchmark | 570 ms | | no gain |
+| float16, compiled, 45 tiles, weights std / 128 | 577 ms (harness) | +0.006 | |
+| 18 tiles (overlap 128), weights std / 128 | 317 ms | −0.023 | passes; 18 tiles take 1.6 times as long as 15 at every batch size |
+| 15 tiles (overlap 64) | 196 ms | −0.038 | passes, less margin |
+| 15 tiles (overlap 80), weights std / 128 | 199 ms (harness) | −0.028 | **dbisf** |
+| 15 tiles (overlap 64), weights std / 48 | | −0.067 | fails |
+| 12 tiles | about 165 ms | −0.220 | fails |
+| whole frames (the authors' do_patched=False) | | −1.09 (authors' code) | fails; does not compile in this env |
+
 **Credits.** BSSTNet (Zhang, Xie and Yao, CVPR 2024; MIT License stated in its README) reuses code of ProPainter
 (Zhou et al., ICCV 2023; S-Lab License 1.0, non-commercial use only) for its sparse transformer and flow completion,
 of Shift-Net (Li et al., CVPR 2023), of RAFT (Teed and Deng, ECCV 2020; BSD 3-Clause) and of BasicVSR++ and RVRT.
@@ -309,5 +381,8 @@ every file in `blocks/` names its source and license.
 
 DSTNet+ (Pan, Sun, Xu, Dong and Tang, TPAMI 2025; Apache License 2.0) is re-implemented in [`dbis/dstnetplus/`](dbis/dstnetplus);
 the CuPy kernel of its dynamic conv is replaced by PyTorch ops.
+
+Turtle (Ghasemabadi, Janjua, Salameh and Niu, NeurIPS 2024; MIT License, Copyright (c) 2024 Huawei Technologies Co.,
+Ltd.) is re-implemented in [`dbis/turtle/`](dbis/turtle).
 
 Not in the leaderboard yet: dbis and dbisf are not rows of the tables.

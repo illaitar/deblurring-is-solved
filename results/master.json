@@ -13024,8 +13024,8 @@
 "n_ok": 4,
 "params_M": 59.08,
 "params_src": "bench",
-"ms_720p": 217.237,
-"gmac": 3943.26
+"ms_720p": 760.865,
+"gmac": 14050.603
 },
 {
 "key": "RNN-MBP",
@@ -23790,8 +23790,8 @@
 "n_ok": 4,
 "params_M": 59.08,
 "params_src": "bench",
-"ms_720p": 217.237,
-"gmac": 3943.26
+"ms_720p": 760.865,
+"gmac": 14050.603
 },
 {
 "key": "UFPNet@RealBlurJ",

@@ -11,6 +11,7 @@ on first use and checks its sha256 (dbis.download). They can also be made locall
     python -m dbis.convert NAFNet-64 NAFNet-GoPro-width64.pth     # -> weights/dbis/dbis-NAFNet-64.safetensors, dbisf-NAFNet-64.wpk
     python -m dbis.convert BSSTNet BSST_gopro.pth raft-things.pth # -> dbis-BSSTNet.safetensors, dbisf-BSSTNet.wpk (BSST + RAFT)
     python -m dbis.convert DSTNetPlus-L DSTNetPlus_L_gopro.pth    # -> dbis-DSTNetPlus-L.safetensors, dbisf-DSTNetPlus-L.wpk
+    python -m dbis.convert Turtle GoPro_Deblur.pth                # -> dbis-Turtle.safetensors, dbisf-Turtle.wpk
 
     import dbis
     net = dbis.load("dbisf-NAFNet-64")                            # eval mode, on the GPU
@@ -66,6 +67,15 @@ SOURCES = {
         "file": "DSTNetPlus_L_gopro.pth", "md5": "d7da9b176f72cd2c10c6c146fe481e65", "group": "params",
         "trained_on": "GoPro", "arch": "dstnetplus",
     },
+    "Turtle": {
+        "method": "Turtle", "paper": "Learning Truncated Causal History Model for Video Restoration",
+        "venue": "NeurIPS 2024",
+        "code": "https://github.com/Ascend-Research/Turtle", "commit": "7094f4221b64ad0962b4f27ff1b76d788836e804",
+        "license": "MIT, Copyright (c) 2024 Huawei Technologies Co., Ltd.",
+        "url": "https://github.com/Ascend-Research/Turtle (README: trained models, GoPro_Deblur.pth)",
+        "file": "GoPro_Deblur.pth", "md5": "736df72180a69242b495b2463042b29d", "group": "params",
+        "trained_on": "GoPro", "arch": "turtle",
+    },
 }
 
 # every model: its source, the class and arguments in dbis/<arch>.py, the weight file and how it is written
@@ -100,6 +110,17 @@ MODELS = {
                                     "prop_channels_last": True, "autotune": True},
                            "file": "dbisf-DSTNetPlus-L.wpk", "store": "qc128",
                            "sha256": "42a6934bce12fd88d30a1fe33de480070abb7d8311333a96f321f1de1a32cf1b"},
+    # the authors' tiled inference as the benchmark runs it: tiles of 320 px with 192 px overlap, one tile per call,
+    # each with its own history, float32
+    "dbis-Turtle": {"source": "Turtle", "cls": "Turtle", "args": {},
+                    "file": "dbis-Turtle.safetensors", "store": "float32",
+                    "sha256": "3d80bf02e2f4ff6e949ca4db309fc39a2e6bb51143dc8ee4deb9317153a7b61d"},
+    # dbisf: float16 autocast, all tiles of a frame in one call, SAB's two masks applied together, 15 tiles with 80 px
+    # overlap at 1280x720 instead of 45 with 192, weights rounded per channel to std / 128 (std / 48: -0.05 dB on GoPro)
+    "dbisf-Turtle": {"source": "Turtle", "cls": "Turtle",
+                     "args": {"fast": True, "precision": "fp16", "batch": 15, "tile_overlap": 80},
+                     "file": "dbisf-Turtle.wpk", "store": "qc128",
+                     "sha256": "30c8bea074fa9fb53300fee15c8d16e920eff6c4b3148932e72294c5cb7371b6"},
 }
 
 

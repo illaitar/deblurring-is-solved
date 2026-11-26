@@ -29,9 +29,11 @@ checkpoints by `python -m dbis.convert` of [deblurring is solved?](https://githu
 | `dbisf-BSSTNet.wpk` | BSSTNet, with RAFT | 42 MB | 35.9425 | 4.6 s | MIT; RAFT BSD-3-Clause |
 | `dbis-DSTNetPlus-L.safetensors` | DSTNet+ L (TPAMI 2025) | 56 MB | 35.7078 (authors 35.7078) | 3.45 s (authors 3.01 s) | Apache 2.0 |
 | `dbisf-DSTNetPlus-L.wpk` | DSTNet+ L | 16 MB | 35.6999 | 0.58 s | Apache 2.0 |
+| `dbis-Turtle.safetensors` | Turtle (NeurIPS 2024) | 236 MB | 34.5598 (authors 34.5598) | 724 ms (authors 761 ms) | MIT |
+| `dbisf-Turtle.wpk` | Turtle | 68 MB | 34.5316 | 199 ms | MIT |
 
 All are the GoPro-trained checkpoints. Time: the benchmark's latency harness, one A100, batch 1; BSSTNet and DSTNet+ L
-with a window for every output frame, as in the leaderboard. Every number, the speed options and what was tried are
+with a window for every output frame, as in the leaderboard; Turtle one frame per step with its history, in tiles. Every number, the speed options and what was tried are
 in [DBIS.md](https://github.com/illaitar/deblurring-is-solved/blob/main/DBIS.md) and `results/dbis/` of the repository.
 Each file has a JSON card here (`<file>.json`) with its sha256, the source checkpoint and its md5, and the network's
 arguments.
@@ -59,7 +61,7 @@ weights rounded per output channel and entropy coded.
   rounding: NAFNet's LayerNorm scale and shift and its residual scales go into the next convs; DSTNet+ drops its fixed
   Haar weights, which the code rebuilds. BSSTNet's files hold BSST and the RAFT flow network it uses.
 - dbisf files: the same tensors, each weight tensor of two or more dimensions rounded per output channel to
-  std(channel) / 48 (NAFNet-64, BSSTNet) or / 128 (DSTNet+ L).
+  std(channel) / 48 (NAFNet-64, BSSTNet) or / 128 (DSTNet+ L, Turtle).
 
 ## Terms
 
