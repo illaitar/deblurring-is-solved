@@ -390,6 +390,10 @@ if missing:
 page = re.sub(r"\{\{(\w+)\}\}", lambda m: str(FACTS[m.group(1)]), tpl)
 payload = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 page = page.replace("/*__DATA__*/null", payload)
+# 27.11: the anatomy of the dbis networks (tools/anatomy.py) for section 05's heat maps
+_anat = RES / "dbis" / "anatomy.json"
+page = page.replace("/*__ANATOMY__*/null", _anat.read_text(encoding="utf-8").strip().replace("</", "<\\/")
+                    if _anat.exists() else "null")
 # frame-level sections (site/frames.js) and their lazily fetched data: results/frames/{data,img} -> docs/{data,img}
 page = page.replace("/*__FRAMES_JS__*/", (ROOT / "site" / "frames.js").read_text(encoding="utf-8").replace("</script", "<\\/script"))
 import shutil  # noqa: E402

@@ -41,6 +41,11 @@ with fp16 autocast and `torch.compile` in its default mode (max-autotune of the 
 [`results/dbis/NAFNet-64.json`](results/dbis/NAFNet-64.json), [`results/dbis/BSSTNet.json`](results/dbis/BSSTNet.json),
 [`results/dbis/DSTNetPlus-L.json`](results/dbis/DSTNetPlus-L.json) and [`results/dbis/Turtle.json`](results/dbis/Turtle.json).
 
+**Anatomy.** The site's section 05 draws every network block by block: the scale each block works at, its
+parameters and its FLOPs per 1280x720 frame, with a share matrix to compare networks. The numbers are
+[`results/dbis/anatomy.json`](results/dbis/anatomy.json), made by `python tools/anatomy.py` (PyTorch's FLOP counter on
+the meta device; BSSTNet on real GoPro frames, since its sparse attention picks its tokens by the blur).
+
 ## dbisf on every test set
 
 Mean PSNR difference to the authors' code, dB.

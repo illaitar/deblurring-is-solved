@@ -42,6 +42,7 @@
   --focus: #2a78d6;
   --bar-bg: rgba(255, 255, 255, .9);
   --logo-ghost: #55585f; --fast: #c4501f; --on-img: #ffffff;
+  --heat-lo: #f0ecf8; --heat-hi: #3a1d8a; --heat-empty: #f5f6f8;   /* the anatomy heat maps (violet: no other meaning here) */
   /* Geologica: a geometric sans whose d, b, o and p have nearly round counters (the d of the title carries the iris) */
   --sans: "Geologica", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --display: "Geologica", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -60,13 +61,13 @@
   :root:not([data-theme="light"]) {
     color-scheme: dark; --paper: #0e1013; --paper-2: #171a1f; --ink: #eef0f3; --ink-rgb: 238, 240, 243; --ink-72: #b9bdc5;
     --ink-56: #9198a2; --ink-40: #6c727c; --ink-16: #353a42; --ink-8: #23272e; --img: #5c9bea; --vid: #3acb9c; --ours: #f07d4f; --focus: #5c9bea;
-    --bar-bg: rgba(14, 16, 19, .88); --logo-ghost: #c3c6cc; --fast: #f28a5e; --on-img: #0e1013;
+    --bar-bg: rgba(14, 16, 19, .88); --logo-ghost: #c3c6cc; --fast: #f28a5e; --on-img: #0e1013; --heat-lo: #2b2440; --heat-hi: #e2d6ff; --heat-empty: #171a1f;
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark; --paper: #0e1013; --paper-2: #171a1f; --ink: #eef0f3; --ink-rgb: 238, 240, 243; --ink-72: #b9bdc5;
   --ink-56: #9198a2; --ink-40: #6c727c; --ink-16: #353a42; --ink-8: #23272e; --img: #5c9bea; --vid: #3acb9c; --ours: #f07d4f; --focus: #5c9bea;
-  --bar-bg: rgba(14, 16, 19, .88); --logo-ghost: #c3c6cc; --fast: #f28a5e; --on-img: #0e1013;
+  --bar-bg: rgba(14, 16, 19, .88); --logo-ghost: #c3c6cc; --fast: #f28a5e; --on-img: #0e1013; --heat-lo: #2b2440; --heat-hi: #e2d6ff; --heat-empty: #171a1f;
 }
 
 * { box-sizing: border-box; }
@@ -548,6 +549,46 @@ pre.code { margin: 0; padding: .8rem 1rem; background: var(--paper-2); border-ra
 .gd-seg button:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
 .gd-dl dt { color: var(--ink-56); }
 .gd-dl dd { margin: 0; min-width: 0; }
+
+/* 27.11: anatomy of the networks (section 05): a share matrix (network x scale) and one silhouette per network,
+   x = the blocks in the order the forward pass runs them, y = their scale, colour = parameters or FLOPs */
+.an { margin-top: 2.6rem; }
+.an h3 { font: 600 1.25rem/1.25 var(--display); margin: 0 0 .45rem; }
+.an-ctl { display: flex; flex-wrap: wrap; gap: .6rem 1.4rem; align-items: center; margin: 1.1rem 0 1.3rem; }
+.an-g { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; min-width: 0; }
+.an-g > span { font: 500 var(--t-xs)/1 var(--mono); color: var(--ink-56); letter-spacing: .04em; margin-right: .15rem; }
+.an-b { font: 500 var(--t-s)/1.2 var(--sans); color: var(--ink-72); background: var(--paper); border: 1px solid var(--ink-16);
+  border-radius: 999px; padding: .3rem .78rem; cursor: pointer; display: inline-flex; gap: .4rem; align-items: center;
+  transition: background .15s var(--ease), color .15s var(--ease), border-color .15s var(--ease); }
+.an-b:hover { border-color: var(--ink-40); color: var(--ink); }
+.an-b[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.an-b:focus-visible, .an-cell:focus-visible, .an-tab td:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.an-b i { width: .5rem; height: .5rem; border-radius: 50%; display: inline-block; flex: none; }
+.an-sub { font: 600 1rem/1.3 var(--display); margin: 0 0 .55rem; }
+.an-scroll { overflow-x: auto; }
+.an-tab { border-collapse: separate; border-spacing: 3px; font-variant-numeric: tabular-nums; min-width: 24rem; }
+.an-tab th { font: 500 var(--t-xs)/1.2 var(--mono); color: var(--ink-56); text-align: center; padding: 0 .2rem; }
+.an-tab th.r { text-align: left; font: 500 var(--t-s)/1.2 var(--sans); color: var(--ink); padding-right: .6rem; white-space: nowrap; }
+.an-tab td { width: 4.1rem; height: 2.05rem; text-align: center; font-size: var(--t-s); border-radius: 6px; cursor: pointer; }
+.an-tab td.t { background: none; cursor: default; color: var(--ink-72); font: 400 var(--t-xs)/1.2 var(--mono); width: auto;
+  padding-left: .6rem; text-align: left; white-space: nowrap; }
+.an-tab td.on { outline: 2px solid var(--ink); outline-offset: -2px; }
+.an-cap { font-size: var(--t-xs); color: var(--ink-56); margin: .45rem 0 1.6rem; max-width: var(--read); }
+.an-legend { display: flex; flex-wrap: wrap; align-items: center; gap: .55rem; font: 400 var(--t-xs)/1.3 var(--mono);
+  color: var(--ink-56); margin: 0 0 1rem; }
+.an-ramp { width: 8rem; height: .55rem; border-radius: 3px; background: linear-gradient(90deg, var(--heat-lo), var(--heat-hi)); }
+.an-strip { margin-bottom: 1.25rem; }
+.an-head { display: flex; flex-wrap: wrap; gap: .15rem .9rem; align-items: baseline; margin-bottom: .35rem; }
+.an-head b { font-weight: 600; }
+.an-head span { color: var(--ink-72); font-size: var(--t-s); }
+.an-head .m { font: 400 var(--t-xs)/1.3 var(--mono); color: var(--ink-56); }
+.an-svg { display: block; width: 100%; height: auto; overflow: visible; }
+.an-svg text { font-family: var(--mono); font-size: 10px; fill: var(--ink-56); }
+.an-cell { cursor: pointer; }
+.an-detail { position: sticky; bottom: 0; z-index: 2; background: var(--paper-2); border: 1px solid var(--ink-8); border-radius: 10px;
+  padding: .6rem .85rem; font-size: var(--t-s); color: var(--ink-72); min-height: 2.6rem; margin: .4rem 0 1.2rem; }
+.an-detail b { color: var(--ink); font-weight: 600; }
+.an-note { font-size: var(--t-s); color: var(--ink-72); max-width: var(--read); margin: 0 0 .5rem; }
 </style>
 </head>
 <body>
@@ -791,6 +832,24 @@ out = net.restore(frames)              # options: tile, tile_overlap, window, ba
 python -m dbis.convert NAFNet-64 NAFNet-GoPro-width64.pth          # -> weights/dbis/
 python -m dbis.convert BSSTNet BSST_gopro.pth raft-things.pth      # BSST and its RAFT
 python -m dbis.convert DSTNetPlus-L DSTNetPlus_L_gopro.pth</pre>
+    <div class="an" id="anatomy">
+      <h3>Anatomy of the networks</h3>
+      <p class="lead2">Where each network keeps its parameters and where its compute goes, block by block, on one 1280&times;720 frame. Pick the networks to compare; tap a block or a scale for its numbers.</p>
+      <div class="an-ctl">
+        <div class="an-g" id="an-models" role="group" aria-label="Networks"><span>NETWORKS</span></div>
+        <div class="an-g" id="an-color" role="group" aria-label="Colour"><span>COLOUR</span></div>
+        <div class="an-g" id="an-width" role="group" aria-label="Width"><span>WIDTH</span></div>
+      </div>
+      <div class="an-sub" id="an-share-title">Share of the parameters at each scale</div>
+      <div class="an-scroll"><table class="an-tab" id="an-share"></table></div>
+      <p class="an-cap">Scale: the resolution a block works at, relative to the frame the network takes in. Tap a scale to light up its blocks below.</p>
+      <div class="an-sub" id="an-strip-title">Every block, in the order the frame goes through them</div>
+      <div class="an-legend" id="an-legend"></div>
+      <div id="an-strips"></div>
+      <div class="an-detail" id="an-detail" aria-live="polite">Tap a block for its name, size and cost.</div>
+      <p class="an-note">A block is one unit of a network's design (NAFNet's NAF block, Concertormer's CSA block, Turtle's attention block, DSTNet+'s residual blocks, BSSTNet's alignment, sparse transformer and shift blocks); the narrow columns between blocks are the other layers (scale changes, first and last convolutions), and BSSTNet's RAFT, which it keeps fixed, is one cell.</p>
+      <p class="an-note">Counted on our dbis code with PyTorch's FLOP counter on one 1280&times;720 frame (FLOPs = 2 &times; multiply-adds), the frame padded as each network pads it: <code>python tools/anatomy.py</code>. Video networks per frame: DSTNet+ and BSSTNet on an 8-frame clip (BSSTNet on real GoPro frames, since its sparse attention picks tokens by the blur), Turtle on its second frame, with its history. The dbisf versions have the same blocks.</p>
+    </div>
   </section>
 
   <section class="wrap sec" id="start" aria-label="Get started">
@@ -2380,6 +2439,167 @@ python -m dbis.run dbisf-NAFNet-64 blurry.png sharp.png</pre></div>
     fetch("https://api.github.com/repos/illaitar/deblurring-is-solved").then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
       if (j && typeof j.stargazers_count === "number") els.forEach(function (e) { e.textContent = j.stargazers_count.toLocaleString("en-US"); });
     }).catch(function () { /* offline or rate-limited: keep the number of the build */ });
+  })();
+</script>
+<script id="anatomy-data" type="application/json">{"frame":[720,1280],"cell":["name","type","block","level","channels","params","gflops"],"models":[{"model":"dbis-NAFNet-64","source":"NAFNet-64","method":"NAFNet","venue":"ECCV 2022","video":false,"params":67788227,"gflops":2045.0,"frames":1,"cells":[["intro","Conv2d",0,0,null,1792,3.185],["encoders.0.0","Block",1,0,null,30400,54.972],["downs.0","Conv2d",0,1,null,32896,15.099],["encoders.1.0","Block",1,1,null,118144,53.91],["downs.1","Conv2d",0,2,null,131328,15.099],["encoders.2.0","Block",1,2,null,465664,53.379],["downs.2","Conv2d",0,3,null,524800,15.099],["encoders.3.0","Block",1,3,null,1848832,53.114],["encoders.3.1","Block",1,3,null,1848832,53.114],["encoders.3.2","Block",1,3,null,1848832,53.114],["encoders.3.3","Block",1,3,null,1848832,53.114],["encoders.3.4","Block",1,3,null,1848832,53.114],["encoders.3.5","Block",1,3,null,1848832,53.114],["encoders.3.6","Block",1,3,null,1848832,53.114],["encoders.3.7","Block",1,3,null,1848832,53.114],["encoders.3.8","Block",1,3,null,1848832,53.114],["encoders.3.9","Block",1,3,null,1848832,53.114],["encoders.3.10","Block",1,3,null,1848832,53.114],["encoders.3.11","Block",1,3,null,1848832,53.114],["encoders.3.12","Block",1,3,null,1848832,53.114],["encoders.3.13","Block",1,3,null,1848832,53.114],["encoders.3.14","Block",1,3,null,1848832,53.114],["encoders.3.15","Block",1,3,null,1848832,53.114],["encoders.3.16","Block",1,3,null,1848832,53.114],["encoders.3.17","Block",1,3,null,1848832,53.114],["encoders.3.18","Block",1,3,null,1848832,53.114],["encoders.3.19","Block",1,3,null,1848832,53.114],["encoders.3.20","Block",1,3,null,1848832,53.114],["encoders.3.21","Block",1,3,null,1848832,53.114],["encoders.3.22","Block",1,3,null,1848832,53.114],["encoders.3.23","Block",1,3,null,1848832,53.114],["encoders.3.24","Block",1,3,null,1848832,53.114],["encoders.3.25","Block",1,3,null,1848832,53.114],["encoders.3.26","Block",1,3,null,1848832,53.114],["encoders.3.27","Block",1,3,null,1848832,53.114],["downs.3","Conv2d",0,4,null,2098176,15.099],["middle_blks.0","Block",1,4,null,7367680,52.981],["ups.0.0","Conv2d",0,4,null,2097152,15.099],["decoders.0.0","Block",1,3,null,1848832,53.114],["ups.1.0","Conv2d",0,3,null,524288,15.099],["decoders.1.0","Block",1,2,null,465664,53.379],["ups.2.0","Conv2d",0,2,null,131072,15.099],["decoders.2.0","Block",1,1,null,118144,53.91],["ups.3.0","Conv2d",0,1,null,32768,15.099],["decoders.3.0","Block",1,0,null,30400,54.972],["ending","Conv2d",0,0,null,1731,3.185]]},{"model":"dbis-Concertormer","source":"Concertormer","method":"Concertormer","venue":"ICCV 2025","video":false,"params":50535664,"gflops":6796.8,"frames":1,"cells":[["intro","Conv2d",0,0,null,1344,2.548],["encoders.0.0","CSABlock",1,0,null,51830,96.162],["encoders.0.1","CSABlock",1,0,null,51830,96.162],["encoders.0.2","CSABlock",1,0,null,51830,96.162],["encoders.0.3","CSABlock",1,0,null,51830,96.162],["encoders.0.4","CSABlock",1,0,null,51830,96.162],["encoders.0.5","CSABlock",1,0,null,51830,96.162],["downs.0","Conv2d",0,1,null,18528,9.06],["intros.0","Conv2d",0,1,null,2688,1.274],["encoders.1.0","CSABlock",1,1,null,205392,85.309],["encoders.1.1","CSABlock",1,1,null,205200,85.309],["encoders.1.2","CSABlock",1,1,null,205200,85.309],["encoders.1.3","CSABlock",1,1,null,205200,85.309],["encoders.1.4","CSABlock",1,1,null,205200,85.309],["encoders.1.5","CSABlock",1,1,null,205200,85.309],["encoders.1.6","CSABlock",1,1,null,205200,85.309],["encoders.1.7","CSABlock",1,1,null,205200,85.309],["downs.1","Conv2d",0,2,null,73920,9.06],["intros.1","Conv2d",0,2,null,5376,0.637],["encoders.2.0","CSABlock",1,2,null,816944,80.479],["encoders.2.1","CSABlock",1,2,null,816560,80.479],["encoders.2.2","CSABlock",1,2,null,816560,80.479],["encoders.2.3","CSABlock",1,2,null,816560,80.479],["encoders.2.4","CSABlock",1,2,null,816560,80.479],["encoders.2.5","CSABlock",1,2,null,816560,80.479],["encoders.2.6","CSABlock",1,2,null,816560,80.479],["encoders.2.7","CSABlock",1,2,null,816560,80.479],["encoders.2.8","CSABlock",1,2,null,816560,80.479],["encoders.2.9","CSABlock",1,2,null,816560,80.479],["encoders.2.10","CSABlock",1,2,null,816560,80.479],["encoders.2.11","CSABlock",1,2,null,816560,80.479],["encoders.2.12","CSABlock",1,2,null,816560,80.479],["encoders.2.13","CSABlock",1,2,null,816560,80.479],["encoders.2.14","CSABlock",1,2,null,816560,80.479],["encoders.2.15","CSABlock",1,2,null,816560,80.479],["encoders.2.16","CSABlock",1,2,null,816560,80.479],["encoders.2.17","CSABlock",1,2,null,816560,80.479],["encoders.2.18","CSABlock",1,2,null,816560,80.479],["encoders.2.19","CSABlock",1,2,null,816560,80.479],["encoders.2.20","CSABlock",1,2,null,816560,80.479],["encoders.2.21","CSABlock",1,2,null,816560,80.479],["encoders.2.22","CSABlock",1,2,null,816560,80.479],["encoders.2.23","CSABlock",1,2,null,816560,80.479],["downs.2","Conv2d",0,3,null,295296,9.06],["intros.2","Conv2d",0,3,null,10752,0.319],["middle_blks.0","CSABlock",1,3,null,3258528,80.447],["middle_blks.1","CSABlock",1,3,null,3257760,80.447],["ups.0.0","Conv2d",0,3,null,294912,9.06],["decoders.0.0","CSABlock",1,2,null,816944,80.479],["decoders.0.1","CSABlock",1,2,null,816560,80.479],["decoders.0.2","CSABlock",1,2,null,816560,80.479],["decoders.0.3","CSABlock",1,2,null,816560,80.479],["decoders.0.4","CSABlock",1,2,null,816560,80.479],["decoders.0.5","CSABlock",1,2,null,816560,80.479],["decoders.0.6","CSABlock",1,2,null,816560,80.479],["decoders.0.7","CSABlock",1,2,null,816560,80.479],["decoders.0.8","CSABlock",1,2,null,816560,80.479],["decoders.0.9","CSABlock",1,2,null,816560,80.479],["decoders.0.10","CSABlock",1,2,null,816560,80.479],["decoders.0.11","CSABlock",1,2,null,816560,80.479],["decoders.0.12","CSABlock",1,2,null,816560,80.479],["decoders.0.13","CSABlock",1,2,null,816560,80.479],["decoders.0.14","CSABlock",1,2,null,816560,80.479],["decoders.0.15","CSABlock",1,2,null,816560,80.479],["decoders.0.16","CSABlock",1,2,null,816560,80.479],["decoders.0.17","CSABlock",1,2,null,816560,80.479],["decoders.0.18","CSABlock",1,2,null,816560,80.479],["decoders.0.19","CSABlock",1,2,null,816560,80.479],["decoders.0.20","CSABlock",1,2,null,816560,80.479],["decoders.0.21","CSABlock",1,2,null,816560,80.479],["decoders.0.22","CSABlock",1,2,null,816560,80.479],["decoders.0.23","CSABlock",1,2,null,816560,80.479],["ups.1.0","Conv2d",0,2,null,73728,9.06],["decoders.1.0","CSABlock",1,1,null,205392,85.309],["decoders.1.1","CSABlock",1,1,null,205200,85.309],["decoders.1.2","CSABlock",1,1,null,205200,85.309],["decoders.1.3","CSABlock",1,1,null,205200,85.309],["decoders.1.4","CSABlock",1,1,null,205200,85.309],["decoders.1.5","CSABlock",1,1,null,205200,85.309],["decoders.1.6","CSABlock",1,1,null,205200,85.309],["decoders.1.7","CSABlock",1,1,null,205200,85.309],["ups.2.0","Conv2d",0,1,null,18432,9.06],["decoders.2.0","CSABlock",1,0,null,51926,96.162],["decoders.2.1","CSABlock",1,0,null,51830,96.162],["decoders.2.2","CSABlock",1,0,null,51830,96.162],["decoders.2.3","CSABlock",1,0,null,51830,96.162],["decoders.2.4","CSABlock",1,0,null,51830,96.162],["decoders.2.5","CSABlock",1,0,null,51830,96.162],["decoders.2.6","CSABlock",1,0,null,51830,96.162],["decoders.2.7","CSABlock",1,0,null,51830,96.162],["ending","Conv2d",0,0,null,1299,2.548]]},{"model":"dbis-Concertormer-lite","source":"Concertormer-lite","method":"Concertormer-lite","venue":"ICCV 2025","video":false,"params":28985644,"gflops":3605.8,"frames":1,"cells":[["intro","Conv2d",0,0,null,1344,2.548],["encoders.0.0","CSABlock",1,0,null,51830,96.162],["encoders.0.1","CSABlock",1,0,null,51830,96.162],["encoders.0.2","CSABlock",1,0,null,51830,96.162],["encoders.0.3","CSABlock",1,0,null,51830,96.162],["downs.0","Conv2d",0,1,null,18528,9.06],["intros.0","Conv2d",0,1,null,2688,1.274],["encoders.1.0","CSABlock",1,1,null,205392,85.309],["encoders.1.1","CSABlock",1,1,null,205200,85.309],["encoders.1.2","CSABlock",1,1,null,205200,85.309],["encoders.1.3","CSABlock",1,1,null,205200,85.309],["downs.1","Conv2d",0,2,null,73920,9.06],["intros.1","Conv2d",0,2,null,5376,0.637],["encoders.2.0","CSABlock",1,2,null,816944,80.479],["encoders.2.1","CSABlock",1,2,null,816560,80.479],["encoders.2.2","CSABlock",1,2,null,816560,80.479],["encoders.2.3","CSABlock",1,2,null,816560,80.479],["encoders.2.4","CSABlock",1,2,null,816560,80.479],["encoders.2.5","CSABlock",1,2,null,816560,80.479],["encoders.2.6","CSABlock",1,2,null,816560,80.479],["encoders.2.7","CSABlock",1,2,null,816560,80.479],["encoders.2.8","CSABlock",1,2,null,816560,80.479],["encoders.2.9","CSABlock",1,2,null,816560,80.479],["encoders.2.10","CSABlock",1,2,null,816560,80.479],["encoders.2.11","CSABlock",1,2,null,816560,80.479],["downs.2","Conv2d",0,3,null,295296,9.06],["intros.2","Conv2d",0,3,null,10752,0.319],["middle_blks.0","CSABlock",1,3,null,3258528,80.447],["middle_blks.1","CSABlock",1,3,null,3257760,80.447],["ups.0.0","Conv2d",0,3,null,294912,9.06],["decoders.0.0","CSABlock",1,2,null,816944,80.479],["decoders.0.1","CSABlock",1,2,null,816560,80.479],["decoders.0.2","CSABlock",1,2,null,816560,80.479],["decoders.0.3","CSABlock",1,2,null,816560,80.479],["decoders.0.4","CSABlock",1,2,null,816560,80.479],["decoders.0.5","CSABlock",1,2,null,816560,80.479],["decoders.0.6","CSABlock",1,2,null,816560,80.479],["decoders.0.7","CSABlock",1,2,null,816560,80.479],["decoders.0.8","CSABlock",1,2,null,816560,80.479],["decoders.0.9","CSABlock",1,2,null,816560,80.479],["decoders.0.10","CSABlock",1,2,null,816560,80.479],["decoders.0.11","CSABlock",1,2,null,816560,80.479],["ups.1.0","Conv2d",0,2,null,73728,9.06],["decoders.1.0","CSABlock",1,1,null,205392,85.309],["decoders.1.1","CSABlock",1,1,null,205200,85.309],["decoders.1.2","CSABlock",1,1,null,205200,85.309],["decoders.1.3","CSABlock",1,1,null,205200,85.309],["ups.2.0","Conv2d",0,1,null,18432,9.06],["decoders.2.0","CSABlock",1,0,null,51926,96.162],["decoders.2.1","CSABlock",1,0,null,51830,96.162],["decoders.2.2","CSABlock",1,0,null,51830,96.162],["decoders.2.3","CSABlock",1,0,null,51830,96.162],["ending","Conv2d",0,0,null,1299,2.548]]},{"model":"dbis-Turtle","source":"Turtle","method":"Turtle","venue":"NeurIPS 2024","video":true,"params":59079548,"gflops":6981.6,"frames":1,"cells":[["input_projection","Conv2d",0,0,null,1728,3.256],["encoder_level1.transformer_blocks.0","TurtleAttnBlock",1,0,null,34816,63.911],["encoder_level1.transformer_blocks.1","TurtleAttnBlock",1,0,null,34816,63.911],["down1_2.body.0","Conv2d",0,0,null,18432,34.729],["encoder_level2.transformer_blocks.0","TurtleAttnBlock",1,1,null,135168,62.825],["encoder_level2.transformer_blocks.1","TurtleAttnBlock",1,1,null,135168,62.825],["encoder_level2.transformer_blocks.2","TurtleAttnBlock",1,1,null,135168,62.825],["encoder_level2.transformer_blocks.3","TurtleAttnBlock",1,1,null,135168,62.825],["encoder_level2.transformer_blocks.4","TurtleAttnBlock",1,1,null,135168,62.825],["encoder_level2.transformer_blocks.5","TurtleAttnBlock",1,1,null,135168,62.825],["down2_3.body.0","Conv2d",0,1,null,73728,34.729],["encoder_level3.transformer_blocks.0","TurtleAttnBlock",1,2,null,773124,94.781],["encoder_level3.transformer_blocks.1","TurtleAttnBlock",1,2,null,773124,94.781],["encoder_level3.transformer_blocks.2","TurtleAttnBlock",1,2,null,773124,94.781],["encoder_level3.transformer_blocks.3","TurtleAttnBlock",1,2,null,773124,94.781],["encoder_level3.transformer_blocks.4","TurtleAttnBlock",1,2,null,773124,94.781],["encoder_level3.transformer_blocks.5","TurtleAttnBlock",1,2,null,773124,94.781],["encoder_level3.transformer_blocks.6","TurtleAttnBlock",1,2,null,773124,94.781],["encoder_level3.transformer_blocks.7","TurtleAttnBlock",1,2,null,773124,94.781],["encoder_level3.transformer_blocks.8","TurtleAttnBlock",1,2,null,773124,94.781],["encoder_level3.transformer_blocks.9","TurtleAttnBlock",1,2,null,773124,94.781],["down3_4.body.0","Conv2d",0,2,null,294912,34.729],["latent.transformer_blocks.0","TurtleAttnBlock",1,3,null,3053576,93.696],["latent.transformer_blocks.1","TurtleAttnBlock",1,3,null,3053576,91.766],["latent.transformer_blocks.2","TurtleAttnBlock",1,3,null,3053576,91.766],["latent.transformer_blocks.3","TurtleAttnBlock",1,3,null,3053576,91.766],["latent.transformer_blocks.4","TurtleAttnBlock",1,3,null,3053576,91.766],["latent.transformer_blocks.5","TurtleAttnBlock",1,3,null,3053576,91.766],["latent.transformer_blocks.6","TurtleAttnBlock",1,3,null,3053576,91.766],["latent.transformer_blocks.7","TurtleAttnBlock",1,3,null,3053576,91.766],["latent.transformer_blocks.8","TurtleAttnBlock",1,3,null,3053576,91.766],["latent.transformer_blocks.9","TurtleAttnBlock",1,3,null,3053576,91.766],["latent.transformer_blocks.10","TurtleAttnBlock",1,3,null,3053576,93.696],["up4_3.body.0","Conv2d",0,3,null,4718592,138.915],["reduce_chan_level3","Conv2d",0,2,null,131072,15.435],["decoder_level3.transformer_blocks.0","TurtleAttnBlock",1,2,null,773124,94.781],["decoder_level3.transformer_blocks.1","TurtleAttnBlock",1,2,null,773124,94.781],["decoder_level3.transformer_blocks.2","TurtleAttnBlock",1,2,null,773124,94.781],["decoder_level3.transformer_blocks.3","TurtleAttnBlock",1,2,null,773124,94.781],["decoder_level3.transformer_blocks.4","TurtleAttnBlock",1,2,null,773124,94.781],["decoder_level3.transformer_blocks.5","TurtleAttnBlock",1,2,null,773124,94.781],["decoder_level3.transformer_blocks.6","TurtleAttnBlock",1,2,null,773124,94.781],["decoder_level3.transformer_blocks.7","TurtleAttnBlock",1,2,null,773124,94.781],["decoder_level3.transformer_blocks.8","TurtleAttnBlock",1,2,null,773124,94.781],["decoder_level3.transformer_blocks.9","TurtleAttnBlock",1,2,null,1456389,454.459],["up3_2.body.0","Conv2d",0,2,null,1179648,138.915],["reduce_chan_level2","Conv2d",0,1,null,32768,15.435],["decoder_level2.transformer_blocks.0","TurtleAttnBlock",1,1,null,198146,100.81],["decoder_level2.transformer_blocks.1","TurtleAttnBlock",1,1,null,198146,100.81],["decoder_level2.transformer_blocks.2","TurtleAttnBlock",1,1,null,198146,100.81],["decoder_level2.transformer_blocks.3","TurtleAttnBlock",1,1,null,198146,100.81],["decoder_level2.transformer_blocks.4","TurtleAttnBlock",1,1,null,198146,100.81],["decoder_level2.transformer_blocks.5","TurtleAttnBlock",1,1,null,400515,678.237],["up2_1.body.0","Conv2d",0,1,null,294912,138.915],["reduce_chan_level1","Conv2d",0,0,null,8192,15.435],["decoder_level1.transformer_blocks.0","TurtleAttnBlock",1,0,null,51969,112.869],["decoder_level1.transformer_blocks.1","TurtleAttnBlock",1,0,null,161346,1146.594],["refinement.transformer_blocks.0","TurtleAttnBlock",1,0,null,51776,96.348],["refinement.transformer_blocks.1","TurtleAttnBlock",1,0,null,51776,96.348],["ending","Conv2d",0,0,null,1731,3.256]]},{"model":"dbis-DSTNetPlus-L","source":"DSTNetPlus-L","method":"DSTNet+ L","venue":"TPAMI 2025","video":true,"params":14087139,"gflops":4449.1,"frames":8,"cells":[["feat_extractor","Conv2d",0,0,null,2688,4.778],["x_wave_2_conv1","Conv2d",0,1,null,27936,12.74],["x_wave_2_conv2","Conv2d",0,1,null,27936,12.74],["backward_propagation.fusion","PAGF",1,1,null,120096,55.208],["backward_propagation.kernel_conv_pixel.Block1.0","ResBlock",1,2,null,166080,19.11],["backward_propagation.kernel_conv_pixel.Block1.1","ResBlock",1,2,null,166080,19.11],["backward_propagation.kernel_conv_pixel.Block1.2","ResBlock",1,2,null,166080,19.11],["backward_propagation.kernel_conv_pixel.Block1.3","ResBlock",1,2,null,166080,19.11],["backward_propagation.kernel_conv_pixel.Block1.4","ResBlock",1,2,null,166080,19.11],["backward_propagation.kernel_conv_pixel.Block2.0","ResBlock",1,3,null,166080,4.778],["backward_propagation.kernel_conv_pixel.Block2.1","ResBlock",1,3,null,166080,4.778],["backward_propagation.kernel_conv_pixel.Block2.2","ResBlock",1,3,null,166080,4.778],["backward_propagation.kernel_conv_pixel.Block2.3","ResBlock",1,3,null,166080,4.778],["backward_propagation.kernel_conv_pixel.Block2.4","ResBlock",1,3,null,166080,4.778],["backward_propagation.kernel_conv_pixel.Block3.0","ResBlock",1,4,null,166080,1.194],["backward_propagation.kernel_conv_pixel.Block3.1","ResBlock",1,4,null,166080,1.194],["backward_propagation.kernel_conv_pixel.Block3.2","ResBlock",1,4,null,166080,1.194],["backward_propagation.kernel_conv_pixel.Block3.3","ResBlock",1,4,null,166080,1.194],["backward_propagation.kernel_conv_pixel.Block3.4","ResBlock",1,4,null,166080,1.194],["backward_propagation.kernel_conv_pixel.tokernel","Conv2d",0,1,null,249696,114.662],["backward_propagation.resblock_bcakward2d.main.0.0","ResidualBlockNoBN",1,1,null,166080,76.441],["backward_propagation.resblock_bcakward2d.main.0.1","ResidualBlockNoBN",1,1,null,166080,76.441],["backward_propagation.resblock_bcakward2d.main.0.2","ResidualBlockNoBN",1,1,null,166080,76.441],["backward_propagation.resblock_bcakward2d.main.0.3","ResidualBlockNoBN",1,1,null,166080,76.441],["backward_propagation.resblock_bcakward2d.main.0.4","ResidualBlockNoBN",1,1,null,166080,76.441],["backward_propagation.resblock_bcakward2d.main.0.5","ResidualBlockNoBN",1,1,null,166080,76.441],["backward_propagation.resblock_bcakward2d.main.0.6","ResidualBlockNoBN",1,1,null,166080,76.441],["backward_propagation.resblock_bcakward2d.main.0.7","ResidualBlockNoBN",1,1,null,166080,76.441],["backward_propagation.resblock_bcakward2d.main.0.8","ResidualBlockNoBN",1,1,null,166080,76.441],["backward_propagation.resblock_bcakward2d.main.0.9","ResidualBlockNoBN",1,1,null,166080,76.441],["backward_propagation.resblock_bcakward2d.main.0.10","ResidualBlockNoBN",1,1,null,166080,76.441],["backward_propagation.resblock_bcakward2d.main.0.11","ResidualBlockNoBN",1,1,null,166080,76.441],["backward_propagation.resblock_bcakward2d.main.0.12","ResidualBlockNoBN",1,1,null,166080,76.441],["backward_propagation.resblock_bcakward2d.main.0.13","ResidualBlockNoBN",1,1,null,166080,76.441],["backward_propagation.resblock_bcakward2d.main.0.14","ResidualBlockNoBN",1,1,null,166080,76.441],["backward_propagation.resblock_bcakward2d.main.0.15","ResidualBlockNoBN",1,1,null,166080,76.441],["backward_propagation.resblock_bcakward2d.main.0.16","ResidualBlockNoBN",1,1,null,166080,76.441],["backward_propagation.resblock_bcakward2d.main.0.17","ResidualBlockNoBN",1,1,null,166080,76.441],["backward_propagation.resblock_bcakward2d.main.0.18","ResidualBlockNoBN",1,1,null,166080,76.441],["backward_propagation.resblock_bcakward2d.main.0.19","ResidualBlockNoBN",1,1,null,166080,76.441],["backward_propagation.resblock_bcakward2d.main.0.20","ResidualBlockNoBN",1,1,null,166080,76.441],["backward_propagation.resblock_bcakward2d.main.0.21","ResidualBlockNoBN",1,1,null,166080,76.441],["backward_propagation.resblock_bcakward2d.main.0.22","ResidualBlockNoBN",1,1,null,166080,76.441],["backward_propagation.resblock_bcakward2d.main.0.23","ResidualBlockNoBN",1,1,null,166080,76.441],["backward_propagation.resblock_bcakward2d.main.0.24","ResidualBlockNoBN",1,1,null,166080,76.441],["forward_propagation.fusion","PAGF",1,1,null,120096,55.208],["forward_propagation.kernel_conv_pixel.Block1.0","ResBlock",1,2,null,166080,19.11],["forward_propagation.kernel_conv_pixel.Block1.1","ResBlock",1,2,null,166080,19.11],["forward_propagation.kernel_conv_pixel.Block1.2","ResBlock",1,2,null,166080,19.11],["forward_propagation.kernel_conv_pixel.Block1.3","ResBlock",1,2,null,166080,19.11],["forward_propagation.kernel_conv_pixel.Block1.4","ResBlock",1,2,null,166080,19.11],["forward_propagation.kernel_conv_pixel.Block2.0","ResBlock",1,3,null,166080,4.778],["forward_propagation.kernel_conv_pixel.Block2.1","ResBlock",1,3,null,166080,4.778],["forward_propagation.kernel_conv_pixel.Block2.2","ResBlock",1,3,null,166080,4.778],["forward_propagation.kernel_conv_pixel.Block2.3","ResBlock",1,3,null,166080,4.778],["forward_propagation.kernel_conv_pixel.Block2.4","ResBlock",1,3,null,166080,4.778],["forward_propagation.kernel_conv_pixel.Block3.0","ResBlock",1,4,null,166080,1.194],["forward_propagation.kernel_conv_pixel.Block3.1","ResBlock",1,4,null,166080,1.194],["forward_propagation.kernel_conv_pixel.Block3.2","ResBlock",1,4,null,166080,1.194],["forward_propagation.kernel_conv_pixel.Block3.3","ResBlock",1,4,null,166080,1.194],["forward_propagation.kernel_conv_pixel.Block3.4","ResBlock",1,4,null,166080,1.194],["forward_propagation.kernel_conv_pixel.tokernel","Conv2d",0,1,null,249696,114.662],["forward_propagation.resblock_bcakward2d.main.0.0","ResidualBlockNoBN",1,1,null,166080,76.441],["forward_propagation.resblock_bcakward2d.main.0.1","ResidualBlockNoBN",1,1,null,166080,76.441],["forward_propagation.resblock_bcakward2d.main.0.2","ResidualBlockNoBN",1,1,null,166080,76.441],["forward_propagation.resblock_bcakward2d.main.0.3","ResidualBlockNoBN",1,1,null,166080,76.441],["forward_propagation.resblock_bcakward2d.main.0.4","ResidualBlockNoBN",1,1,null,166080,76.441],["forward_propagation.resblock_bcakward2d.main.0.5","ResidualBlockNoBN",1,1,null,166080,76.441],["forward_propagation.resblock_bcakward2d.main.0.6","ResidualBlockNoBN",1,1,null,166080,76.441],["forward_propagation.resblock_bcakward2d.main.0.7","ResidualBlockNoBN",1,1,null,166080,76.441],["forward_propagation.resblock_bcakward2d.main.0.8","ResidualBlockNoBN",1,1,null,166080,76.441],["forward_propagation.resblock_bcakward2d.main.0.9","ResidualBlockNoBN",1,1,null,166080,76.441],["forward_propagation.resblock_bcakward2d.main.0.10","ResidualBlockNoBN",1,1,null,166080,76.441],["forward_propagation.resblock_bcakward2d.main.0.11","ResidualBlockNoBN",1,1,null,166080,76.441],["forward_propagation.resblock_bcakward2d.main.0.12","ResidualBlockNoBN",1,1,null,166080,76.441],["forward_propagation.resblock_bcakward2d.main.0.13","ResidualBlockNoBN",1,1,null,166080,76.441],["forward_propagation.resblock_bcakward2d.main.0.14","ResidualBlockNoBN",1,1,null,166080,76.441],["forward_propagation.resblock_bcakward2d.main.0.15","ResidualBlockNoBN",1,1,null,166080,76.441],["forward_propagation.resblock_bcakward2d.main.0.16","ResidualBlockNoBN",1,1,null,166080,76.441],["forward_propagation.resblock_bcakward2d.main.0.17","ResidualBlockNoBN",1,1,null,166080,76.441],["forward_propagation.resblock_bcakward2d.main.0.18","ResidualBlockNoBN",1,1,null,166080,76.441],["forward_propagation.resblock_bcakward2d.main.0.19","ResidualBlockNoBN",1,1,null,166080,76.441],["forward_propagation.resblock_bcakward2d.main.0.20","ResidualBlockNoBN",1,1,null,166080,76.441],["forward_propagation.resblock_bcakward2d.main.0.21","ResidualBlockNoBN",1,1,null,166080,76.441],["forward_propagation.resblock_bcakward2d.main.0.22","ResidualBlockNoBN",1,1,null,166080,76.441],["forward_propagation.resblock_bcakward2d.main.0.23","ResidualBlockNoBN",1,1,null,166080,76.441],["forward_propagation.resblock_bcakward2d.main.0.24","ResidualBlockNoBN",1,1,null,166080,76.441],["recons","Conv2d",0,0,null,2595,4.778]]},{"model":"dbis-BSSTNet","source":"BSSTNet","method":"BSSTNet","venue":"CVPR 2024","video":true,"params":43721290,"gflops":7596.2,"frames":8,"cells":[["raft","RAFT (fixed)",1,0,null,5257536,855.919],["bsst.blur_motion_refine.downsample.0 .. bsst.blur_motion_refine.encoder1.0.conv2.0","layers",0,3,null,14784,1.474],["bsst.blur_motion_refine.encoder1.2.conv1.0 .. bsst.blur_motion_refine.decoder1.0","layers",0,4,null,1460256,48.408],["bsst.blur_motion_refine.decoder1.2.conv .. bsst.blur_motion_refine.upsample.0","layers",0,3,null,27712,2.775],["bsst.blur_motion_refine.upsample.2.conv","Conv2d",0,2,null,578,0.231],["bsst.concat.0 .. bsst.concat.2.CA.conv_du.2","layers",0,0,null,83648,276.925],["bsst.down01.0","Conv2d",0,1,null,36864,33.823],["bsst.encoder_level1.body.0 .. bsst.encoder_level1.CA.conv_du.2","layers",0,1,null,81920,67.646],["bsst.encoder_level1_1.body.0 .. bsst.encoder_level1_1.CA.conv_du.2","layers",0,1,null,81920,67.646],["bsst.down12.0","Conv2d",0,2,null,110592,25.367],["bsst.encoder_level2.body.0 .. bsst.encoder_level2.CA.conv_du.2","layers",0,2,null,737280,152.207],["bsst.encoder_level2_1.body.0 .. bsst.encoder_level2_1.CA.conv_du.2","layers",0,2,null,737280,152.207],["bsst.backbone.backward_1.0","Conv2d",0,2,null,663744,152.203],["bsst.backbone.backward_1.2","CAB1",1,2,null,265536,43.868],["bsst.deform_align.backward_1","BlurGuidedAlignment",1,2,null,3085680,485.89],["bsst.backbone.forward_1.0","Conv2d",0,2,null,995520,228.304],["bsst.backbone.forward_1.2","CAB1",1,2,null,265536,43.868],["bsst.deform_align.forward_1","BlurGuidedAlignment",1,2,null,3085680,485.89],["bsst.backbone.backward_2.0","Conv2d",0,2,null,1327296,304.406],["bsst.backbone.backward_2.2","CAB1",1,2,null,265536,43.868],["bsst.deform_align.backward_2","BlurGuidedAlignment",1,2,null,3085680,485.89],["bsst.backbone.forward_2.0","Conv2d",0,2,null,1659072,380.507],["bsst.backbone.forward_2.2","CAB1",1,2,null,265536,43.868],["bsst.deform_align.forward_2","BlurGuidedAlignment",1,2,null,3085680,485.89],["bsst.reconstruction.main.1 .. bsst.reconstruction.main.3","layers",0,2,null,553536,126.836],["bsst.reconstruction.main.5.0.residual_group.blocks.0","STL",1,2,null,301074,78.92],["bsst.reconstruction.main.5.0.residual_group.blocks.1","STL",1,2,null,301074,78.92],["bsst.reconstruction.main.5.0.linear","Linear",0,2,null,37056,8.456],["bsst.reconstruction.main.5.1.residual_group.blocks.0","STL",1,2,null,301074,78.92],["bsst.reconstruction.main.5.1.residual_group.blocks.1","STL",1,2,null,301074,78.92],["bsst.reconstruction.main.5.1.linear .. bsst.reconstruction.main.7","layers",0,2,null,37440,8.456],["bsst.softsplit.embedding","Linear",0,2,null,2458112,140.929],["bsst.transsqattn.transformer.0","TemporalSparseTransformer",1,3,null,2086888,135.791],["bsst.transsqattn.transformer.1","TemporalSparseTransformer",1,3,null,2086888,135.791],["bsst.transsqattn.transformer.2","TemporalSparseTransformer",1,3,null,2086888,135.791],["bsst.transsqattn.transformer.3","TemporalSparseTransformer",1,3,null,2086888,135.791],["bsst.softcomp.embedding","Linear",0,3,null,2462400,140.929],["bsst.softcomp.bias_conv","Conv2d",0,2,null,331968,76.101],["bsst.cabattn.0","CAB2",1,2,null,344448,61.881],["bsst.cabattn.1","CAB1",1,2,null,268608,44.573],["bsst.skip_attn1.body.0 .. bsst.skip_attn1.CA.conv_du.2","layers",0,1,null,81920,67.646],["bsst.up21.up.1","Conv2d",0,1,null,12288,11.274],["bsst.decoder_level1","ShiftBlock",1,1,null,275328,190.845],["bsst.decoder_level1_1","ShiftBlock",1,1,null,275328,190.845],["bsst.upsample0.upsample_conv","Conv2d",0,1,null,147712,135.291],["bsst.conv_hr0","Conv2d",0,0,null,36864,135.291],["bsst.skip_conv.body.0 .. bsst.skip_conv.CA.conv_du.2","layers",0,0,null,81920,270.583],["bsst.out_conv.body.0 .. bsst.out_conv.CA.conv_du.2","layers",0,0,null,81920,270.583],["bsst.last_conv","Conv2d",0,0,null,1728,6.342]]}]}</script>
+<script>
+  /* 27.11: anatomy of the networks (results/dbis/anatomy.json, tools/anatomy.py). cell = [name, type, block, level,
+     channels, params, gflops]; level = log2(the network's input height / the cell's output height) */
+  (function () {
+    var A = JSON.parse(document.getElementById("anatomy-data").textContent);
+    var root = document.getElementById("anatomy");
+    if (!A || !root) { if (root) root.hidden = true; return; }
+    var D = A.models, LEVELS = ["1/1", "1/2", "1/4", "1/8", "1/16", "1/32"];
+    var COLORS = { params: "Parameters", flops: "FLOPs" }, WIDTHS = { blocks: "One per block", flops: "By FLOPs", params: "By parameters" };
+    var st = { models: new Set(D.map(function (d) { return d.model; })), color: "params", width: "blocks", level: null, cell: null };
+    var val = function (c, k) { return k === "params" ? c[5] : c[6]; };
+    var fmtP = function (p) { return p >= 1e6 ? (p / 1e6).toFixed(p >= 1e7 ? 1 : 2) + " M" : p >= 1e3 ? (p / 1e3).toFixed(0) + " k" : String(p); };
+    var fmtF = function (g) { return g >= 1000 ? (g / 1000).toFixed(2) + " TFLOPs" : g >= 10 ? g.toFixed(0) + " GFLOPs" : g.toFixed(1) + " GFLOPs"; };
+    var short = function (m) { return m.replace(/^dbis-/, ""); };
+    var heat = function (t) { return "color-mix(in oklch, var(--heat-hi) " + Math.round(Math.max(0, Math.min(1, t)) * 100) + "%, var(--heat-lo))"; };
+    var NS = "http://www.w3.org/2000/svg";
+    var el = function (tag, attrs) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); return e; };
+    // one log scale per metric over the blocks of every network (the layers between them sit below it)
+    var RANGE = {};
+    ["params", "flops"].forEach(function (k) {
+      var v = [];
+      D.forEach(function (d) { d.cells.forEach(function (c) { if (c[2] && val(c, k) > 0) v.push(val(c, k)); }); });
+      RANGE[k] = [Math.log10(Math.min.apply(null, v)), Math.log10(Math.max.apply(null, v))];
+    });
+    var tOf = function (v, k) { return v > 0 ? (Math.log10(v) - RANGE[k][0]) / (RANGE[k][1] - RANGE[k][0]) : -1; };
+    function group(id, items, on, set) {
+      var g = document.getElementById(id), bs = {};
+      Object.keys(items).forEach(function (k) {
+        var b = document.createElement("button");
+        b.type = "button"; b.className = "an-b"; b.id = id + "-" + k;
+        if (items[k].dot) { var i = document.createElement("i"); i.style.background = items[k].dot; b.append(i); }
+        b.append(items[k].label || items[k]);
+        b.addEventListener("click", function () { set(k); render(); });
+        g.append(b); bs[k] = b;
+      });
+      return function () { Object.keys(bs).forEach(function (k) { bs[k].setAttribute("aria-pressed", on(k)); }); };
+    }
+    var models = {};
+    D.forEach(function (d) { models[d.model] = { label: short(d.model), dot: d.video ? "var(--vid)" : "var(--img)" }; });
+    var syncM = group("an-models", models, function (k) { return st.models.has(k); }, function (k) {
+      if (st.models.has(k) && st.models.size > 1) st.models.delete(k); else st.models.add(k);
+      st.cell = null;
+    });
+    var syncC = group("an-color", COLORS, function (k) { return st.color === k; }, function (k) { st.color = k; });
+    var syncW = group("an-width", WIDTHS, function (k) { return st.width === k; }, function (k) { st.width = k; });
+    var shown = function () { return D.filter(function (d) { return st.models.has(d.model); }); };
+    var nLevels = function () {
+      return Math.max.apply(null, shown().map(function (d) { return Math.max.apply(null, d.cells.map(function (c) { return c[3]; })); })) + 1;
+    };
+
+    function share() {
+      var k = st.color, t = document.getElementById("an-share"), nl = nLevels();
+      t.innerHTML = "";
+      var head = t.insertRow(), th = document.createElement("th");
+      th.className = "r"; head.append(th);
+      for (var l = 0; l < nl; l++) { th = document.createElement("th"); th.textContent = LEVELS[l]; head.append(th); }
+      th = document.createElement("th"); th.textContent = "total"; head.append(th);
+      shown().forEach(function (d) {
+        var tot = 0, by = [];
+        for (var l = 0; l < nl; l++) by.push(0);
+        d.cells.forEach(function (c) { tot += val(c, k); by[c[3]] += val(c, k); });
+        var tr = t.insertRow(), h = document.createElement("th");
+        h.className = "r"; h.textContent = short(d.model); tr.append(h);
+        by.forEach(function (x, i) {
+          var s = x / tot, td = tr.insertCell(), r = Math.sqrt(s);
+          td.style.background = s > 0 ? heat(r) : "var(--heat-empty)";
+          td.style.color = r > .55 ? "var(--paper)" : "var(--ink)";
+          td.textContent = s > 0 ? (s >= .995 ? "100" : (s * 100).toFixed(s < .1 ? 1 : 0)) + "%" : "–";
+          td.tabIndex = 0;
+          if (st.level === i) td.className = "on";
+          var pick = function () { st.level = st.level === i ? null : i; st.cell = null; render(); };
+          td.addEventListener("click", pick);
+          td.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+        });
+        var c = tr.insertCell();
+        c.className = "t"; c.textContent = k === "params" ? fmtP(tot) : fmtF(tot);
+      });
+      document.getElementById("an-share-title").textContent =
+        k === "params" ? "Share of the parameters at each scale" : "Share of the FLOPs at each scale";
+    }
+    function niceStep(max) {
+      var raw = max / 5, p = Math.pow(10, Math.floor(Math.log10(raw)));
+      return [1, 2, 2.5, 5, 10].map(function (m) { return m * p; }).filter(function (s) { return s >= raw; })[0];
+    }
+    function detail(d, c) {
+      var tp = 0, tf = 0;
+      d.cells.forEach(function (x) { tp += x[5]; tf += x[6]; });
+      var pct = function (a, b) { return (a / b * 100).toFixed(a / b < .01 ? 2 : 1) + "%"; };
+      var box = document.getElementById("an-detail"), code = document.createElement("code"), b = document.createElement("b");
+      box.textContent = "";
+      b.textContent = short(d.model); code.textContent = c[0];
+      box.append(b, " · ", code, " · " + c[1] + " · scale " + LEVELS[c[3]], document.createElement("br"),
+        fmtP(c[5]) + " parameters (" + pct(c[5], tp) + " of the network) · " + fmtF(c[6]) + " (" + pct(c[6], tf) + ")");
+    }
+    function strips() {
+      var box = document.getElementById("an-strips"), W = Math.max(280, box.clientWidth), gut = 34, rowH = 15, gap = 3;
+      var k = st.color, wk = st.width, ds = shown(), nl = nLevels();
+      var unit = function (c) { return wk === "blocks" ? (c[2] ? 1 : .35) : Math.max(val(c, wk), 0); };
+      var totals = ds.map(function (d) { return d.cells.reduce(function (s, c) { return s + unit(c); }, 0); });
+      var maxTot = Math.max.apply(null, totals);
+      box.innerHTML = "";
+      ds.forEach(function (d, di) {
+        var inner = W - gut - 4, len = wk === "blocks" ? inner : inner * totals[di] / maxTot, sc = len / totals[di];
+        var H = nl * (rowH + gap) + (wk === "blocks" ? 0 : 16), nb = d.cells.filter(function (c) { return c[2]; }).length;
+        var wrap = document.createElement("div"), head = document.createElement("div");
+        wrap.className = "an-strip"; head.className = "an-head";
+        var b = document.createElement("b"), s1 = document.createElement("span"), s2 = document.createElement("span");
+        b.textContent = short(d.model);
+        s1.textContent = d.method + ", " + d.venue + (d.video ? ", video" : "");
+        s2.className = "m";
+        s2.textContent = fmtP(d.params) + " params · " + fmtF(d.gflops) + " per frame · " + nb + " blocks";
+        head.append(b, s1, s2); wrap.append(head);
+        var svg = el("svg", { viewBox: "0 0 " + W + " " + H, role: "img", "class": "an-svg",
+                              "aria-label": short(d.model) + ": blocks by scale, coloured by " + COLORS[k].toLowerCase() });
+        for (var l = 0; l < nl; l++) {
+          var y = l * (rowH + gap);
+          svg.append(el("rect", { x: gut, y: y, width: inner, height: rowH, rx: 2, fill: "var(--paper-2)" }));
+          var tx = el("text", { x: 0, y: y + rowH - 4 }); tx.textContent = LEVELS[l]; svg.append(tx);
+        }
+        var x = gut;
+        d.cells.forEach(function (c, ci) {
+          var w = unit(c) * sc, t = tOf(val(c, k), k), wide = w > 2.5;
+          var r = el("rect", { x: x + (wide ? .4 : 0), y: c[3] * (rowH + gap), width: Math.max(.8, w - (wide ? .8 : 0)), height: rowH,
+                               rx: w > 4 ? 1.5 : 0, fill: t < 0 ? "var(--heat-empty)" : heat(t), "class": "an-cell", tabindex: 0,
+                               opacity: st.level !== null && c[3] !== st.level ? .18 : 1 });
+          if (st.cell && st.cell[0] === d.model && st.cell[1] === ci) { r.setAttribute("stroke", "var(--ink)"); r.setAttribute("stroke-width", 1.5); }
+          var pick = function () { st.cell = [d.model, ci]; detail(d, c); strips(); };
+          r.addEventListener("click", pick);
+          r.addEventListener("mouseenter", function () { detail(d, c); });
+          r.addEventListener("focus", function () { detail(d, c); });
+          r.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+          svg.append(r);
+          x += w;
+        });
+        if (wk !== "blocks") {                         // a shared axis: the same length is the same cost in every network
+          var step = niceStep(maxTot), y0 = nl * (rowH + gap) + 11;
+          var f = wk === "flops" ? function (v) { return v ? (v / 1000).toFixed(v < 1000 ? 1 : 0) + "T" : "0"; }
+                                 : function (v) { return v ? (v / 1e6).toFixed(0) + "M" : "0"; };
+          for (var v = 0; v <= totals[di] + 1e-9; v += step) {
+            var lab = el("text", { x: gut + v * sc, y: y0, "text-anchor": v === 0 ? "start" : "middle" });
+            lab.textContent = f(v); svg.append(lab);
+          }
+        }
+        wrap.append(svg); box.append(wrap);
+      });
+      var lo = Math.pow(10, RANGE[k][0]), hi = Math.pow(10, RANGE[k][1]), ff = k === "params" ? fmtP : fmtF;
+      var lg = document.getElementById("an-legend");
+      lg.textContent = "";
+      [COLORS[k].toLowerCase() + " per block", ff(lo)].forEach(function (txt) { var sp = document.createElement("span"); sp.textContent = txt; lg.append(sp); });
+      var ramp = document.createElement("span"); ramp.className = "an-ramp"; lg.append(ramp);
+      [ff(hi), "(log scale, the same for every network)"].forEach(function (txt) { var sp = document.createElement("span"); sp.textContent = txt; lg.append(sp); });
+      document.getElementById("an-strip-title").textContent = wk === "blocks"
+        ? "Every block, in the order the frame goes through them"
+        : "Every block as wide as its " + (wk === "flops" ? "FLOPs" : "parameters") + ": the same length is the same cost in every network";
+    }
+    function render() { syncM(); syncC(); syncW(); share(); strips(); }
+    render();
+    if (window.ResizeObserver) new ResizeObserver(function () { strips(); }).observe(document.getElementById("an-strips"));
   })();
 </script>
 </body>

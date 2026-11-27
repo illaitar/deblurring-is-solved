@@ -42,6 +42,7 @@
   --focus: #2a78d6;
   --bar-bg: rgba(255, 255, 255, .9);
   --logo-ghost: #55585f; --fast: #c4501f; --on-img: #ffffff;
+  --heat-lo: #f0ecf8; --heat-hi: #3a1d8a; --heat-empty: #f5f6f8;   /* the anatomy heat maps (violet: no other meaning here) */
   /* Geologica: a geometric sans whose d, b, o and p have nearly round counters (the d of the title carries the iris) */
   --sans: "Geologica", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --display: "Geologica", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -60,13 +61,13 @@
   :root:not([data-theme="light"]) {
     color-scheme: dark; --paper: #0e1013; --paper-2: #171a1f; --ink: #eef0f3; --ink-rgb: 238, 240, 243; --ink-72: #b9bdc5;
     --ink-56: #9198a2; --ink-40: #6c727c; --ink-16: #353a42; --ink-8: #23272e; --img: #5c9bea; --vid: #3acb9c; --ours: #f07d4f; --focus: #5c9bea;
-    --bar-bg: rgba(14, 16, 19, .88); --logo-ghost: #c3c6cc; --fast: #f28a5e; --on-img: #0e1013;
+    --bar-bg: rgba(14, 16, 19, .88); --logo-ghost: #c3c6cc; --fast: #f28a5e; --on-img: #0e1013; --heat-lo: #2b2440; --heat-hi: #e2d6ff; --heat-empty: #171a1f;
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark; --paper: #0e1013; --paper-2: #171a1f; --ink: #eef0f3; --ink-rgb: 238, 240, 243; --ink-72: #b9bdc5;
   --ink-56: #9198a2; --ink-40: #6c727c; --ink-16: #353a42; --ink-8: #23272e; --img: #5c9bea; --vid: #3acb9c; --ours: #f07d4f; --focus: #5c9bea;
-  --bar-bg: rgba(14, 16, 19, .88); --logo-ghost: #c3c6cc; --fast: #f28a5e; --on-img: #0e1013;
+  --bar-bg: rgba(14, 16, 19, .88); --logo-ghost: #c3c6cc; --fast: #f28a5e; --on-img: #0e1013; --heat-lo: #2b2440; --heat-hi: #e2d6ff; --heat-empty: #171a1f;
 }
 
 * { box-sizing: border-box; }
@@ -548,6 +549,46 @@ pre.code { margin: 0; padding: .8rem 1rem; background: var(--paper-2); border-ra
 .gd-seg button:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
 .gd-dl dt { color: var(--ink-56); }
 .gd-dl dd { margin: 0; min-width: 0; }
+
+/* 27.11: anatomy of the networks (section 05): a share matrix (network x scale) and one silhouette per network,
+   x = the blocks in the order the forward pass runs them, y = their scale, colour = parameters or FLOPs */
+.an { margin-top: 2.6rem; }
+.an h3 { font: 600 1.25rem/1.25 var(--display); margin: 0 0 .45rem; }
+.an-ctl { display: flex; flex-wrap: wrap; gap: .6rem 1.4rem; align-items: center; margin: 1.1rem 0 1.3rem; }
+.an-g { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; min-width: 0; }
+.an-g > span { font: 500 var(--t-xs)/1 var(--mono); color: var(--ink-56); letter-spacing: .04em; margin-right: .15rem; }
+.an-b { font: 500 var(--t-s)/1.2 var(--sans); color: var(--ink-72); background: var(--paper); border: 1px solid var(--ink-16);
+  border-radius: 999px; padding: .3rem .78rem; cursor: pointer; display: inline-flex; gap: .4rem; align-items: center;
+  transition: background .15s var(--ease), color .15s var(--ease), border-color .15s var(--ease); }
+.an-b:hover { border-color: var(--ink-40); color: var(--ink); }
+.an-b[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.an-b:focus-visible, .an-cell:focus-visible, .an-tab td:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.an-b i { width: .5rem; height: .5rem; border-radius: 50%; display: inline-block; flex: none; }
+.an-sub { font: 600 1rem/1.3 var(--display); margin: 0 0 .55rem; }
+.an-scroll { overflow-x: auto; }
+.an-tab { border-collapse: separate; border-spacing: 3px; font-variant-numeric: tabular-nums; min-width: 24rem; }
+.an-tab th { font: 500 var(--t-xs)/1.2 var(--mono); color: var(--ink-56); text-align: center; padding: 0 .2rem; }
+.an-tab th.r { text-align: left; font: 500 var(--t-s)/1.2 var(--sans); color: var(--ink); padding-right: .6rem; white-space: nowrap; }
+.an-tab td { width: 4.1rem; height: 2.05rem; text-align: center; font-size: var(--t-s); border-radius: 6px; cursor: pointer; }
+.an-tab td.t { background: none; cursor: default; color: var(--ink-72); font: 400 var(--t-xs)/1.2 var(--mono); width: auto;
+  padding-left: .6rem; text-align: left; white-space: nowrap; }
+.an-tab td.on { outline: 2px solid var(--ink); outline-offset: -2px; }
+.an-cap { font-size: var(--t-xs); color: var(--ink-56); margin: .45rem 0 1.6rem; max-width: var(--read); }
+.an-legend { display: flex; flex-wrap: wrap; align-items: center; gap: .55rem; font: 400 var(--t-xs)/1.3 var(--mono);
+  color: var(--ink-56); margin: 0 0 1rem; }
+.an-ramp { width: 8rem; height: .55rem; border-radius: 3px; background: linear-gradient(90deg, var(--heat-lo), var(--heat-hi)); }
+.an-strip { margin-bottom: 1.25rem; }
+.an-head { display: flex; flex-wrap: wrap; gap: .15rem .9rem; align-items: baseline; margin-bottom: .35rem; }
+.an-head b { font-weight: 600; }
+.an-head span { color: var(--ink-72); font-size: var(--t-s); }
+.an-head .m { font: 400 var(--t-xs)/1.3 var(--mono); color: var(--ink-56); }
+.an-svg { display: block; width: 100%; height: auto; overflow: visible; }
+.an-svg text { font-family: var(--mono); font-size: 10px; fill: var(--ink-56); }
+.an-cell { cursor: pointer; }
+.an-detail { position: sticky; bottom: 0; z-index: 2; background: var(--paper-2); border: 1px solid var(--ink-8); border-radius: 10px;
+  padding: .6rem .85rem; font-size: var(--t-s); color: var(--ink-72); min-height: 2.6rem; margin: .4rem 0 1.2rem; }
+.an-detail b { color: var(--ink); font-weight: 600; }
+.an-note { font-size: var(--t-s); color: var(--ink-72); max-width: var(--read); margin: 0 0 .5rem; }
 </style>
 </head>
 <body>
@@ -791,6 +832,24 @@ out = net.restore(frames)              # options: tile, tile_overlap, window, ba
 python -m dbis.convert NAFNet-64 NAFNet-GoPro-width64.pth          # -> weights/dbis/
 python -m dbis.convert BSSTNet BSST_gopro.pth raft-things.pth      # BSST and its RAFT
 python -m dbis.convert DSTNetPlus-L DSTNetPlus_L_gopro.pth</pre>
+    <div class="an" id="anatomy">
+      <h3>Anatomy of the networks</h3>
+      <p class="lead2">Where each network keeps its parameters and where its compute goes, block by block, on one 1280&times;720 frame. Pick the networks to compare; tap a block or a scale for its numbers.</p>
+      <div class="an-ctl">
+        <div class="an-g" id="an-models" role="group" aria-label="Networks"><span>NETWORKS</span></div>
+        <div class="an-g" id="an-color" role="group" aria-label="Colour"><span>COLOUR</span></div>
+        <div class="an-g" id="an-width" role="group" aria-label="Width"><span>WIDTH</span></div>
+      </div>
+      <div class="an-sub" id="an-share-title">Share of the parameters at each scale</div>
+      <div class="an-scroll"><table class="an-tab" id="an-share"></table></div>
+      <p class="an-cap">Scale: the resolution a block works at, relative to the frame the network takes in. Tap a scale to light up its blocks below.</p>
+      <div class="an-sub" id="an-strip-title">Every block, in the order the frame goes through them</div>
+      <div class="an-legend" id="an-legend"></div>
+      <div id="an-strips"></div>
+      <div class="an-detail" id="an-detail" aria-live="polite">Tap a block for its name, size and cost.</div>
+      <p class="an-note">A block is one unit of a network's design (NAFNet's NAF block, Concertormer's CSA block, Turtle's attention block, DSTNet+'s residual blocks, BSSTNet's alignment, sparse transformer and shift blocks); the narrow columns between blocks are the other layers (scale changes, first and last convolutions), and BSSTNet's RAFT, which it keeps fixed, is one cell.</p>
+      <p class="an-note">Counted on our dbis code with PyTorch's FLOP counter on one 1280&times;720 frame (FLOPs = 2 &times; multiply-adds), the frame padded as each network pads it: <code>python tools/anatomy.py</code>. Video networks per frame: DSTNet+ and BSSTNet on an 8-frame clip (BSSTNet on real GoPro frames, since its sparse attention picks tokens by the blur), Turtle on its second frame, with its history. The dbisf versions have the same blocks.</p>
+    </div>
   </section>
 
   <section class="wrap sec" id="start" aria-label="Get started">
@@ -1689,6 +1748,167 @@ python -m dbis.run dbisf-NAFNet-64 blurry.png sharp.png</pre></div>
     fetch("https://api.github.com/repos/illaitar/deblurring-is-solved").then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
       if (j && typeof j.stargazers_count === "number") els.forEach(function (e) { e.textContent = j.stargazers_count.toLocaleString("en-US"); });
     }).catch(function () { /* offline or rate-limited: keep the number of the build */ });
+  })();
+</script>
+<script id="anatomy-data" type="application/json">/*__ANATOMY__*/null</script>
+<script>
+  /* 27.11: anatomy of the networks (results/dbis/anatomy.json, tools/anatomy.py). cell = [name, type, block, level,
+     channels, params, gflops]; level = log2(the network's input height / the cell's output height) */
+  (function () {
+    var A = JSON.parse(document.getElementById("anatomy-data").textContent);
+    var root = document.getElementById("anatomy");
+    if (!A || !root) { if (root) root.hidden = true; return; }
+    var D = A.models, LEVELS = ["1/1", "1/2", "1/4", "1/8", "1/16", "1/32"];
+    var COLORS = { params: "Parameters", flops: "FLOPs" }, WIDTHS = { blocks: "One per block", flops: "By FLOPs", params: "By parameters" };
+    var st = { models: new Set(D.map(function (d) { return d.model; })), color: "params", width: "blocks", level: null, cell: null };
+    var val = function (c, k) { return k === "params" ? c[5] : c[6]; };
+    var fmtP = function (p) { return p >= 1e6 ? (p / 1e6).toFixed(p >= 1e7 ? 1 : 2) + " M" : p >= 1e3 ? (p / 1e3).toFixed(0) + " k" : String(p); };
+    var fmtF = function (g) { return g >= 1000 ? (g / 1000).toFixed(2) + " TFLOPs" : g >= 10 ? g.toFixed(0) + " GFLOPs" : g.toFixed(1) + " GFLOPs"; };
+    var short = function (m) { return m.replace(/^dbis-/, ""); };
+    var heat = function (t) { return "color-mix(in oklch, var(--heat-hi) " + Math.round(Math.max(0, Math.min(1, t)) * 100) + "%, var(--heat-lo))"; };
+    var NS = "http://www.w3.org/2000/svg";
+    var el = function (tag, attrs) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); return e; };
+    // one log scale per metric over the blocks of every network (the layers between them sit below it)
+    var RANGE = {};
+    ["params", "flops"].forEach(function (k) {
+      var v = [];
+      D.forEach(function (d) { d.cells.forEach(function (c) { if (c[2] && val(c, k) > 0) v.push(val(c, k)); }); });
+      RANGE[k] = [Math.log10(Math.min.apply(null, v)), Math.log10(Math.max.apply(null, v))];
+    });
+    var tOf = function (v, k) { return v > 0 ? (Math.log10(v) - RANGE[k][0]) / (RANGE[k][1] - RANGE[k][0]) : -1; };
+    function group(id, items, on, set) {
+      var g = document.getElementById(id), bs = {};
+      Object.keys(items).forEach(function (k) {
+        var b = document.createElement("button");
+        b.type = "button"; b.className = "an-b"; b.id = id + "-" + k;
+        if (items[k].dot) { var i = document.createElement("i"); i.style.background = items[k].dot; b.append(i); }
+        b.append(items[k].label || items[k]);
+        b.addEventListener("click", function () { set(k); render(); });
+        g.append(b); bs[k] = b;
+      });
+      return function () { Object.keys(bs).forEach(function (k) { bs[k].setAttribute("aria-pressed", on(k)); }); };
+    }
+    var models = {};
+    D.forEach(function (d) { models[d.model] = { label: short(d.model), dot: d.video ? "var(--vid)" : "var(--img)" }; });
+    var syncM = group("an-models", models, function (k) { return st.models.has(k); }, function (k) {
+      if (st.models.has(k) && st.models.size > 1) st.models.delete(k); else st.models.add(k);
+      st.cell = null;
+    });
+    var syncC = group("an-color", COLORS, function (k) { return st.color === k; }, function (k) { st.color = k; });
+    var syncW = group("an-width", WIDTHS, function (k) { return st.width === k; }, function (k) { st.width = k; });
+    var shown = function () { return D.filter(function (d) { return st.models.has(d.model); }); };
+    var nLevels = function () {
+      return Math.max.apply(null, shown().map(function (d) { return Math.max.apply(null, d.cells.map(function (c) { return c[3]; })); })) + 1;
+    };
+
+    function share() {
+      var k = st.color, t = document.getElementById("an-share"), nl = nLevels();
+      t.innerHTML = "";
+      var head = t.insertRow(), th = document.createElement("th");
+      th.className = "r"; head.append(th);
+      for (var l = 0; l < nl; l++) { th = document.createElement("th"); th.textContent = LEVELS[l]; head.append(th); }
+      th = document.createElement("th"); th.textContent = "total"; head.append(th);
+      shown().forEach(function (d) {
+        var tot = 0, by = [];
+        for (var l = 0; l < nl; l++) by.push(0);
+        d.cells.forEach(function (c) { tot += val(c, k); by[c[3]] += val(c, k); });
+        var tr = t.insertRow(), h = document.createElement("th");
+        h.className = "r"; h.textContent = short(d.model); tr.append(h);
+        by.forEach(function (x, i) {
+          var s = x / tot, td = tr.insertCell(), r = Math.sqrt(s);
+          td.style.background = s > 0 ? heat(r) : "var(--heat-empty)";
+          td.style.color = r > .55 ? "var(--paper)" : "var(--ink)";
+          td.textContent = s > 0 ? (s >= .995 ? "100" : (s * 100).toFixed(s < .1 ? 1 : 0)) + "%" : "–";
+          td.tabIndex = 0;
+          if (st.level === i) td.className = "on";
+          var pick = function () { st.level = st.level === i ? null : i; st.cell = null; render(); };
+          td.addEventListener("click", pick);
+          td.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+        });
+        var c = tr.insertCell();
+        c.className = "t"; c.textContent = k === "params" ? fmtP(tot) : fmtF(tot);
+      });
+      document.getElementById("an-share-title").textContent =
+        k === "params" ? "Share of the parameters at each scale" : "Share of the FLOPs at each scale";
+    }
+    function niceStep(max) {
+      var raw = max / 5, p = Math.pow(10, Math.floor(Math.log10(raw)));
+      return [1, 2, 2.5, 5, 10].map(function (m) { return m * p; }).filter(function (s) { return s >= raw; })[0];
+    }
+    function detail(d, c) {
+      var tp = 0, tf = 0;
+      d.cells.forEach(function (x) { tp += x[5]; tf += x[6]; });
+      var pct = function (a, b) { return (a / b * 100).toFixed(a / b < .01 ? 2 : 1) + "%"; };
+      var box = document.getElementById("an-detail"), code = document.createElement("code"), b = document.createElement("b");
+      box.textContent = "";
+      b.textContent = short(d.model); code.textContent = c[0];
+      box.append(b, " · ", code, " · " + c[1] + " · scale " + LEVELS[c[3]], document.createElement("br"),
+        fmtP(c[5]) + " parameters (" + pct(c[5], tp) + " of the network) · " + fmtF(c[6]) + " (" + pct(c[6], tf) + ")");
+    }
+    function strips() {
+      var box = document.getElementById("an-strips"), W = Math.max(280, box.clientWidth), gut = 34, rowH = 15, gap = 3;
+      var k = st.color, wk = st.width, ds = shown(), nl = nLevels();
+      var unit = function (c) { return wk === "blocks" ? (c[2] ? 1 : .35) : Math.max(val(c, wk), 0); };
+      var totals = ds.map(function (d) { return d.cells.reduce(function (s, c) { return s + unit(c); }, 0); });
+      var maxTot = Math.max.apply(null, totals);
+      box.innerHTML = "";
+      ds.forEach(function (d, di) {
+        var inner = W - gut - 4, len = wk === "blocks" ? inner : inner * totals[di] / maxTot, sc = len / totals[di];
+        var H = nl * (rowH + gap) + (wk === "blocks" ? 0 : 16), nb = d.cells.filter(function (c) { return c[2]; }).length;
+        var wrap = document.createElement("div"), head = document.createElement("div");
+        wrap.className = "an-strip"; head.className = "an-head";
+        var b = document.createElement("b"), s1 = document.createElement("span"), s2 = document.createElement("span");
+        b.textContent = short(d.model);
+        s1.textContent = d.method + ", " + d.venue + (d.video ? ", video" : "");
+        s2.className = "m";
+        s2.textContent = fmtP(d.params) + " params · " + fmtF(d.gflops) + " per frame · " + nb + " blocks";
+        head.append(b, s1, s2); wrap.append(head);
+        var svg = el("svg", { viewBox: "0 0 " + W + " " + H, role: "img", "class": "an-svg",
+                              "aria-label": short(d.model) + ": blocks by scale, coloured by " + COLORS[k].toLowerCase() });
+        for (var l = 0; l < nl; l++) {
+          var y = l * (rowH + gap);
+          svg.append(el("rect", { x: gut, y: y, width: inner, height: rowH, rx: 2, fill: "var(--paper-2)" }));
+          var tx = el("text", { x: 0, y: y + rowH - 4 }); tx.textContent = LEVELS[l]; svg.append(tx);
+        }
+        var x = gut;
+        d.cells.forEach(function (c, ci) {
+          var w = unit(c) * sc, t = tOf(val(c, k), k), wide = w > 2.5;
+          var r = el("rect", { x: x + (wide ? .4 : 0), y: c[3] * (rowH + gap), width: Math.max(.8, w - (wide ? .8 : 0)), height: rowH,
+                               rx: w > 4 ? 1.5 : 0, fill: t < 0 ? "var(--heat-empty)" : heat(t), "class": "an-cell", tabindex: 0,
+                               opacity: st.level !== null && c[3] !== st.level ? .18 : 1 });
+          if (st.cell && st.cell[0] === d.model && st.cell[1] === ci) { r.setAttribute("stroke", "var(--ink)"); r.setAttribute("stroke-width", 1.5); }
+          var pick = function () { st.cell = [d.model, ci]; detail(d, c); strips(); };
+          r.addEventListener("click", pick);
+          r.addEventListener("mouseenter", function () { detail(d, c); });
+          r.addEventListener("focus", function () { detail(d, c); });
+          r.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+          svg.append(r);
+          x += w;
+        });
+        if (wk !== "blocks") {                         // a shared axis: the same length is the same cost in every network
+          var step = niceStep(maxTot), y0 = nl * (rowH + gap) + 11;
+          var f = wk === "flops" ? function (v) { return v ? (v / 1000).toFixed(v < 1000 ? 1 : 0) + "T" : "0"; }
+                                 : function (v) { return v ? (v / 1e6).toFixed(0) + "M" : "0"; };
+          for (var v = 0; v <= totals[di] + 1e-9; v += step) {
+            var lab = el("text", { x: gut + v * sc, y: y0, "text-anchor": v === 0 ? "start" : "middle" });
+            lab.textContent = f(v); svg.append(lab);
+          }
+        }
+        wrap.append(svg); box.append(wrap);
+      });
+      var lo = Math.pow(10, RANGE[k][0]), hi = Math.pow(10, RANGE[k][1]), ff = k === "params" ? fmtP : fmtF;
+      var lg = document.getElementById("an-legend");
+      lg.textContent = "";
+      [COLORS[k].toLowerCase() + " per block", ff(lo)].forEach(function (txt) { var sp = document.createElement("span"); sp.textContent = txt; lg.append(sp); });
+      var ramp = document.createElement("span"); ramp.className = "an-ramp"; lg.append(ramp);
+      [ff(hi), "(log scale, the same for every network)"].forEach(function (txt) { var sp = document.createElement("span"); sp.textContent = txt; lg.append(sp); });
+      document.getElementById("an-strip-title").textContent = wk === "blocks"
+        ? "Every block, in the order the frame goes through them"
+        : "Every block as wide as its " + (wk === "flops" ? "FLOPs" : "parameters") + ": the same length is the same cost in every network";
+    }
+    function render() { syncM(); syncC(); syncW(); share(); strips(); }
+    render();
+    if (window.ResizeObserver) new ResizeObserver(function () { strips(); }).observe(document.getElementById("an-strips"));
   })();
 </script>
 </body>
