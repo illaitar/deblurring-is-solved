@@ -2,7 +2,7 @@
 #   pip install "deblurring-is-solved @ git+https://github.com/illaitar/deblurring-is-solved"
 # The weight files come from Hugging Face on first use (dbis.load).
 [build-system]
-requires = ["setuptools>=64", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -10,6 +10,9 @@ name = "deblurring-is-solved"
 version = "0.3.0"
 description = "Deblurring networks of the 'deblurring is solved?' benchmark in plain PyTorch: dbis gives the authors' outputs, dbisf runs faster"
 readme = "PACKAGE.md"
+# our code MIT; the ported parts keep their terms (NOTICE): BSSTNet's ProPainter blocks are non-commercial
+license = "MIT AND Apache-2.0 AND BSD-3-Clause AND LicenseRef-S-Lab-1.0"
+license-files = ["LICENSE", "NOTICE", "hf/dbis/licenses/*.txt"]
 requires-python = ">=3.9"
 dependencies = ["torch", "numpy", "safetensors", "zstandard", "pillow"]
 keywords = ["deblurring", "motion deblurring", "video deblurring", "image restoration", "pytorch"]

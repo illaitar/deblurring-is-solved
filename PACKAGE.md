@@ -55,3 +55,10 @@ follows it (`--noise-every`, `--adapt-batch`), data echoing (`--echo`), frames h
 (`--reader ram|gpu`). What each does and what it measured: [DBIS.md](https://github.com/illaitar/deblurring-is-solved/blob/main/DBIS.md).
 
 Requires Python 3.9+ and PyTorch; numpy, safetensors, zstandard and pillow come with the package.
+
+## License
+
+Our code is under the MIT License. The networks re-implement their authors' code and keep its terms, listed per
+folder in NOTICE: MIT (NAFNet, Concertormer, Turtle, BSSTNet), Apache 2.0 (DSTNet+), BSD 3-Clause (RAFT in
+BSSTNet), and the S-Lab License 1.0 for the three ProPainter blocks that BSSTNet reuses, which allows only
+non-commercial use.

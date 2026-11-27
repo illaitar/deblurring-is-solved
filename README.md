@@ -1173,3 +1173,10 @@ deblurring-is-solved/
 
 - Compute cluster (primary): environments, weights, FFV1 outputs and run logs.
 - This folder is the git part: code, specs, registry, result tables and the site.
+
+## License
+
+The code is under the MIT License ([LICENSE](LICENSE)). The networks in `dbis/` re-implement their authors' code and
+keep its terms, listed per folder in [NOTICE](NOTICE): MIT (NAFNet, Concertormer, Turtle, BSSTNet), Apache 2.0
+(DSTNet+), BSD 3-Clause (RAFT in BSSTNet), and the S-Lab License 1.0, non-commercial use only, for the three ProPainter
+blocks that BSSTNet reuses. Weight files and test sets keep the terms of their sources (their Hugging Face cards).

@@ -1,0 +1,47 @@
+deblurring is solved?  https://github.com/illaitar/deblurring-is-solved
+Copyright (c) 2026 Nikita Alutis
+
+The code of this repository is under the MIT License (LICENSE), except the parts below. They re-implement, in plain
+PyTorch, the networks of published methods from their authors' code, and keep the terms of that code. The license
+texts are in hf/dbis/licenses/. The weight files are not part of this repository; each keeps the terms of the
+checkpoint it is made from (its card on Hugging Face).
+
+dbis/nafnet/
+    NAFNet, https://github.com/megvii-research/NAFNet
+    MIT License, Copyright (c) 2022 megvii-model (NAFNet-LICENSE.txt)
+
+dbis/concertormer/
+    Concertormer, https://github.com/setsunil/Concertormer (built on NAFNet's code)
+    MIT License, Copyright (c) 2022 megvii-model (Concertormer-LICENSE.txt)
+
+dbis/turtle/
+    Turtle, https://github.com/Ascend-Research/Turtle
+    MIT License, Copyright (c) 2024 Huawei Technologies Co., Ltd. (Turtle-LICENSE.txt)
+
+dbis/dstnetplus/
+    DSTNet+, https://github.com/sunny2109/DSTNet-plus
+    Apache License 2.0 (DSTNet-plus-LICENSE.txt)
+    Changes: re-implemented in plain PyTorch; the CuPy kernel of the dynamic convolution replaced by PyTorch code;
+    the weights folded and renamed; a faster variant (dbisf) added.
+
+dbis/bsst/
+    BSSTNet, https://github.com/huicongzhang/BSSTNet
+    MIT License, as the README of that repository states (it has no license file). BSSTNet reuses code of other
+    projects, and so do the files below:
+  dbis/bsst/blocks/raft.py
+    RAFT, https://github.com/princeton-vl/RAFT
+    BSD 3-Clause License, Copyright (c) 2020, princeton-vl (RAFT-LICENSE.txt)
+  dbis/bsst/blocks/align.py, dbis/bsst/blocks/flow_completion.py, dbis/bsst/blocks/sparse_transformer.py
+    ProPainter, https://github.com/sczhou/ProPainter (the flow completion network and the temporal sparse
+    transformer, as reused by BSSTNet)
+    S-Lab License 1.0, Copyright 2023 S-Lab (ProPainter-LICENSE.txt): redistribution and use for non-commercial
+    purposes only
+  dbis/bsst/blocks/cnn.py
+    Shift-Net, https://github.com/dasongli1/Shift-Net (the shift and CAB blocks, as reused by BSSTNet); that
+    repository states no license
+  dbis/bsst/blocks/swin.py
+    the Swin layers of BSSTNet's reconstruction (VRT / RVRT lineage; "Facebook, BSD license" header in BSST_arch.py)
+
+dbis/losses.py
+    the training losses of the benchmark's methods, written to give the values of their authors' code; the reference
+    code of each loss is named in the file
