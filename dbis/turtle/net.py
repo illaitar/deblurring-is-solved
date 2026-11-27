@@ -82,6 +82,18 @@ class Turtle(Restorer, TurtleEncoder):
             out, k, v = fwd(x, *kv)
         return out.float(), (k, v)
 
+    def train_forward(self, x):
+        """Training (dbis/train.py): x (B, T, 3, H, W) -> (B, T, 3, H, W), frame by frame from an empty history, the
+        caches carried through the clip (gradients through them)."""
+        h, w = x.shape[-2:]
+        local_mask(-(-h // 32) * 2, -(-w // 32) * 2, 4, x.device)
+        kc = vc = None
+        outs = []
+        for t in range(x.shape[1]):
+            y, kc, vc = self(x[:, t], kc, vc)
+            outs.append(y)
+        return torch.stack(outs, 1)
+
     # ------------------------------------------------------------ one frame
     @torch.no_grad()
     def step(self, frame, state=None, tile="default", tile_overlap=None, batch=None, precision=None):

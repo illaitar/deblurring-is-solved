@@ -5,8 +5,10 @@
     dbisf-<method>   our fast and light version: shorter run time and a smaller weight file, at most 0.05 dB below the
                      authors' mean PSNR on every test set of the benchmark
 
-The weight files are hosted at https://huggingface.co/Illaitar/dbis: dbis.load fetches a missing file into weights/dbis/
-on first use and checks its sha256 (dbis.download). They can also be made locally from the authors' checkpoint:
+The weight files are hosted at https://huggingface.co/Illaitar/dbis: dbis.load fetches a missing file into WEIGHTS on
+first use and checks its sha256 (dbis.download). WEIGHTS is $DBIS_WEIGHTS if set, else weights/dbis/ of the repository
+checkout, else ~/.cache/dbis (the package installed with pip); $HF_ENDPOINT selects a mirror of Hugging Face. The files
+can also be made locally from the authors' checkpoint:
 
     python -m dbis.convert NAFNet-64 NAFNet-GoPro-width64.pth     # -> weights/dbis/dbis-NAFNet-64.safetensors, dbisf-NAFNet-64.wpk
     python -m dbis.convert BSSTNet BSST_gopro.pth raft-things.pth # -> dbis-BSSTNet.safetensors, dbisf-BSSTNet.wpk (BSST + RAFT)
@@ -27,10 +29,14 @@ Dependencies: torch and numpy (BSSTNet: torchvision too); safetensors for dbis f
 wpack codec, dbis/wpack.py).
 """
 import importlib
+import os
 from pathlib import Path
 
-WEIGHTS = Path(__file__).resolve().parent.parent / "weights" / "dbis"
-URL = "https://huggingface.co/Illaitar/dbis/resolve/main/"     # the hosted weight files (tools/hf_upload_dbis.py)
+_REPO = Path(__file__).resolve().parent.parent
+WEIGHTS = Path(os.environ.get("DBIS_WEIGHTS") or (_REPO / "weights" / "dbis" if (_REPO / "registry").is_dir()
+                                                  else Path.home() / ".cache" / "dbis"))
+HF_REPO = "Illaitar/dbis"                                      # the hosted weight files (tools/hf_upload_dbis.py)
+URL = os.environ.get("HF_ENDPOINT", "https://huggingface.co").rstrip("/") + f"/{HF_REPO}/resolve/main/"
 
 # the authors' checkpoints the models are made from
 SOURCES = {

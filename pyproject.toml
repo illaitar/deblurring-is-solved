@@ -1,0 +1,29 @@
+# The dbis package alone (dbis/: the networks, restore, run, train), for
+#   pip install https://huggingface.co/Illaitar/dbis/resolve/main/dbis-<version>-py3-none-any.whl
+# The wheel is built with `python -m pip wheel . --no-deps -w dist` and hosted next to the weight files
+# (tools/hf_upload_dbis.py). The weight files come from Hugging Face on first use (dbis.load).
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dbis"
+version = "0.2.0"
+description = "Deblurring networks of the 'deblurring is solved?' benchmark in plain PyTorch: dbis gives the authors' outputs, dbisf runs faster"
+readme = "DBIS.md"
+requires-python = ">=3.9"
+dependencies = ["torch", "numpy", "safetensors", "zstandard", "pillow"]
+
+[project.optional-dependencies]
+bsst = ["torchvision"]          # BSSTNet's deformable convolutions
+
+[project.urls]
+Homepage = "https://illaitar.github.io/deblurring-is-solved/"
+Source = "https://github.com/illaitar/deblurring-is-solved"
+Weights = "https://huggingface.co/Illaitar/dbis"
+
+[tool.setuptools.packages.find]
+include = ["dbis*"]
+
+[tool.setuptools.package-data]
+dbis = ["train_memory.json"]

@@ -36,6 +36,11 @@ class NAFNet(Restorer, NAFNetEncoder):
             x = dec(up(x) + skip)
         return (self.ending(x) + inp)[..., :h, :w]
 
+    def train_forward(self, x):
+        """Training (dbis/train.py): x [B, 3, H, W] -> [B, 3, H, W]. At the training crop the TLC window covers the
+        whole map, so the channel attention is the global one of plain NAFNet, as the authors train it."""
+        return self(x)
+
 
 def fold(sd):
     """The authors' state dict (key "params" of NAFNet-GoPro-width64.pth) -> the state dict of NAFNet above.

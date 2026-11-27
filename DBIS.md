@@ -112,9 +112,21 @@ dbisf's rounded weights give −0.010, +0.070, −0.027 and −0.013 dB, with th
 
 ## Use
 
-The weight files are at [huggingface.co/Illaitar/dbis](https://huggingface.co/Illaitar/dbis), with their terms.
-`dbis.load(name)` fetches a missing file into `weights/dbis/` on first use and checks its sha256 (`dbis.download(name)`
-does only that; `fetch=False` turns it off). To make the files yourself from the authors' checkpoints:
+The package and the weight files are at [huggingface.co/Illaitar/dbis](https://huggingface.co/Illaitar/dbis), with
+the terms of the files. The package alone (about 100 KB of code) installs from there with pip, and `python -m dbis.run`
+restores an image, a folder of frames or a video file:
+
+```bash
+pip install "dbis @ https://huggingface.co/Illaitar/dbis/resolve/main/dbis-0.2.0-py3-none-any.whl"   # BSSTNet: "dbis[bsst] @ ..."
+python -m dbis.run dbisf-NAFNet-64 blurry.png sharp.png
+python -m dbis.run dbisf-DSTNetPlus-L blurry_frames/ sharp_frames/     # a folder: one clip, frames in name order
+python -m dbis.run dbisf-Turtle blurry.mp4 sharp.mp4                     # video files through ffmpeg (on PATH)
+```
+
+`dbis.load(name)` fetches a missing weight file on first use and checks its sha256 (`dbis.download(name)` does only
+that; `fetch=False` turns it off). The files are kept in `$DBIS_WEIGHTS` if it is set, else in `weights/dbis/` of a
+checkout of this repository, else in `~/.cache/dbis`; `$HF_ENDPOINT` selects a mirror of Hugging Face. To make the files
+yourself from the authors' checkpoints:
 
 ```bash
 pip install torch numpy safetensors zstandard   # BSSTNet: torchvision too
@@ -158,11 +170,70 @@ padding is cropped. `net(x)` is the bare network (NAFNet: [B, 3, H, W]; BSSTNet:
 
 The converter checks the md5 of each checkpoint, reads it with `weights_only=True`, folds it and writes each model's
 file with a JSON card. It compares the file's sha256 with the one recorded in `dbis/__init__.py`; another BLAS can
-change the last bit of a folded bias, which the card reports. We do not host weight files yet.
+change the last bit of a folded bias, which the card reports. The hosted files are the ones this converter wrote.
 
 dbisf-BSSTNet takes 18 GiB of GPU memory at 1280x720 (the authors' code 9.4 GiB, the first dbisf with 48-frame windows
 36 GiB). On a smaller card give fewer patches per call, `net.restore(frames, batch=4)` for example; it changes only
 float rounding.
+
+## Training
+
+`python -m dbis.train` ([`dbis/train.py`](dbis/train.py)) trains every model with one script: from the released
+weights (a fine-tune, the default) or from scratch, on one GPU or several, on any folder of blurry and sharp frames.
+
+```bash
+python -m dbis.train dbisf-NAFNet-64 --data DIR --val VAL_DIR --out runs/nafnet        # one GPU
+torchrun --nproc-per-node 8 -m dbis.train dbisf-BSSTNet --data DIR --init scratch --out runs/bsst
+```
+
+The folder layout is found by itself: a blurry frame is an image whose path has `blur`, `Blur`, `input_noise` or
+`input` in it, and its sharp frame is the same path with `sharp`, `Sharp`, `target`, `GT` or `gt` there instead. So the
+layouts of GoPro, REDS, BSD, DVD, RealBlur, GS-Blur and MIORe all work as downloaded. The frames of one folder are one
+sequence; video models train on clips of consecutive frames of one sequence. `--list` and `--exclude` keep or drop
+frames and sequences by name.
+
+**One recipe per model, the authors' own.** The numbers are those of each method's GoPro training config at the commit
+we ported (`RECIPES` in `dbis/train.py` names the config file of each). A fine-tune from the released weights takes
+10 % of the steps at 10 % of the learning rate unless `--steps` and `--lr` say otherwise.
+
+| | NAFNet-64 | BSSTNet | DSTNet+ L | Turtle |
+|---|---|---|---|---|
+| crop, frames per clip | 256, 1 | 256, 24 | 256, 15 | 192, 5 |
+| global batch | 64 | 8 | 8 | 16 |
+| steps | 400k | 600k | 600k | 200k |
+| AdamW lr, betas, weight decay | 1e-3, (0.9, 0.9), 1e-3 | 4e-4, (0.9, 0.99), 0 | 2e-4, (0.9, 0.999), 1e-4 | 4e-4, (0.9, 0.99), 0 |
+| schedule | cosine to 1e-7 | 1000 warmup steps, cosine to 1e-7; lr x0.1 flow completion, x0.25 offsets, x0.5 soft split | cosine to 1e-7 | cosine to 1e-7 |
+| loss | PSNR loss | L1 over all frames | Charbonnier + 0.1 x L1 of the 2-D FFT | L1 per frame |
+| gradient-norm clip | 0.01 | 0.01 | 0.01 | none |
+| kept fixed | | RAFT (its flows without gradients) | | |
+
+What is the same for all, and was not in every original: bfloat16 autocast (NAFNet and DSTNet+ trained in float32,
+BSSTNet and Turtle in float16 with a loss scaler) and one set of augmentations, the 8 flips and transposes chosen
+uniformly with the crop at the same place in every frame of a clip and in both frames of a pair (`--reverse` also plays
+clips backwards; no original did). Each network's `train_forward` is the function `restore` runs: checked on GoPro
+frames, NAFNet, BSSTNet and Turtle give the same outputs bit for bit, DSTNet+ within 8e-7 (the dynamic convolution's
+rounding).
+
+**The batch fits itself to the GPU.** We measured the memory of a training step of every model (forward, backward and
+the AdamW step at batch 1, 2, 4 and 8, bfloat16, one A100 80 GB; `python -m dbis.train MODEL --measure` repeats it):
+
+| Model | Crop, frames | Fixed | Per sample | Samples on 80 GB |
+|---|---|---:|---:|---:|
+| NAFNet-64 | 256, 1 | 0.85 GiB | 1.14 GiB | about 60 |
+| DSTNet+ L | 256, 15 | 2.16 GiB | 8.54 GiB | 8 |
+| Turtle | 192, 5 | 0.60 GiB | 14.7 GiB | 4 |
+| BSSTNet | 256, 24 | 1.78 GiB | 34.6 GiB | 2 |
+
+The script reads the free memory of the GPU it runs on, takes the largest batch per GPU the table allows (the per-sample
+memory scaled by the crop's area and the frames), checks it with one step and halves it while that step runs out of
+memory, then reaches the recipe's global batch by gradient accumulation. The same command therefore trains the same way
+on one small card and on eight 80 GB cards, only slower, as long as one sample fits: at the recipe's crop that takes
+about 2 GiB for NAFNet-64, 11 GiB for DSTNet+ L, 16 GiB for Turtle and 37 GiB for BSSTNet (a smaller `--crop` or
+`--frames` lowers it and changes the recipe).
+
+Output in `--out`: `last.pt` (a stopped run resumes from it), `log.tsv`, `best.pt` (with `--val`: the best validation
+PSNR, frames restored with `net.restore` and rounded to 8 bits as the benchmark scores them) and, at the end, the weight
+files of the model in the stores of `dbis.MODELS` (`dbis-<source>.safetensors`, `dbisf-<source>.wpk`).
 
 ## Layout of a method and its encoder
 

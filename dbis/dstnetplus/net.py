@@ -82,6 +82,17 @@ class DSTNetPlus(Restorer, DSTNetPlusEncoder):
                 p.channels_last = cl
             object.__setattr__(self, "_prop_cl", cl)
 
+    def train_forward(self, lrs):
+        """Training (dbis/train.py): lrs (B, T, 3, H, W) -> (B, T, 3, H, W), the whole clip at once. The encoder
+        unfolded (the folded kernels are made without gradients) and the dynamic conv as plain addcmul."""
+        fold, self.fold_encoder = self.fold_encoder, False
+        for p in (self.forward_propagation, self.backward_propagation):
+            p.kernel_conv_pixel.exact = False
+        try:
+            return self._forward(lrs, None)
+        finally:
+            self.fold_encoder = fold
+
     @torch.no_grad()
     def forward(self, lrs, precision=None, frame_chunk=None, keep=None):
         """keep=(lo, hi): only the outputs of frames lo .. hi-1, (b, hi - lo, 3, h, w). The forward propagation is

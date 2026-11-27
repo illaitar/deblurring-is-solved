@@ -53,7 +53,8 @@ class BSST(BSSTEncoder):
 
     def propagate(self, feats, flows, flows_check, blur_motion_map, module_name, out):
         """One propagation branch. The features are written into out (n, t+1, 192, h, w), a channel slice of the
-        float32 buffer that the authors build afterwards with stack + cat; feats keeps views of it."""
+        float32 buffer that the authors build afterwards with stack + cat; feats keeps views of it. out=None (training,
+        where autograd cannot follow writes into a shared buffer): feats keeps the features themselves."""
         n, t, _, h, w = flows.size()
         last_key = list(feats)[-2]
         if "backward" in module_name:
@@ -93,8 +94,11 @@ class BSST(BSSTEncoder):
                                                            blur_map_n1 * flow_n1_valid, blur_map_n2 * flow_n2_valid)
             feat = torch.cat([feats[k][idx] for k in feats if k != module_name] + [feat_prop], dim=1)
             feat_prop = feat_prop + self.backbone[module_name](feat)
-            out[:, idx].copy_(feat_prop)
-            feats[module_name].append(out[:, idx])
+            if out is None:
+                feats[module_name].append(feat_prop)
+            else:
+                out[:, idx].copy_(feat_prop)
+                feats[module_name].append(out[:, idx])
         if "backward" in module_name:
             feats[module_name] = feats[module_name][::-1]
         return feats
@@ -138,10 +142,15 @@ class BSST(BSSTEncoder):
             pred_map, flows_forwards_gt, flows_backwards_gt)
         blur_map_st = get_blur_map(flows_forward, flows_backward)
         shortcuts, enc11s, hr = [], [], None
+        train = torch.is_grad_enabled()            # training (train_forward): no shared buffer, hr made by torch.cat
+        spatial = []
         for sl in parts:
             x, enc11, enc22 = self.encode(lqs[sl].flatten(0, 1))     # the authors: lqs[0]
             shortcuts.append(x)
             enc11s.append(enc11)
+            if train:
+                spatial.append(enc22.view(-1, t, *enc22.shape[1:]))
+                continue
             if hr is None:   # the authors' torch.cat of [spatial, backward_1, forward_1, backward_2, forward_2]
                 hr = torch.empty(n, t, 5 * self.mid_channels, *enc22.shape[-2:], device=lqs.device,
                                  dtype=torch.promote_types(enc22.dtype, flows_forward.dtype))
@@ -149,7 +158,11 @@ class BSST(BSSTEncoder):
             del x, enc11, enc22
         # the spatial features enter the propagation only through torch.cat with float32 tensors, so their float32
         # copies in hr give the same values as the authors' float16 originals
-        feats = {"spatial": [hr[:, i, :self.mid_channels] for i in range(t)]}
+        if train:
+            spatial = torch.cat(spatial) if len(spatial) > 1 else spatial[0]
+            feats = {"spatial": [spatial[:, i] for i in range(t)]}
+        else:
+            feats = {"spatial": [hr[:, i, :self.mid_channels] for i in range(t)]}
         blur_motion = 1 - blur_map_st
         for k, (iter_, direction) in enumerate(((1, "backward"), (1, "forward"), (2, "backward"), (2, "forward"))):
             flows, check = ((flows_backward, flows_forward) if direction == "backward"
@@ -157,7 +170,11 @@ class BSST(BSSTEncoder):
             name = f"{direction}_{iter_}"
             feats[name] = []
             c0 = (k + 1) * self.mid_channels
-            feats = self.propagate(feats, flows, check, blur_motion, name, hr[:, :, c0:c0 + self.mid_channels])
+            feats = self.propagate(feats, flows, check, blur_motion, name,
+                                   None if train else hr[:, :, c0:c0 + self.mid_channels])
+        if train:
+            hr = torch.cat([torch.stack(feats[k], 1) for k in ("spatial", "backward_1", "forward_1", "backward_2",
+                                                               "forward_2")], 2)
         del feats
         qmasks, kvmasks = self.sparse_masks(blur_map_st)
         outs = []
@@ -320,6 +337,15 @@ class BSSTNet(Restorer, nn.Module):
         if j > ws[0]:
             m[:, :hx] = 0
         return m
+
+    train_frozen = ("raft.",)
+
+    def train_forward(self, lqs):
+        """Training (dbis/train.py): lqs (B, T, 3, 256, 256) -> (B, T, 3, 256, 256), one patch per clip: RAFT frozen,
+        its flows without gradients, then BSST (whose sparse attention is built for 256 px patches)."""
+        with torch.no_grad(), torch.autocast(lqs.device.type, enabled=False):
+            ff, fb = self.flows(lqs.float())
+        return self.bsst(lqs, ff, fb)
 
     @torch.no_grad()
     def forward(self, lqs, patch_batch=None, precision=None, stage_batch=None):

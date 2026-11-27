@@ -535,6 +535,15 @@ pre.code { margin: 0; padding: .8rem 1rem; background: var(--paper-2); border-ra
 .gd-copy { position: absolute; top: .45rem; right: .45rem; font: 500 .7rem/1 var(--sans); border: 1px solid var(--ink-16); background: var(--paper);
   color: var(--ink-72); border-radius: 999px; padding: .3rem .55rem; cursor: pointer; }
 .gd-dl { display: grid; grid-template-columns: auto 1fr; gap: .3rem .8rem; margin: 0; font-size: var(--t-s); }
+/* 27.11: "Run it": an install line and a command or a script, put together from three choices */
+.gd-run { display: grid; gap: .55rem; min-width: 0; }
+.gd-runh { font-weight: 600; font-size: var(--t-s); }
+.gd-segrow { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem .6rem; }
+.gd-segrow .l { font-size: var(--t-xs); color: var(--ink-56); min-width: 3.6rem; }
+.gd-seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--ink-16); border-radius: 999px; padding: 2px; background: var(--paper); }
+.gd-seg button { font: 500 var(--t-xs)/1.2 var(--sans); border: 0; background: none; color: var(--ink-72); padding: .32rem .7rem; border-radius: 999px; cursor: pointer; }
+.gd-seg button[aria-checked="true"] { background: var(--img); color: var(--on-img); font-weight: 600; }
+.gd-seg button:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
 .gd-dl dt { color: var(--ink-56); }
 .gd-dl dd { margin: 0; min-width: 0; }
 </style>
@@ -767,7 +776,12 @@ pre.code { margin: 0; padding: .8rem 1rem; background: var(--paper-2); border-ra
     <div class="sh"><span class="k">05</span><span class="big">{{tag_dbis_big}}</span><span class="big">{{tag_dbisf_big}}</span><h2 class="h2s">our versions of the methods</h2></div>
     <p class="lead2"><b>dbis</b> gives the authors' outputs from plain PyTorch and a safetensors file, every method in the same layout with an encoder that loads on its own. <b>dbisf</b> is faster and lighter, and its mean PSNR is never more than 0.05&nbsp;dB below the authors' code on any test set. What changed in each method: <a href="https://github.com/illaitar/deblurring-is-solved/blob/main/DBIS.md">DBIS.md</a>.</p>
     {{dbis_table}}
-    <pre class="code">import dbis
+    <pre class="code">pip install "dbis[bsst] @ {{dbis_wheel}}"   # the package, from Hugging Face
+
+python -m dbis.run dbisf-Turtle blurry.mp4 sharp.mp4   # a video, a folder of frames or an image
+python -m dbis.train dbisf-NAFNet-64 --data DIR        # training: the authors' recipe, the batch fitted to the GPU's memory
+
+import dbis
 net = dbis.load("dbisf-BSSTNet")       # every model the same way; the weight file comes from Hugging Face on first use
 out = net.restore(frames)              # options: tile, tile_overlap, window, batch, precision, compile, out
 
@@ -781,9 +795,8 @@ python -m dbis.convert DSTNetPlus-L DSTNetPlus_L_gopro.pth</pre>
     <div class="sh"><span class="k">06</span><h2>Get started</h2></div>
     <div class="steps">
       <div class="step"><b>1 &middot; Get the code</b><pre class="code">git clone https://github.com/illaitar/deblurring-is-solved</pre></div>
-      <div class="step"><b>2 &middot; Load a model</b><pre class="code">import dbis
-net = dbis.load("dbisf-NAFNet-64")
-out = net.restore(frames)</pre></div>
+      <div class="step"><b>2 &middot; Run a model</b><pre class="code">pip install "dbis @ {{dbis_wheel}}"
+python -m dbis.run dbisf-NAFNet-64 blurry.png sharp.png</pre></div>
       <div class="step"><b>3 &middot; Take the numbers</b><p class="lead2">Every score: <a href="leaderboard.csv">leaderboard.csv</a>; per sequence and per frame: <code>results/</code> in the repository.</p></div>
     </div>
   </section>
@@ -977,6 +990,68 @@ out = net.restore(frames)</pre></div>
     return h("div", { class: "gd-code" }, pre, b);
   }
   function fmtT(ms) { return ms < 1000 ? fx(ms, 1) + " ms" : fx(ms / 1000, 1) + " s"; }
+  /* 27.11: "Run it": pip installs the dbis package from Hugging Face (v.wheel), dbis.load fetches the weight file from
+     there on first use; the command or script is put together from the version, the input and the form chosen */
+  var RUN = { ver: "dbisf", input: null, as: "cli" };
+  var RUN_IO = { image: ["blurry.png", "sharp.png"], frames: ["blurry_frames/", "sharp_frames/"], video: ["blurry.mp4", "sharp.mp4"] };
+  var RUN_PY = {
+    image: function (n) {
+      return ["import numpy as np, torch, dbis", "from PIL import Image", "",
+        "net = dbis.load(\"" + n + "\")   # the weight file comes from Hugging Face on first use",
+        "x = torch.from_numpy(np.array(Image.open(\"blurry.png\").convert(\"RGB\"))).permute(2, 0, 1)   # [3, H, W] uint8",
+        "y = net.restore(x, out=\"uint8\")",
+        "Image.fromarray(y.permute(1, 2, 0).numpy()).save(\"sharp.png\")"].join("\n");
+    },
+    frames: function (n) {
+      return ["import glob, os, numpy as np, torch, dbis", "from PIL import Image", "",
+        "files = sorted(glob.glob(\"blurry_frames/*.png\"))",
+        "clip = torch.stack([torch.from_numpy(np.array(Image.open(f).convert(\"RGB\"))).permute(2, 0, 1) for f in files])",
+        "out = dbis.load(\"" + n + "\").restore(clip, out=\"uint8\")   # [T, 3, H, W] uint8",
+        "os.makedirs(\"sharp_frames\", exist_ok=True)",
+        "for f, y in zip(files, out):",
+        "    Image.fromarray(y.permute(1, 2, 0).numpy()).save(os.path.join(\"sharp_frames\", os.path.basename(f)))"].join("\n");
+    },
+    video: function (n) {
+      return ["import torch, dbis", "from dbis.run import read_video, write_video   # ffmpeg and ffprobe on PATH", "",
+        "frames, rate = read_video(\"blurry.mp4\")   # [T, H, W, 3] uint8",
+        "out = dbis.load(\"" + n + "\").restore(torch.from_numpy(frames).permute(0, 3, 1, 2), out=\"uint8\")",
+        "write_video(\"sharp.mp4\", out.permute(0, 2, 3, 1).numpy(), rate, crf=12)"].join("\n");
+    }
+  };
+  function runBuilder(r, v) {
+    var inputs = r.task === "video" ? [["video", "Video file"], ["frames", "Frames folder"]]
+      : [["image", "Image"], ["frames", "Frames folder"], ["video", "Video file"]];
+    if (!inputs.some(function (o) { return o[0] === RUN.input; })) RUN.input = inputs[0][0];
+    var code = h("div", { class: "gd-run" });
+    function seg(key, label, opts) {
+      var g = h("div", { class: "gd-seg", role: "radiogroup", "aria-label": label });
+      opts.forEach(function (o) {
+        var b = h("button", { type: "button", role: "radio", "aria-checked": String(RUN[key] === o[0]) }, o[1]);
+        b.addEventListener("click", function () {
+          RUN[key] = o[0];
+          g.querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-checked", String(x === b)); });
+          draw();
+        });
+        g.append(b);
+      });
+      return h("div", { class: "gd-segrow" }, h("span", { class: "l" }, label), g);
+    }
+    function draw() {
+      var m = v.models.filter(function (x) { return x.kind === RUN.ver; })[0] || v.models[v.models.length - 1];
+      var pip = "pip install \"dbis" + (v.extra ? "[" + v.extra + "]" : "") + " @ " + v.wheel + "\"", io = RUN_IO[RUN.input];
+      code.replaceChildren(copyBox(RUN.as === "cli" ? pip + "\npython -m dbis.run " + m.name + " " + io[0] + " " + io[1]
+          : "# " + pip + "\n" + RUN_PY[RUN.input](m.name)),
+        h("p", { class: "gd-note" }, "pip installs the dbis package (" + v.wheel_kb + " KB of code) from Hugging Face; on the first run dbis.load fetches " +
+          m.file + " (" + m.mb + " MB) from there too and checks its sha256." +
+          (RUN.input === "video" ? " Video files are read and written with ffmpeg, which must be on PATH." : "") +
+          " A GPU is used when there is one (--device cpu otherwise)."));
+    }
+    var box = h("div", { class: "gd-run" }, h("div", { class: "gd-runh" }, "Run it"),
+      seg("ver", "Version", v.models.slice().reverse().map(function (x) { return [x.kind, x.kind === "dbisf" ? "dbisf, fast" : "dbis, exact"]; })),
+      seg("input", "Input", inputs), seg("as", "As", [["cli", "Command line"], ["py", "Python"]]), code);
+    draw();
+    return box;
+  }
   function stat(label, val, d) {
     return h("div", { class: "gd-st" }, h("span", { class: "l" }, label), h("span", { class: "val" }, val),
       h("span", { class: "d" + (d && d[1] ? " good" : "") }, d ? d[0] : ""));
@@ -1003,11 +1078,11 @@ out = net.restore(frames)</pre></div>
         left.append(o);
       });
       var hosted = v.models.some(function (m) { return m.url; });
-      left.append(h("p", { class: "gd-note" }, hosted ? "In code, dbis.load fetches the file from Hugging Face on first use and checks its sha256:"
-          : "Until the files are hosted, the converter makes them from the authors' checkpoint (" + v.checkpoint + "):"),
-        copyBox(hosted ? "git clone https://github.com/illaitar/deblurring-is-solved && cd deblurring-is-solved\npip install " + v.pip + "\npython -c \"import dbis; net = dbis.load('" + v.models[v.models.length - 1].name + "')\""
-          : "pip install " + v.pip + "\npython -m dbis.convert " + v.source + " " + v.checkpoint + "\npython -c \"import dbis; net = dbis.load('" + v.models[v.models.length - 1].name + "')\""),
-        ...(hosted ? [h("p", { class: "gd-note" }, "Or make it from the authors' checkpoint: python -m dbis.convert " + v.source + " " + v.checkpoint + ".")] : []),
+      if (hosted && v.wheel) left.append(runBuilder(r, v));
+      else left.append(h("p", { class: "gd-note" }, "Until the files are hosted, the converter makes them from the authors' checkpoint (" + v.checkpoint + "):"),
+        copyBox("pip install " + v.pip + "\npython -m dbis.convert " + v.source + " " + v.checkpoint + "\npython -c \"import dbis; net = dbis.load('" + v.models[v.models.length - 1].name + "')\""));
+      left.append(
+        ...(hosted ? [h("p", { class: "gd-note" }, "Or make the weights from the authors' checkpoint: python -m dbis.convert " + v.source + " " + v.checkpoint + ".")] : []),
         ...(v.extra_note ? [h("p", { class: "gd-note" }, v.extra_note)] : []),
         h("p", { class: "gd-note" }, (v.note || "") + " ",
           h("a", { href: "https://github.com/illaitar/deblurring-is-solved/blob/main/DBIS.md", target: "_blank", rel: "noopener" }, "What changed")));
