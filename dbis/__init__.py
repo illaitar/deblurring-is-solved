@@ -82,7 +82,25 @@ SOURCES = {
         "file": "GoPro_Deblur.pth", "md5": "736df72180a69242b495b2463042b29d", "group": "params",
         "trained_on": "GoPro", "arch": "turtle",
     },
+    "Concertormer": {
+        "method": "Concertormer", "paper": "Efficient Concertormer for Image Deblurring and Beyond", "venue": "ICCV 2025",
+        "code": "https://github.com/setsunil/Concertormer", "commit": "94269c556277805051644343e3a2cc76c4cd7aaf",
+        "license": "MIT (the repository's LICENSE, Copyright (c) 2022 megvii-model)",
+        "url": "https://drive.google.com/file/d/1NvbGroZm4vVgvWJtmgW-6Fwd97PiukiL/view (CSA_models.zip, models/GoPro/)",
+        "file": "Concertormer.pth", "md5": "2a999099018acdee9b2add1e3c22eb61", "group": "params",
+        "trained_on": "GoPro", "arch": "concertormer",
+    },
+    "Concertormer-lite": {
+        "method": "Concertormer-lite", "paper": "Efficient Concertormer for Image Deblurring and Beyond",
+        "venue": "ICCV 2025",
+        "code": "https://github.com/setsunil/Concertormer", "commit": "94269c556277805051644343e3a2cc76c4cd7aaf",
+        "license": "MIT (the repository's LICENSE, Copyright (c) 2022 megvii-model)",
+        "url": "https://drive.google.com/file/d/1NvbGroZm4vVgvWJtmgW-6Fwd97PiukiL/view (CSA_models.zip, models/GoPro/)",
+        "file": "Concertormer_lite.pth", "md5": "02863c886a8f8d98233d8bd0d8db00e2", "group": "params",
+        "trained_on": "GoPro", "arch": "concertormer",
+    },
 }
+LITE = {"enc_blk_nums": (4, 4, 12), "dec_blk_nums": (12, 4, 4)}       # options/test/GoPro/Concertormer_lite.yml
 
 # every model: its source, the class and arguments in dbis/<arch>.py, the weight file and how it is written
 MODELS = {
@@ -127,6 +145,12 @@ MODELS = {
                      "args": {"fast": True, "precision": "fp16", "batch": 15, "tile_overlap": 80},
                      "file": "dbisf-Turtle.wpk", "store": "qc128",
                      "sha256": "30c8bea074fa9fb53300fee15c8d16e920eff6c4b3148932e72294c5cb7371b6"},
+    # the authors' test configuration as the benchmark runs it: ConcertormerLocal (TLC windows, grid_factor 1.75), whole
+    # frame, float16 autocast
+    "dbis-Concertormer": {"source": "Concertormer", "cls": "Concertormer", "args": {"tlc": "exact"},
+                          "file": "dbis-Concertormer.safetensors", "store": "float32", "sha256": None},
+    "dbis-Concertormer-lite": {"source": "Concertormer-lite", "cls": "Concertormer", "args": {"tlc": "exact", **LITE},
+                               "file": "dbis-Concertormer-lite.safetensors", "store": "float32", "sha256": None},
 }
 
 

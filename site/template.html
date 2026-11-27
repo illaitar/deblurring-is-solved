@@ -534,6 +534,8 @@ pre.code { margin: 0; padding: .8rem 1rem; background: var(--paper-2); border-ra
 .gd-code pre.code { font-size: .72rem; padding-right: 4rem; }
 .gd-copy { position: absolute; top: .45rem; right: .45rem; font: 500 .7rem/1 var(--sans); border: 1px solid var(--ink-16); background: var(--paper);
   color: var(--ink-72); border-radius: 999px; padding: .3rem .55rem; cursor: pointer; }
+.gd-save { right: 3.6rem; }
+.gd-code pre.code.two { padding-right: 8.5rem; }
 .gd-dl { display: grid; grid-template-columns: auto 1fr; gap: .3rem .8rem; margin: 0; font-size: var(--t-s); }
 /* 27.11: "Run it": an install line and a command or a script, put together from three choices */
 .gd-run { display: grid; gap: .55rem; min-width: 0; }
@@ -776,7 +778,7 @@ pre.code { margin: 0; padding: .8rem 1rem; background: var(--paper-2); border-ra
     <div class="sh"><span class="k">05</span><span class="big">{{tag_dbis_big}}</span><span class="big">{{tag_dbisf_big}}</span><h2 class="h2s">our versions of the methods</h2></div>
     <p class="lead2"><b>dbis</b> gives the authors' outputs from plain PyTorch and a safetensors file, every method in the same layout with an encoder that loads on its own. <b>dbisf</b> is faster and lighter, and its mean PSNR is never more than 0.05&nbsp;dB below the authors' code on any test set. What changed in each method: <a href="https://github.com/illaitar/deblurring-is-solved/blob/main/DBIS.md">DBIS.md</a>.</p>
     {{dbis_table}}
-    <pre class="code">pip install "dbis[bsst] @ {{dbis_wheel}}"   # the package, from Hugging Face
+    <pre class="code">pip install "{{dbis_pip_bsst}}"   # the package, from {{dbis_where}}
 
 python -m dbis.run dbisf-Turtle blurry.mp4 sharp.mp4   # a video, a folder of frames or an image
 python -m dbis.train dbisf-NAFNet-64 --data DIR        # training: the authors' recipe, the batch fitted to the GPU's memory
@@ -795,7 +797,7 @@ python -m dbis.convert DSTNetPlus-L DSTNetPlus_L_gopro.pth</pre>
     <div class="sh"><span class="k">06</span><h2>Get started</h2></div>
     <div class="steps">
       <div class="step"><b>1 &middot; Get the code</b><pre class="code">git clone https://github.com/illaitar/deblurring-is-solved</pre></div>
-      <div class="step"><b>2 &middot; Run a model</b><pre class="code">pip install "dbis @ {{dbis_wheel}}"
+      <div class="step"><b>2 &middot; Run a model</b><pre class="code">pip install "{{dbis_pip}}"
 python -m dbis.run dbisf-NAFNet-64 blurry.png sharp.png</pre></div>
       <div class="step"><b>3 &middot; Take the numbers</b><p class="lead2">Every score: <a href="leaderboard.csv">leaderboard.csv</a>; per sequence and per frame: <code>results/</code> in the repository.</p></div>
     </div>
@@ -980,19 +982,31 @@ python -m dbis.run dbisf-NAFNet-64 blurry.png sharp.png</pre></div>
   var dlg = document.getElementById("getdlg");
   document.getElementById("getdlg-x").addEventListener("click", function () { dlg.close(); });
   dlg.addEventListener("click", function (ev) { if (ev.target === dlg) dlg.close(); });
-  function copyBox(text) {
-    var pre = h("pre", { class: "code" }, text), b = h("button", { type: "button", class: "gd-copy" }, "Copy");
+  function copyBox(text, filename) {
+    var pre = h("pre", { class: "code" + (filename ? " two" : "") }, text), b = h("button", { type: "button", class: "gd-copy" }, "Copy");
     var select = function () { var rg = document.createRange(); rg.selectNodeContents(pre); var s = getSelection(); s.removeAllRanges(); s.addRange(rg); };
     b.addEventListener("click", function () {
       var done = function () { b.textContent = "Copied"; setTimeout(function () { b.textContent = "Copy"; }, 1500); };
       try { navigator.clipboard.writeText(text).then(done, select); } catch (err) { select(); }
     });
-    return h("div", { class: "gd-code" }, pre, b);
+    var box = h("div", { class: "gd-code" }, pre, b);
+    if (filename) {        // 27.11: the same text as a file
+      var d = h("button", { type: "button", class: "gd-copy gd-save", title: "Save as " + filename }, "Download");
+      d.addEventListener("click", function () {
+        var url = URL.createObjectURL(new Blob([text + "\n"], { type: "text/plain" })), a = h("a", { href: url, download: filename });
+        document.body.append(a); a.click(); a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+      });
+      box.append(d);
+    }
+    return box;
   }
   function fmtT(ms) { return ms < 1000 ? fx(ms, 1) + " ms" : fx(ms / 1000, 1) + " s"; }
-  /* 27.11: "Run it": pip installs the dbis package from Hugging Face (v.wheel), dbis.load fetches the weight file from
-     there on first use; the command or script is put together from the version, the input and the form chosen */
-  var RUN = { ver: "dbisf", input: null, as: "cli" };
+  /* 27.11: "Run it": a script put together from a few choices, to copy or download. pip installs the dbis package
+     (v.dist, from v.where); dbis.load fetches the weight file from Hugging Face on first use. Restore: dbis.run or a Python
+     script. Train: dbis.train --plan once (batch, precision, checkpointing, reader and workers for this machine), then
+     the training with the authors' recipe */
+  var RUN = { task: "run", ver: "dbisf", input: null, as: "cli", init: "released", gpus: "all" };
   var RUN_IO = { image: ["blurry.png", "sharp.png"], frames: ["blurry_frames/", "sharp_frames/"], video: ["blurry.mp4", "sharp.mp4"] };
   var RUN_PY = {
     image: function (n) {
@@ -1018,38 +1032,67 @@ python -m dbis.run dbisf-NAFNet-64 blurry.png sharp.png</pre></div>
         "write_video(\"sharp.mp4\", out.permute(0, 2, 3, 1).numpy(), rate, crf=12)"].join("\n");
     }
   };
+  function runScript(r, v, m, pip) {
+    var io = RUN_IO[RUN.input];
+    if (RUN.task === "run" && RUN.as === "py")
+      return { file: "restore_" + m.name + ".py", text: "# " + pip + "\n" + RUN_PY[RUN.input](m.name) };
+    if (RUN.task === "run")
+      return { file: "restore_" + m.name + ".sh", text: ["#!/usr/bin/env bash",
+        "# " + r.name + " with " + m.name + " (deblurring is solved?, https://illaitar.github.io/deblurring-is-solved/)",
+        "# usage: bash restore_" + m.name + ".sh [INPUT] [OUTPUT]   (an image, a folder of frames or a video file)",
+        "set -e", pip, "python -m dbis.run " + m.name + " \"${1:-" + io[0] + "}\" \"${2:-" + io[1] + "}\""].join("\n") };
+    var init = RUN.init === "scratch" ? " --init scratch" : "", one = RUN.gpus === "one";
+    var launch = one ? "python -m dbis.train" : "torchrun --standalone --nproc-per-node \"$(python -c 'import torch; print(torch.cuda.device_count())')\" -m dbis.train";
+    return { file: "train_" + m.name + ".sh", text: ["#!/usr/bin/env bash",
+      "# Train " + m.name + " (" + r.name + ") with the authors' recipe" + (init ? ", from scratch" : ", fine-tuning the released weights") + ".",
+      "# usage: bash train_" + m.name + ".sh DATA [OUT]",
+      "#   DATA: blurry and sharp frames as downloaded (GoPro, REDS, BSD, DVD, RealBlur, GS-Blur, MIORe; see python -m dbis.data find DATA)",
+      "set -e", "DATA=${1:?give the folder of the training pairs}", "OUT=${2:-runs/" + m.name + "}"]
+      .concat(one ? ["export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0}"] : [])
+      .concat([pip,
+        "# once per machine: the largest batch that fits, precision, checkpointing, the fastest frame reader and the data",
+        "# workers, measured here and written to $OUT/plan.json (a frame cache in $OUT/cache only if decoding is too slow)",
+        "[ -f \"$OUT/plan.json\" ] || python -m dbis.train " + m.name + init + " --plan --data \"$DATA\" --out \"$OUT\" --cache \"$OUT/cache\"",
+        "# the training: the recipe's global batch by gradient accumulation; a stopped run resumes from $OUT/last.pt",
+        launch + " " + m.name + init + " --data \"$DATA\" --out \"$OUT\"",
+        "echo \"weights: $OUT (python: dbis.load('" + m.name + "', weights_dir='$OUT'))\""]).join("\n") };
+  }
   function runBuilder(r, v) {
     var inputs = r.task === "video" ? [["video", "Video file"], ["frames", "Frames folder"]]
       : [["image", "Image"], ["frames", "Frames folder"], ["video", "Video file"]];
     if (!inputs.some(function (o) { return o[0] === RUN.input; })) RUN.input = inputs[0][0];
-    var code = h("div", { class: "gd-run" });
+    var rows = h("div", { class: "gd-run" }), code = h("div", { class: "gd-run" });
     function seg(key, label, opts) {
       var g = h("div", { class: "gd-seg", role: "radiogroup", "aria-label": label });
       opts.forEach(function (o) {
         var b = h("button", { type: "button", role: "radio", "aria-checked": String(RUN[key] === o[0]) }, o[1]);
-        b.addEventListener("click", function () {
-          RUN[key] = o[0];
-          g.querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-checked", String(x === b)); });
-          draw();
-        });
+        b.addEventListener("click", function () { RUN[key] = o[0]; layout(); });
         g.append(b);
       });
       return h("div", { class: "gd-segrow" }, h("span", { class: "l" }, label), g);
     }
+    function layout() {
+      var v2 = seg("ver", "Version", v.models.slice().reverse().map(function (x) { return [x.kind, x.kind === "dbisf" ? "dbisf, fast" : "dbis, exact"]; }));
+      rows.replaceChildren.apply(rows, [seg("task", "Task", [["run", "Restore"], ["train", "Train"]]), v2].concat(RUN.task === "run"
+        ? [seg("input", "Input", inputs), seg("as", "As", [["cli", "Command line"], ["py", "Python"]])]
+        : [seg("init", "Start", [["released", "Released weights"], ["scratch", "From scratch"]]), seg("gpus", "GPUs", [["all", "All of them"], ["one", "One"]])]));
+      draw();
+    }
     function draw() {
       var m = v.models.filter(function (x) { return x.kind === RUN.ver; })[0] || v.models[v.models.length - 1];
-      var pip = "pip install \"dbis" + (v.extra ? "[" + v.extra + "]" : "") + " @ " + v.wheel + "\"", io = RUN_IO[RUN.input];
-      code.replaceChildren(copyBox(RUN.as === "cli" ? pip + "\npython -m dbis.run " + m.name + " " + io[0] + " " + io[1]
-          : "# " + pip + "\n" + RUN_PY[RUN.input](m.name)),
-        h("p", { class: "gd-note" }, "pip installs the dbis package (" + v.wheel_kb + " KB of code) from Hugging Face; on the first run dbis.load fetches " +
-          m.file + " (" + m.mb + " MB) from there too and checks its sha256." +
+      var pip = "pip install \"" + v.dist + (v.extra ? "[" + v.extra + "]" : "") + v.from + "\"", sc = runScript(r, v, m, pip);
+      var note = RUN.task === "run"
+        ? "pip installs the dbis package (" + v.wheel_kb + " KB of code) from " + v.where + "; on the first run dbis.load fetches " +
+          m.file + " (" + m.mb + " MB) from Hugging Face and checks its sha256." +
           (RUN.input === "video" ? " Video files are read and written with ffmpeg, which must be on PATH." : "") +
-          " A GPU is used when there is one (--device cpu otherwise)."));
+          " A GPU is used when there is one (--device cpu otherwise)."
+        : "The plan step runs a few training steps at growing batch sizes, times the frame readers on your data and writes plan.json; " +
+          "the training then uses the largest batch that fits and reaches the recipe's global batch by accumulation, so any GPU " +
+          "gives the same training, only faster or slower. The recipe and our memory table per model: DBIS.md, Training.";
+      code.replaceChildren(copyBox(sc.text, sc.file), h("p", { class: "gd-note" }, note));
     }
-    var box = h("div", { class: "gd-run" }, h("div", { class: "gd-runh" }, "Run it"),
-      seg("ver", "Version", v.models.slice().reverse().map(function (x) { return [x.kind, x.kind === "dbisf" ? "dbisf, fast" : "dbis, exact"]; })),
-      seg("input", "Input", inputs), seg("as", "As", [["cli", "Command line"], ["py", "Python"]]), code);
-    draw();
+    var box = h("div", { class: "gd-run" }, h("div", { class: "gd-runh" }, "Run it"), rows, code);
+    layout();
     return box;
   }
   function stat(label, val, d) {

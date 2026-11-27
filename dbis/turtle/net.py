@@ -31,6 +31,7 @@ class Turtle(Restorer, TurtleEncoder):
     (the same values, fewer kernels)."""
     kind = "video"
     min_frames = 1
+    train_checkpoint = ("TurtleAttnBlock",)
 
     def __init__(self, dim=64, enc_blocks=(2, 6, 10), middle_blocks=11, dec_blocks=(10, 6, 2), num_refinement_blocks=2,
                  num_heads=(1, 2, 4, 8), ffn_expansion_factor=2.5, bias=False, LayerNorm_type="WithBias",

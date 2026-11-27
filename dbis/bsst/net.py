@@ -339,6 +339,8 @@ class BSSTNet(Restorer, nn.Module):
         return m
 
     train_frozen = ("raft.",)
+    train_crops = (256,)                   # its sparse attention is built for 256 px patches
+    train_checkpoint = ("CAB1", "CAB2", "ShiftBlock", "TemporalSparseTransformer", "STL", "BlurGuidedAlignment")
 
     def train_forward(self, lqs):
         """Training (dbis/train.py): lqs (B, T, 3, 256, 256) -> (B, T, 3, 256, 256), one patch per clip: RAFT frozen,

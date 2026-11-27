@@ -15,6 +15,7 @@ class NAFNet(Restorer, NAFNetEncoder):
     (zero-padded to a multiple of 16 inside, as the authors do). Defaults of restore: the whole frame, one frame per
     call, float32 (as the quality of dbis and dbisf was measured)."""
     kind = "image"
+    train_checkpoint = ("Block",)          # blocks recomputed in the backward pass with activation checkpointing (train.py)
 
     def __init__(self, width=64, enc=(1, 1, 1, 28), middle=1, dec=(1, 1, 1, 1), tlc=None, train_crop=256):
         super().__init__(width, enc, middle, tlc, train_crop)      # intro, encoders, downs, middle_blks (encoder.py)

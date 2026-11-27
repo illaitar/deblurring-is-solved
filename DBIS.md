@@ -112,12 +112,12 @@ dbisf's rounded weights give −0.010, +0.070, −0.027 and −0.013 dB, with th
 
 ## Use
 
-The package and the weight files are at [huggingface.co/Illaitar/dbis](https://huggingface.co/Illaitar/dbis), with
-the terms of the files. The package alone (about 100 KB of code) installs from there with pip, and `python -m dbis.run`
-restores an image, a folder of frames or a video file:
+The weight files are at [huggingface.co/Illaitar/dbis](https://huggingface.co/Illaitar/dbis), with the terms of the
+files. The package (`dbis`, distributed as `deblurring-is-solved`) installs with pip from this repository, and
+`python -m dbis.run` restores an image, a folder of frames or a video file:
 
 ```bash
-pip install "dbis @ https://huggingface.co/Illaitar/dbis/resolve/main/dbis-0.2.0-py3-none-any.whl"   # BSSTNet: "dbis[bsst] @ ..."
+pip install "deblurring-is-solved @ git+https://github.com/illaitar/deblurring-is-solved"   # BSSTNet: "deblurring-is-solved[bsst] @ ..."
 python -m dbis.run dbisf-NAFNet-64 blurry.png sharp.png
 python -m dbis.run dbisf-DSTNetPlus-L blurry_frames/ sharp_frames/     # a folder: one clip, frames in name order
 python -m dbis.run dbisf-Turtle blurry.mp4 sharp.mp4                     # video files through ffmpeg (on PATH)
@@ -180,17 +180,25 @@ float rounding.
 
 `python -m dbis.train` ([`dbis/train.py`](dbis/train.py)) trains every model with one script: from the released
 weights (a fine-tune, the default) or from scratch, on one GPU or several, on any folder of blurry and sharp frames.
+A plan fitted to the machine is made once, and the training follows it:
 
 ```bash
-python -m dbis.train dbisf-NAFNet-64 --data DIR --val VAL_DIR --out runs/nafnet        # one GPU
-torchrun --nproc-per-node 8 -m dbis.train dbisf-BSSTNet --data DIR --init scratch --out runs/bsst
+python -m dbis.train dbisf-Turtle --plan --data DIR --out runs/turtle --cache runs/turtle/cache   # once, a minute or two
+torchrun --nproc-per-node 8 -m dbis.train dbisf-Turtle --data DIR --out runs/turtle                # or python -m ... on one GPU
 ```
 
-The folder layout is found by itself: a blurry frame is an image whose path has `blur`, `Blur`, `input_noise` or
-`input` in it, and its sharp frame is the same path with `sharp`, `Sharp`, `target`, `GT` or `gt` there instead. So the
-layouts of GoPro, REDS, BSD, DVD, RealBlur, GS-Blur and MIORe all work as downloaded. The frames of one folder are one
-sequence; video models train on clips of consecutive frames of one sequence. `--list` and `--exclude` keep or drop
-frames and sequences by name.
+The download dialog on the site writes this as a script file for any model.
+
+**Data** ([`dbis/data.py`](dbis/data.py)). The folder layout is found by itself: a blurry frame is an image whose path
+has `blur`, `Blur`, `input_noise` or `input` in it, and its sharp frame is the same path with `sharp`, `Sharp`,
+`target`, `GT` or `gt` there instead, so GoPro, REDS, BSD, DVD, RealBlur, GS-Blur and MIORe work as downloaded
+(`python -m dbis.data find DIR` shows what it finds). The frames of one folder are one sequence; video models train on
+clips of consecutive frames of one sequence. `--list` and `--exclude` keep or drop frames and sequences by name.
+A training sample needs only a crop, but a PNG is decoded whole: 7 to 9 crops (blurry and sharp) per second and process
+at 1920x1080, 17 to 21 at 1280x720. The cache (`python -m dbis.data cache DIR CACHE`, or the plan when decoding cannot
+keep up) decodes every frame once into an uncompressed `.npy` file that is opened as a memory map, so a crop reads only
+its rows: 198 crops per second and process at 1920x1080, 22 times the fastest decoder. `python -m dbis.data bench DIR`
+times every reader on a machine.
 
 **One recipe per model, the authors' own.** The numbers are those of each method's GoPro training config at the commit
 we ported (`RECIPES` in `dbis/train.py` names the config file of each). A fine-tune from the released weights takes
@@ -203,37 +211,94 @@ we ported (`RECIPES` in `dbis/train.py` names the config file of each). A fine-t
 | steps | 400k | 600k | 600k | 200k |
 | AdamW lr, betas, weight decay | 1e-3, (0.9, 0.9), 1e-3 | 4e-4, (0.9, 0.99), 0 | 2e-4, (0.9, 0.999), 1e-4 | 4e-4, (0.9, 0.99), 0 |
 | schedule | cosine to 1e-7 | 1000 warmup steps, cosine to 1e-7; lr x0.1 flow completion, x0.25 offsets, x0.5 soft split | cosine to 1e-7 | cosine to 1e-7 |
-| loss | PSNR loss | L1 over all frames | Charbonnier + 0.1 x L1 of the 2-D FFT | L1 per frame |
+| loss | PSNR loss | L1 over all frames | Charbonnier + 0.1 x mean modulus of the rfft2 difference | L1 per frame |
 | gradient-norm clip | 0.01 | 0.01 | 0.01 | none |
 | kept fixed | | RAFT (its flows without gradients) | | |
 
-What is the same for all, and was not in every original: bfloat16 autocast (NAFNet and DSTNet+ trained in float32,
-BSSTNet and Turtle in float16 with a loss scaler) and one set of augmentations, the 8 flips and transposes chosen
-uniformly with the crop at the same place in every frame of a clip and in both frames of a pair (`--reverse` also plays
-clips backwards; no original did). Each network's `train_forward` is the function `restore` runs: checked on GoPro
-frames, NAFNet, BSSTNet and Turtle give the same outputs bit for bit, DSTNet+ within 8e-7 (the dynamic convolution's
-rounding).
+What is the same for all, and was not in every original: bfloat16 autocast by default (NAFNet and DSTNet+ trained in
+float32, BSSTNet and Turtle in float16 with a loss scaler; `--precision fp16` adds the scaler, `fp32` turns autocast off)
+and one set of augmentations, the 8 flips and transposes chosen uniformly with the crop at the same place in every frame
+of a clip and in both frames of a pair (`--reverse` also plays clips backwards; no original did). Each network's
+`train_forward` is the function `restore` runs: checked on GoPro frames, NAFNet, BSSTNet and Turtle give the same
+outputs bit for bit, DSTNet+ within 8e-7 (the dynamic convolution's rounding).
 
-**The batch fits itself to the GPU.** We measured the memory of a training step of every model (forward, backward and
-the AdamW step at batch 1, 2, 4 and 8, bfloat16, one A100 80 GB; `python -m dbis.train MODEL --measure` repeats it):
+**Losses** ([`dbis/losses.py`](dbis/losses.py)): the training losses of the benchmark's methods, each as its authors'
+code computes it and checked against that code; `--loss "l1_mean+0.1*fft_l1_full"` trains with any composition.
 
-| Model | Crop, frames | Fixed | Per sample | Samples on 80 GB |
+**The plan.** `--plan` measures, on one GPU of the machine, what the training will use:
+
+- the largest batch per GPU that fits, by real training steps (forward, backward and the AdamW step), with and without
+  activation checkpointing (each block of `net.train_checkpoint` recomputed in the backward pass), keeping the faster;
+- bfloat16 where the GPU has it, else float16 with a loss scaler;
+- with `--compile-probe`, whether `torch.compile` is faster;
+- every frame reader on the data, and the data workers per GPU that keep up with the GPU, building the cache when
+  decoding cannot.
+
+It writes `OUT/plan.json`; the global batch stays the recipe's (gradient accumulation), so a plan changes the speed,
+not the training. On one A100 80 GB, NAFNet-64 on GoPro: batch 64 in one step, bfloat16, the torchvision reader with 4
+workers, 57.5 samples per second.
+
+**Feeding the GPU.** After `torch.compile`, one A100 trains NAFNet-64 on about 106 crops per second, more than a few
+PNG decoders give. Three ways round it, measured with 2 data workers on GoPro (crops of 256, pairs per second):
+
+| Reader | Pairs per second | |
+|---|---:|---|
+| PNG (torchvision) | 42 | |
+| PNG, `--echo 2` / `4` / `8` | 80 / 151 / 274 | every clip read feeds 2, 4 or 8 batches, each time with a new crop and flips |
+| cache (`--cache`) | 557 | uncompressed `.npy` memory maps |
+| `--reader ram` | 1,477 | every frame in memory (per GPU process) |
+| `--reader gpu` | 74,000 | every frame on the GPU (GoPro: 10.8 GiB), the batch cut there in 0.86 ms, no data workers |
+
+With PNG and 2 workers a 15-minute NAFNet-64 run makes 511 steps (the GPU busy 36 % of the time, GoPro 25.70 dB);
+with `--echo 4` 1,465 steps (99 %, 26.28 dB). Echo factors up to 8 cost nothing we could measure (26.24 dB against
+25.94 and 25.97 without echo, at the same number of steps). Two crops of one read never share a batch.
+
+**Options that change the training** (off by default). Measured on NAFNet-64 from scratch, one A100, 15 minutes,
+GoPro test PSNR (the benchmark's evaluation, 1,111 frames):
+
+| Option | What it does | Steps | PSNR | With EMA |
 |---|---|---:|---:|---:|
-| NAFNet-64 | 256, 1 | 0.85 GiB | 1.14 GiB | about 60 |
-| DSTNet+ L | 256, 15 | 2.16 GiB | 8.54 GiB | 8 |
-| Turtle | 192, 5 | 0.60 GiB | 14.7 GiB | 4 |
-| BSSTNet | 256, 24 | 1.78 GiB | 34.6 GiB | 2 |
+| (none, batch 64) | the recipe's batch | 1,480 | 26.16 ± 0.25 (11 runs) | ±0.04 |
+| `--batch-per-gpu 8 --accum 1` | batch 8 | 9,101 | 26.98 | 27.41 |
+| `--noise-every 10 --adapt-batch 8,64` | batch 8, raised with the gradient noise scale | 3,497 | 26.95 | 27.04 |
+| `--shuffle perm` | random reshuffling: a new permutation of the clips every epoch | 1,481 | 26.16 | 26.10 |
+| `--rho 2` / `--rho 4` | RHO-LOSS (Mindermann et al. 2022): train on the half / quarter of 2x / 4x candidates whose loss is highest relative to the released weights' loss | 1,054 / 821 | 26.35 / 25.78 | 26.30 / 26.12 |
 
-The script reads the free memory of the GPU it runs on, takes the largest batch per GPU the table allows (the per-sample
-memory scaled by the crop's area and the frames), checks it with one step and halves it while that step runs out of
-memory, then reaches the recipe's global batch by gradient accumulation. The same command therefore trains the same way
-on one small card and on eight 80 GB cards, only slower, as long as one sample fits: at the recipe's crop that takes
-about 2 GiB for NAFNet-64, 11 GiB for DSTNet+ L, 16 GiB for Turtle and 37 GiB for BSSTNet (a smaller `--crop` or
-`--frames` lowers it and changes the recipe).
+- `--ema 0.99,0.999` keeps averages of the weights (`OUT/ema_<decay>.pt`, loadable like `last.pt`; the decay ramps
+  as min(d, (1 + t) / (10 + t)), so after 1,500 steps every decay above 0.994 is the same). `--export-ema` exports the
+  first average at the end. The average helps when the steps are many and noisy (batch 8: +0.43 dB), not at batch 64.
+- `--noise-every N` measures the gradient noise scale B = tr(Σ) / |G|² (McCandlish et al. 2018, "An Empirical Model of
+  Large-Batch Training") from the gradients of the two halves and of the whole batch, every N steps, into
+  `OUT/noise.tsv`. Below B, doubling the batch halves the steps a result needs; above it, samples go to waste. On
+  NAFNet-64 it grows from 1-3 at the start to 10-20 after 15 minutes, so early on the recipe's batch 64 spends most of
+  its samples for nothing, and batch 8 wins. `--adapt-batch MIN,MAX` starts at MIN and raises the batch to the largest
+  power of two not above the measured scale (after 3 measurements in a row, never down); the run above used an earlier,
+  jumpier rule, which reached 64 after 9 minutes. The scale keeps growing over a full run, so these numbers say
+  nothing yet about 400k steps.
+- Runs with the same data and initial weights differ by up to 0.8 dB at this length (the GPU's nondeterministic
+  kernels), so differences below about 0.5 dB in this table are noise.
+- `--adapt-batch`, `--rho` and `--shuffle perm` need `--reader gpu`; `--noise-every` and `--adapt-batch` run on one GPU
+  without gradient accumulation.
 
-Output in `--out`: `last.pt` (a stopped run resumes from it), `log.tsv`, `best.pt` (with `--val`: the best validation
-PSNR, frames restored with `net.restore` and rounded to 8 bits as the benchmark scores them) and, at the end, the weight
-files of the model in the stores of `dbis.MODELS` (`dbis-<source>.safetensors`, `dbisf-<source>.wpk`).
+**Our table of settings** (`python -m dbis.train MODEL --sweep` -> [`dbis/train_configs.json`](dbis/train_configs.json),
+which the plan starts from): for each model the recipe's crop and frames and smaller ones, in bfloat16, float16 and
+float32, with and without checkpointing, the largest batch up to 64 on an A100 80 GB, the peak memory as fixed + per
+sample, and the time per sample. At the recipe's crop, in bfloat16:
+
+| Model | Crop, frames | Per sample | Per sample, checkpointing | Time per sample (checkpointing) | One sample fits in |
+|---|---|---:|---:|---:|---:|
+| NAFNet-64 | 256, 1 | 1.12 GiB | 0.30 GiB | 17 ms (22 ms) | 4 GB |
+| DSTNet+ L | 256, 15 | 8.6 GiB | 4.1 GiB | 317 ms (299 ms) | 8 GB |
+| Turtle | 192, 5 | 14.8 GiB | 1.2 GiB | 300 ms (317 ms) | 4 GB |
+| BSSTNet | 256, 24 | 34.8 GiB | 8.5 GiB | 1256 ms (2279 ms) | 16 GB |
+
+So with checkpointing every model trains with its own recipe on a 16 GB card (the last column: fixed + one sample
+with checkpointing, with room for the CUDA context); only the time per step grows.
+
+Output in `--out`: `plan.json`, `last.pt` (a stopped run resumes from it), `log.tsv`, `best.pt` (with `--val`: the best
+validation PSNR, frames restored with `net.restore` and rounded to 8 bits as the benchmark scores them) and, at the end,
+the weight files of the model in the stores of `dbis.MODELS` (`dbis-<source>.safetensors`, `dbisf-<source>.wpk`), which
+`dbis.load(name, weights_dir=OUT)` reads.
 
 ## Layout of a method and its encoder
 

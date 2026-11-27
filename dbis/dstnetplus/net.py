@@ -31,6 +31,7 @@ class DSTNetPlus(Restorer, DSTNetPlusEncoder):
     moved back to end at the last frame (runs/baselines/common.py clip_plan); batch = frame_chunk; no tiles."""
     kind = "video"
     min_frames = 1
+    train_checkpoint = ("ResidualBlocks2D",)
 
     def __init__(self, num_feat=96, num_kernel_block=5, num_block=25, nonblind_denoise=False, window=50, frame_chunk=10,
                  precision="fp32", exact_dynconv=True, fold_encoder=False, prop_channels_last=False, autotune=False):

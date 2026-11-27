@@ -266,11 +266,13 @@ FACTS["tag_dbis"], FACTS["tag_dbisf"] = _tag("dbis-plain-css.svg"), _tag("dbisf-
 FACTS["tag_dbis_big"], FACTS["tag_dbisf_big"] = _tag("dbis-css.svg"), _tag("dbisf-css.svg")
 DBIS_FILES = ["NAFNet-64.json", "BSSTNet.json", "DSTNetPlus-L.json", "Turtle.json"]      # results/dbis/<file>, each with a "site" block
 DBIS_URL = "https://huggingface.co/Illaitar/dbis/resolve/main/"   # the hosted weight files (dbis.URL); None: "soon"
-# 27.11: the dbis package as a wheel next to the weight files (pyproject.toml; pip install "dbis @ <url>"), its size
-DBIS_VERSION = re.search(r'^version = "([^"]+)"', (ROOT / "pyproject.toml").read_text(encoding="utf-8"), re.M).group(1)
-DBIS_WHEEL = f"dbis-{DBIS_VERSION}-py3-none-any.whl"
+# 27.11: the dbis package for pip (pyproject.toml): distribution DBIS_DIST, installed from DBIS_FROM (a PEP 508 direct
+# reference; "" once it is on PyPI), described as coming from DBIS_WHERE; its size in KB of code
+DBIS_DIST, DBIS_FROM, DBIS_WHERE = "deblurring-is-solved", " @ git+https://github.com/illaitar/deblurring-is-solved", "GitHub"
 DBIS_WHEEL_KB = 100
-FACTS["dbis_wheel"] = DBIS_URL + DBIS_WHEEL if DBIS_URL else "<the dbis wheel>"
+FACTS["dbis_pip"] = f"{DBIS_DIST}{DBIS_FROM}"
+FACTS["dbis_pip_bsst"] = f"{DBIS_DIST}[bsst]{DBIS_FROM}"
+FACTS["dbis_where"] = DBIS_WHERE
 MINUS = "−"
 DBS = [json.loads((RES / "dbis" / f).read_text(encoding="utf-8")) | {"_file": f} for f in DBIS_FILES]
 def _faster(a, x):
@@ -336,7 +338,7 @@ for _J in DBS:
     DBIS_PAY[_s["row_key"]] = {
         "source": _s["source"], "checkpoint": _s["checkpoint"], "note": _s["note"], "extra_note": _s.get("extra_note"),
         "pip": _s.get("pip", "torch numpy safetensors zstandard"),
-        "wheel": DBIS_URL + DBIS_WHEEL if DBIS_URL else None, "wheel_kb": DBIS_WHEEL_KB,
+        "wheel": DBIS_DIST, "dist": DBIS_DIST, "from": DBIS_FROM, "where": DBIS_WHERE, "wheel_kb": DBIS_WHEEL_KB,
         "extra": "bsst" if _s["source"] == "BSSTNet" else None,     # torchvision for BSSTNet's deformable convolutions
         "authors": {"mb": round(_W["authors"] / 1e6), "ms": _L["authors"], "load": _T["authors"], "psnr": _P["authors"]},
         "models": [{"name": _s["models"][kd], "kind": kd, "ext": _s["ext"][kd], "file": _s["models"][kd] + _s["ext"][kd],

@@ -1,10 +1,12 @@
 """Upload the dbis / dbisf weight files to a Hugging Face model repository (run where you are logged in).
 
-    python tools/hf_upload_dbis.py WEIGHTS_DIR OWNER/NAME [--dry] [--private]
+    python tools/hf_upload_dbis.py WEIGHTS_DIR OWNER/NAME [dist/dbis-<version>-py3-none-any.whl] [--dry] [--private]
 
 WEIGHTS_DIR holds the files made by `python -m dbis.convert` (weights/dbis/ by default). Every file of dbis.MODELS is
 checked against its recorded sha256; the repository gets the files, a JSON card per file (made from dbis.MODELS and
 dbis.SOURCES), hf/dbis/README.md as the model card, hf/dbis/LICENSE.md and the license texts of hf/dbis/licenses/.
+A wheel of the package (python -m pip wheel . --no-deps -w dist) given after the repository goes up next to the files,
+for pip install "dbis @ https://huggingface.co/OWNER/NAME/resolve/main/<wheel>".
 """
 import hashlib
 import json
@@ -18,6 +20,7 @@ from dbis import MODELS, SOURCES  # noqa: E402
 args = sys.argv[1:]
 wdir, repo = Path(args[0]), args[1]
 dry, private = "--dry" in args, "--private" in args
+wheels = [Path(a) for a in args[2:] if a.endswith(".whl")]
 
 
 def sha256(p):
@@ -45,6 +48,7 @@ for name, m in MODELS.items():
 hf = ROOT / "hf" / "dbis"
 ops += [(hf / "README.md", "README.md"), (hf / "LICENSE.md", "LICENSE.md")]
 ops += [(p, "licenses/" + p.name) for p in sorted((hf / "licenses").glob("*.txt"))]
+ops += [(w, w.name) for w in wheels]
 size = sum(len(x) if isinstance(x, bytes) else x.stat().st_size for x, _ in ops)
 print(f"{len(ops)} files, {size / 2 ** 20:.0f} MiB -> {repo} (model, {'private' if private else 'public'})")
 for x, q in ops:
@@ -69,6 +73,6 @@ for x, q in ops:
             t.hardlink_to(x)
         except OSError:
             shutil.copy2(x, t)
-hf_push.push(stage, repo, "model", lfs=["*.wpk", "licenses/*.txt"], message="dbis and dbisf weight files, cards and terms",
+hf_push.push(stage, repo, "model", lfs=["*.wpk", "*.whl", "licenses/*.txt"], message="dbis and dbisf weight files, cards and terms",
              private=private)
 print(f"files at https://huggingface.co/{repo}/resolve/main/<file> (staged links left in {stage})")

@@ -11,7 +11,7 @@ tags:
 - image-restoration
 ---
 
-# dbis: weight files
+# dbis: package and weight files
 
 Weights of **dbis** and **dbisf**, our versions of published motion deblurring methods, made from the authors' released
 checkpoints by `python -m dbis.convert` of [deblurring is solved?](https://github.com/illaitar/deblurring-is-solved)
@@ -20,6 +20,19 @@ checkpoints by `python -m dbis.convert` of [deblurring is solved?](https://githu
 - **dbis-&lt;method&gt;**: our code and weight file, the same outputs as the authors' code.
 - **dbisf-&lt;method&gt;**: fast and light. Shorter run time and a smaller file, at most 0.05 dB below the authors' mean
   PSNR on every test set of the benchmark.
+
+## Install and run
+
+The package (code only, about 100 KB) installs with pip from GitHub; `dbis.load` fetches a weight file from here on
+first use and checks its sha256.
+
+```bash
+pip install "deblurring-is-solved @ git+https://github.com/illaitar/deblurring-is-solved"   # BSSTNet: "deblurring-is-solved[bsst] @ ..."
+python -m dbis.run dbisf-NAFNet-64 blurry.png sharp.png          # an image, a folder of frames or a video file
+python -m dbis.train dbisf-NAFNet-64 --data DIR                  # training: the authors' recipe, the batch fitted to the GPU
+```
+
+## Files
 
 | File | Method | Size | GoPro PSNR, dB | Time per 720p frame | Terms |
 |---|---|---:|---:|---:|---|
