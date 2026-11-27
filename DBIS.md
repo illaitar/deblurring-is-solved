@@ -112,9 +112,10 @@ dbisf's rounded weights give −0.010, +0.070, −0.027 and −0.013 dB, with th
 
 ## Use
 
-The weight files are at [huggingface.co/Illaitar/dbis](https://huggingface.co/Illaitar/dbis), with the terms of the
-files. The package (`dbis`, distributed as `deblurring-is-solved`) installs with pip from this repository, and
-`python -m dbis.run` restores an image, a folder of frames or a video file:
+The weight files are on Hugging Face, one repository per model named as the model (`dbis.repo(name)`, for example
+[Illaitar/dbisf-NAFNet-64](https://huggingface.co/Illaitar/dbisf-NAFNet-64)), each with the terms of its source and a
+card; all of them are in the [dbis collection](https://huggingface.co/collections/Illaitar/dbis-6b09930cbf629d8d89c027ba). The package (`dbis`, distributed as `deblurring-is-solved`)
+installs with pip from this repository, and `python -m dbis.run` restores an image, a folder of frames or a video file:
 
 ```bash
 pip install "deblurring-is-solved @ git+https://github.com/illaitar/deblurring-is-solved"   # BSSTNet: "deblurring-is-solved[bsst] @ ..."

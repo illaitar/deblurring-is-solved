@@ -787,7 +787,7 @@ import dbis
 net = dbis.load("dbisf-BSSTNet")       # every model the same way; the weight file comes from Hugging Face on first use
 out = net.restore(frames)              # options: tile, tile_overlap, window, batch, precision, compile, out
 
-# the files: https://huggingface.co/Illaitar/dbis, or made from the authors' checkpoints
+# the files: https://huggingface.co/Illaitar/&lt;model&gt;, or made from the authors' checkpoints
 python -m dbis.convert NAFNet-64 NAFNet-GoPro-width64.pth          # -> weights/dbis/
 python -m dbis.convert BSSTNet BSST_gopro.pth raft-things.pth      # BSST and its RAFT
 python -m dbis.convert DSTNetPlus-L DSTNetPlus_L_gopro.pth</pre>

@@ -265,7 +265,7 @@ def _tag(name):
 FACTS["tag_dbis"], FACTS["tag_dbisf"] = _tag("dbis-plain-css.svg"), _tag("dbisf-plain-css.svg")
 FACTS["tag_dbis_big"], FACTS["tag_dbisf_big"] = _tag("dbis-css.svg"), _tag("dbisf-css.svg")
 DBIS_FILES = ["NAFNet-64.json", "BSSTNet.json", "DSTNetPlus-L.json", "Turtle.json"]      # results/dbis/<file>, each with a "site" block
-DBIS_URL = "https://huggingface.co/Illaitar/dbis/resolve/main/"   # the hosted weight files (dbis.URL); None: "soon"
+DBIS_URL = "https://huggingface.co/Illaitar/{model}/resolve/main/"   # one repository per model (dbis.url); None: "soon"
 # 27.11: the dbis package for pip (pyproject.toml): distribution DBIS_DIST, installed from DBIS_FROM (a PEP 508 direct
 # reference; "" once it is on PyPI), described as coming from DBIS_WHERE; its size in KB of code
 DBIS_DIST, DBIS_FROM, DBIS_WHERE = "deblurring-is-solved", " @ git+https://github.com/illaitar/deblurring-is-solved", "GitHub"
@@ -346,7 +346,8 @@ for _J in DBS:
                     "psnr": _P[kd], "d_mb": _times(_W["authors"], _W[kd], "smaller"), "d_ms": _times(_L["authors"], _L[kd], "faster") if _L["authors"] / _L[kd] >= 1.5 else _pct(_L[kd], _L["authors"]),
                     "d_load": _times(_T["authors"], _T[kd], "faster"), "d_psnr": _dpsnr(_P[kd] - _P["authors"]),
                     "sets": _set_psnr(_J, kd),   # PSNR per set: the Pareto chart draws dbisf with it
-                    "url": DBIS_URL + _s["models"][kd] + _s["ext"][kd] if DBIS_URL else None} for kd in ("dbis", "dbisf")]}
+                    "url": DBIS_URL.format(model=_s["models"][kd]) + _s["models"][kd] + _s["ext"][kd] if DBIS_URL else None}
+                   for kd in ("dbis", "dbisf")]}
 REPOS = json.loads((ROOT / "site" / "method_repos.json").read_text(encoding="utf-8"))
 DATA_CARDS = [  # set, name, pairs, size, blur, license, authors' page
     ("gopro", "GoPro", "1,111 pairs", "1280&times;720", "", "CC BY 4.0", "https://seungjunnah.github.io/Datasets/gopro.html"),

@@ -57,7 +57,7 @@ authors' CuPy kernel has no float16). Turtle runs one frame per step with its hi
 15 tiles per 720p frame instead of 45).
 
 ```python
-import dbis                               # weights: huggingface.co/Illaitar/dbis, fetched on first use (sha256 checked)
+import dbis                               # weights: huggingface.co/Illaitar/<model>, fetched on first use (sha256 checked)
 net = dbis.load("dbisf-NAFNet-64")        # or "dbisf-BSSTNet", "dbisf-DSTNetPlus-L", "dbisf-Turtle", or a dbis-* model
 out = net.restore(frames)                 # the same call for every model; options: tile, tile_overlap, window, batch,
                                           # precision, compile, out (DBIS.md)

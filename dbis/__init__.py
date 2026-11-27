@@ -5,8 +5,9 @@
     dbisf-<method>   our fast and light version: shorter run time and a smaller weight file, at most 0.05 dB below the
                      authors' mean PSNR on every test set of the benchmark
 
-The weight files are hosted at https://huggingface.co/Illaitar/dbis: dbis.load fetches a missing file into WEIGHTS on
-first use and checks its sha256 (dbis.download). WEIGHTS is $DBIS_WEIGHTS if set, else weights/dbis/ of the repository
+The weight files are hosted on Hugging Face, one repository per model named as the model (dbis.repo(name), e.g.
+Illaitar/dbisf-NAFNet-64, with the terms of its source; all of them in the collection dbis.COLLECTION): dbis.load fetches a
+missing file into WEIGHTS on first use and checks its sha256 (dbis.download). WEIGHTS is $DBIS_WEIGHTS if set, else weights/dbis/ of the repository
 checkout, else ~/.cache/dbis (the package installed with pip); $HF_ENDPOINT selects a mirror of Hugging Face. The files
 can also be made locally from the authors' checkpoint:
 
@@ -35,8 +36,9 @@ from pathlib import Path
 _REPO = Path(__file__).resolve().parent.parent
 WEIGHTS = Path(os.environ.get("DBIS_WEIGHTS") or (_REPO / "weights" / "dbis" if (_REPO / "registry").is_dir()
                                                   else Path.home() / ".cache" / "dbis"))
-HF_REPO = "Illaitar/dbis"                                      # the hosted weight files (tools/hf_upload_dbis.py)
-URL = os.environ.get("HF_ENDPOINT", "https://huggingface.co").rstrip("/") + f"/{HF_REPO}/resolve/main/"
+HF_OWNER = "Illaitar"                                         # the hosted weight files (tools/hf_upload_dbis.py)
+COLLECTION = "https://huggingface.co/collections/Illaitar/dbis-6b09930cbf629d8d89c027ba"   # all of them (tools/hf_collection_dbis.py)
+ENDPOINT = os.environ.get("HF_ENDPOINT", "https://huggingface.co").rstrip("/")
 
 # the authors' checkpoints the models are made from
 SOURCES = {
@@ -148,9 +150,11 @@ MODELS = {
     # the authors' test configuration as the benchmark runs it: ConcertormerLocal (TLC windows, grid_factor 1.75), whole
     # frame, float16 autocast
     "dbis-Concertormer": {"source": "Concertormer", "cls": "Concertormer", "args": {"tlc": "exact"},
-                          "file": "dbis-Concertormer.safetensors", "store": "float32", "sha256": None},
+                          "file": "dbis-Concertormer.safetensors", "store": "float32",
+                          "sha256": "43ab05230a3eec9b4275fd5d93ade7d6b6967fee4f49c0c1233faabcd4b55457"},
     "dbis-Concertormer-lite": {"source": "Concertormer-lite", "cls": "Concertormer", "args": {"tlc": "exact", **LITE},
-                               "file": "dbis-Concertormer-lite.safetensors", "store": "float32", "sha256": None},
+                               "file": "dbis-Concertormer-lite.safetensors", "store": "float32",
+                               "sha256": "3812049ef5acc78df2b00cac0d7d07faa7cee93508c112a93677dc2a0e344080"},
 }
 
 
@@ -166,9 +170,21 @@ def build(name, device="meta"):
         return getattr(_module(name), m["cls"])(**m["args"])
 
 
+def repo(name):
+    """The Hugging Face repository of a model's weight file: one per model, named as the model (its file, a JSON
+    card, the model card and the terms of the source checkpoint)."""
+    return f"{HF_OWNER}/{name}"
+
+
+def url(name):
+    """Where download() fetches a model's weight file from."""
+    return f"{ENDPOINT}/{repo(name)}/resolve/main/{MODELS[name]['file']}"
+
+
 def download(name, weights_dir=None):
-    """Fetch a model's weight file from URL into `weights_dir` (weights/dbis/ by default) and check its sha256 against
-    the recorded one; returns its path. The file is written under a .part name and renamed only once it checks out."""
+    """Fetch a model's weight file from url(name) into `weights_dir` (weights/dbis/ by default) and check its sha256
+    against the recorded one; returns its path. The file is written under a .part name and renamed only once it checks
+    out."""
     import hashlib
     import urllib.request
     m = MODELS[name]
@@ -177,14 +193,14 @@ def download(name, weights_dir=None):
     path = d / m["file"]
     part = path.with_name(path.name + ".part")
     h = hashlib.sha256()
-    print(f"dbis: fetching {URL}{m['file']} -> {path}", flush=True)
-    with urllib.request.urlopen(URL + m["file"], timeout=60) as r, open(part, "wb") as f:
+    print(f"dbis: fetching {url(name)} -> {path}", flush=True)
+    with urllib.request.urlopen(url(name), timeout=60) as r, open(part, "wb") as f:
         for chunk in iter(lambda: r.read(1 << 22), b""):
             h.update(chunk)
             f.write(chunk)
     if h.hexdigest() != m["sha256"]:
         part.unlink()
-        raise OSError(f"{URL}{m['file']}: sha256 {h.hexdigest()} differs from the recorded {m['sha256']}")
+        raise OSError(f"{url(name)}: sha256 {h.hexdigest()} differs from the recorded {m['sha256']}")
     part.replace(path)
     return path
 
@@ -214,8 +230,8 @@ def _weights(name, weights_dir, device, fetch=True):
 
 
 def load(name, weights_dir=None, device="cuda", fetch=True):
-    """The network of a model with its weights, in eval mode, on `device` (a missing weight file is fetched from URL
-    unless fetch is False)."""
+    """The network of a model with its weights, in eval mode, on `device` (a missing weight file is fetched from
+    url(name) unless fetch is False)."""
     net = build(name)
     net.load_state_dict(_weights(name, weights_dir, device, fetch), strict=True, assign=True)
     return net.eval()

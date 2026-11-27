@@ -64,7 +64,8 @@ net = dbis.load("dbisf-NAFNet-64")       # fetches the file from this repository
 out = net.restore(frames)                # frames [T, 3, H, W], [B, T, 3, H, W] or [3, H, W]; the same call for every model
 ```
 
-Or download them yourself into `weights/dbis/` of the repository: `hf download Illaitar/dbis --local-dir weights/dbis`.
+Or download them yourself into `weights/dbis/` of the repository: `hf download Illaitar/dbis --local-dir weights/dbis`
+(the same files are now in one repository per model, `Illaitar/<model>`, which `dbis.load` uses: https://huggingface.co/collections/Illaitar/dbis-6b09930cbf629d8d89c027ba).
 `.safetensors` files are float32. `.wpk` files are the repository's wpack format (`dbis/wpack.py`, needs zstandard):
 weights rounded per output channel and entropy coded.
 
